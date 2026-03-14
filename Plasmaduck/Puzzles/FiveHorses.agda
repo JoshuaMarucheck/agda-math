@@ -20,36 +20,13 @@ open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respec
 open import Plasmaduck.Relation.Order using (Comparable; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Util.TypeChange using (change-type)
-
+open import Plasmaduck.Number.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
 
 
 module Plasmaduck.Puzzles.FiveHorses where
 
 variable
     ℓ ℓ₂ : Level
-
-
-suc-inj : {n : ℕ} → {x y : Fin n} → suc x ≡ suc y → x ≡ y
-suc-inj {n} {x} {y} refl = refl
-
-fin-≡-dec : {n : ℕ} → Decidable (_≡_ {A = Fin n})
-fin-≡-dec {zero-ℕ} ()
-fin-≡-dec {suc-ℕ n} zero zero = yes refl
-fin-≡-dec {suc-ℕ n} zero (suc _) = no λ ()
-fin-≡-dec {suc-ℕ n} (suc _) zero = no λ ()
-fin-≡-dec {suc-ℕ n} (suc p) (suc q) = case (fin-≡-dec p q) of λ {
-    (yes p≡q) → yes (cong suc p≡q);
-    (no p≢q) → no λ sp≡sq → p≢q (suc-inj sp≡sq)
-    }
-
-_∸-fin_ : (n : ℕ) → (m : Fin n) → ℕ
-zero-ℕ ∸-fin ()
-(suc-ℕ n) ∸-fin zero = suc-ℕ n
-(suc-ℕ n) ∸-fin (suc m) = n ∸-fin m
-
--- Left addition
-_↑ˡ-inverted_ : {m : ℕ} → Fin m → (n : ℕ) → Fin (n + m)
-_↑ˡ-inverted_ {m = m} i n = change-type (cong Fin (+-comm m n)) (i ↑ˡ n)
 
 
 vec-pairwise-rel : {A : Set ℓ} {n : ℕ} → Vec A n → Rel A ℓ₂ → Set ℓ₂
