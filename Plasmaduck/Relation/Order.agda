@@ -19,6 +19,10 @@ Comparable : Rel S ℓ₂ → Set (s ⊔ ℓ ⊔ ℓ₂)
 Comparable _<_ = (x y : S) → WeakTri (x < y) (x ≈ y) (x > y)
     where _>_ = flip _<_
 
+ComparableAt : Rel S ℓ₂ → (x y : S) → Set (ℓ ⊔ ℓ₂)
+ComparableAt _<_ x y = WeakTri (x < y) (x ≈ y) (x > y)
+    where _>_ = flip _<_
+
 show-total-order :
     (≈-isEquivalence : IsEquivalence _≈_) →
     (_<_ : Rel S ℓ₂) →
