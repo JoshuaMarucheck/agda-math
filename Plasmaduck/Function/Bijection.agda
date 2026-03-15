@@ -2,11 +2,11 @@ open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero t
 
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; _∘_)
+open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; _∘_; id)
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (IsEquivalence)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; rel₁; rel₂; ×-setoid)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong)
 
 module Plasmaduck.Function.Bijection where
 
@@ -134,6 +134,27 @@ invert-bijection {s₁ = s₁} {s₂} bij = record {
                 open InverseFunction bij₃₄
                 open import Relation.Binary.Reasoning.Setoid s₄
 
+⊎-discrete-distributivity : (A : Set a) (B : Set b) → Bijection (discrete-setoid (A ⊎ B)) (⊎-setoid (discrete-setoid A) (discrete-setoid B))
+⊎-discrete-distributivity A B = record {
+    to = f;
+    cong = from-discrete-cong {A = A ⊎ B} (⊎-setoid (discrete-setoid A) (discrete-setoid B)) f;
+    bijective = injective , surjective
+    }
+    where
+        open import Relation.Binary.PropositionalEquality using (_≡_; inspect; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; cong to ≡-cong)
+
+        f : A ⊎ B → A ⊎ B
+        f = id
+
+        injective : Injective _≡_ (⊎-rel (discrete-setoid A) (discrete-setoid B)) f
+        injective {inj₁ x} {inj₁ y} (rel₁ x≡y) = ≡-cong inj₁ x≡y
+        injective {inj₂ x} {inj₂ y} (rel₂ x≡y) = ≡-cong inj₂ x≡y
+
+        surjective : Surjective _≡_ (⊎-rel (discrete-setoid A) (discrete-setoid B)) f
+        surjective (inj₁ x) = inj₁ x , λ { {inj₁ y} ≡-refl → rel₁ ≡-refl }
+        surjective (inj₂ x) = inj₂ x , λ { {inj₂ y} ≡-refl → rel₂ ≡-refl }
+
+
 ×-bijection :
     {s₁ : Setoid a ℓ₁} {s₂ : Setoid b ℓ₂} {s₃ : Setoid c ℓ₃} {s₄ : Setoid d ℓ₄} →
     Bijection s₁ s₂ → Bijection s₃ s₄ → Bijection (×-setoid s₁ s₃) (×-setoid s₂ s₄)
@@ -162,3 +183,21 @@ invert-bijection {s₁ = s₁} {s₂} bij = record {
             (λ {z} z~x →
                bij₁₂ .bijective .proj₂ x₁ .proj₂ (z~x .proj₁) ,
                bij₃₄ .bijective .proj₂ x₂ .proj₂ (z~x .proj₂))
+
+×-discrete-distributivity : (A : Set a) (B : Set b) → Bijection (discrete-setoid (A × B)) (×-setoid (discrete-setoid A) (discrete-setoid B))
+×-discrete-distributivity A B = record {
+    to = f;
+    cong = from-discrete-cong {A = A × B} (×-setoid (discrete-setoid A) (discrete-setoid B)) f;
+    bijective = injective , surjective
+    }
+    where
+        open import Relation.Binary.PropositionalEquality using (_≡_; inspect; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; cong to ≡-cong)
+
+        f : A × B → A × B
+        f = id
+
+        injective : Injective _≡_ (×-rel (discrete-setoid A) (discrete-setoid B)) f
+        injective (≡-refl , ≡-refl) = ≡-refl
+
+        surjective : Surjective _≡_ (×-rel (discrete-setoid A) (discrete-setoid B)) f
+        surjective (x₁ , y₁) = (x₁ , y₁) , λ { ≡-refl → ≡-refl , ≡-refl }

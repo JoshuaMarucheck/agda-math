@@ -71,6 +71,12 @@ indiscrete-setoid S = record
         }
     }
 
+from-discrete-cong : {A : Set a} (B : Setoid c ℓ) (f : A → B .Carrier) → Congruent _≡_ (B ._≈_) f
+from-discrete-cong {A} B f {x} {y} x≡y rewrite x≡y = B .Setoid.refl
+
+into-indiscrete-cong : (A : Setoid c ℓ) {B : Set b} (f : A .Carrier → B) → Congruent (A ._≈_) (indiscrete-setoid B ._≈_) f
+into-indiscrete-cong A {B} f {x} {y} _ = tt
+
 
 data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid .Carrier ⊎ setoid₂ .Carrier) (c ⊔ ℓ ⊔ d ⊔ ℓ₂) where
     rel₁ : {x y : setoid .Carrier} → setoid ._≈_ x y → ⊎-rel setoid setoid₂ (inj₁ x) (inj₁ y)
