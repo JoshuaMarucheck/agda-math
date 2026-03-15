@@ -2,15 +2,12 @@ open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero t
 open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; Reveal_·_is_; [_]; refl; sym; trans)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
-open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
 open import Function using (_∘_; flip)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _+_; _≤_; _≥_; z≤n; s≤s) renaming (zero to zero-ℕ; suc to suc-ℕ)
+open import Data.Nat using (ℕ; _+_; _≤_; _≥_) renaming (zero to zero-ℕ; suc to suc-ℕ)
 open import Data.Nat.Properties using (+-comm)
-open import Data.Fin using (Fin; zero; suc; _↑ˡ_; toℕ) renaming (_<_ to _<-fin_)
+open import Data.Fin using (Fin; zero; suc; _↑ˡ_)
 open import Data.Vec using (Vec; lookup; head; drop; []; _∷_; length)
 open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsStrictTotalOrder; Irreflexive; Transitive; Rel; IsEquivalence; _Respects₂_; Decidable; IsStrictPartialOrder; Trichotomous; Tri; tri<; tri≈; tri>; Asymmetric; IsDecStrictPartialOrder)
 
@@ -20,30 +17,13 @@ open import Plasmaduck.Relation.Order using (Comparable; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.Number.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
-
+open import Plasmaduck.Relation.RelationVector using (vec-pairwise-rel)
 
 module Plasmaduck.Puzzles.FiveHorses where
 
 variable
     ℓ ℓ₂ : Level
 
-
-vec-pairwise-rel : {A : Set ℓ} {n : ℕ} → Vec A n → Rel A ℓ₂ → Set ℓ₂
-vec-pairwise-rel [] _~_ = Lift _ ⊤
-vec-pairwise-rel (_ ∷ []) _~_ = Lift _ ⊤
-vec-pairwise-rel (x ∷ xs@(y ∷ vec)) _~_ = x ~ y × vec-pairwise-rel xs _~_
-
-vec-pairwise-rel-lookup :
-    {A : Set ℓ} {n : ℕ} → (vec : Vec A n) →
-    {_~_ : Rel A ℓ₂} → (Transitive _~_) →
-    (vec-pairwise-rel vec _~_) →
-    {i j : Fin n} → i <-fin j →
-    lookup vec i ~ lookup vec j
-vec-pairwise-rel-lookup {n = 0}         [] {_~_} ~-trans _ {()}
-vec-pairwise-rel-lookup {n = 1}   (_ ∷ []) {_~_} ~-trans _ {_} {zero} ()
-vec-pairwise-rel-lookup (x ∷ xs@(y ∷ vec)) {_~_} ~-trans (x~y , pfs) {zero} {suc zero} i<j = x~y
-vec-pairwise-rel-lookup (x ∷ xs@(y ∷ vec)) {_~_} ~-trans (x~y , pfs) {zero} {suc (suc j)} i<j = ~-trans x~y (vec-pairwise-rel-lookup xs ~-trans pfs {zero} {suc j} (s≤s (z≤n {n = toℕ j})))
-vec-pairwise-rel-lookup (x ∷ xs@(y ∷ vec)) {_~_} ~-trans (x~y , pfs) {suc i} {suc j} (s≤s pf) = vec-pairwise-rel-lookup xs ~-trans pfs {i} {j} pf
 
 vec-drop : {A : Set ℓ} {n : ℕ} → (m : Fin n) → Vec A n → Vec A (n ∸-fin m)
 vec-drop {n = zero-ℕ} ()
