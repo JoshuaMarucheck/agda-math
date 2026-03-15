@@ -10,7 +10,7 @@ open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_) renaming (zero to 
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine)
 open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; combine-injective; combine-surjective)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; rel₁; rel₂)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂)
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
 
 
@@ -99,6 +99,30 @@ fin-×-bijection m n = invert-bijection (fin-×-bijection' m n)
         ∘-bijection
     (fin-×-bijection m n)
 
+
+maybe-bijection-lemma : (m : ℕ) → Bijection (discrete-setoid (Maybe (Fin m))) (discrete-setoid (Fin (suc-ℕ m)))
+maybe-bijection-lemma m = record {
+    to = f;
+    cong = from-discrete-cong (discrete-setoid (Fin (suc-ℕ m))) f;
+    bijective = injective , surjective
+    }
+    where
+        f : Maybe (Fin m) → Fin (suc-ℕ m)
+        f nothing = zero
+        f (just x) = suc x
+
+        injective : Injective _≡_ _≡_ f
+        injective {nothing} {nothing} _ = ≡-refl
+        injective {just x} {just y} ≡-refl = ≡-refl
+
+        surjective : Surjective _≡_ _≡_ f
+        surjective zero = nothing , λ { ≡-refl → ≡-refl }
+        surjective (suc x) = just x , λ { ≡-refl → ≡-refl }
+
+-- maybe-size-theorem :
+--     {s : Setoid c ℓ₁} {m : ℕ} → (HasSize s m) →
+--     HasSize (maybe-setoid s) (suc-ℕ m)
+-- maybe-size-theorem fin-m↔s = {!   !}
 
 record InfiniteSize (setoid : Setoid c ℓ) : Set (c ⊔ ℓ) where
     field
