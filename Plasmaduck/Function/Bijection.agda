@@ -71,8 +71,11 @@ invert-bijection {s₁ = s₁} {s₂} bij = record {
     }
     where open InverseFunction bij
 
-∘-bijection : {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} {s₃ : Setoid e ℓ₃} → Bijection s₁ s₂ → Bijection s₂ s₃ → Bijection s₁ s₃
-∘-bijection {s₁ = s₁} {s₂} {s₃} bij₁ bij₂ = record {
+
+infixr 9 _∘-bijection_
+
+_∘-bijection_ : {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} {s₃ : Setoid e ℓ₃} → Bijection s₂ s₃ → Bijection s₁ s₂ → Bijection s₁ s₃
+_∘-bijection_ {s₁ = s₁} {s₂} {s₃} bij₂ bij₁ = record {
     to = f;
     cong = f-cong;
     bijective = bij₁ .bijective .proj₁ ∘ bij₂ .bijective .proj₁ , surjective
