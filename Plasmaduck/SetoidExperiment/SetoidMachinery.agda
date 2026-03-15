@@ -3,6 +3,7 @@ open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Function using (Congruent)
 
@@ -82,7 +83,6 @@ data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid
     rel₁ : {x y : setoid .Carrier} → setoid ._≈_ x y → ⊎-rel setoid setoid₂ (inj₁ x) (inj₁ y)
     rel₂ : {x y : setoid₂ .Carrier} → setoid₂ ._≈_ x y → ⊎-rel setoid setoid₂ (inj₂ x) (inj₂ y)
 
-
 ⊎-setoid : (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) → Setoid (c ⊔ d) (c ⊔ ℓ ⊔ d ⊔ ℓ₂)
 ⊎-setoid {ℓ = ℓ} {ℓ₂ = ℓ₂} setoid setoid₂ = record {
     Carrier = setoid .Carrier ⊎ setoid₂ .Carrier;
@@ -119,4 +119,26 @@ data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid
             IsEquivalence.trans (isEquivalence setoid) (z .proj₁) (z₁ .proj₁) ,
             IsEquivalence.trans (isEquivalence setoid₂) (z .proj₂) (z₁ .proj₂)
     }
+    }
+
+
+data maybe-rel (setoid : Setoid c ℓ) : Rel (Maybe (setoid .Carrier)) (c ⊔ ℓ) where
+    maybe-rel-nothing : maybe-rel setoid nothing nothing
+    maybe-rel-just : {x y : setoid .Carrier} → (setoid ._≈_ x y) → maybe-rel setoid (just x) (just y)
+
+maybe-setoid : (setoid : Setoid c ℓ) → Setoid c (c ⊔ ℓ)
+maybe-setoid setoid = record {
+    Carrier = Maybe (setoid .Carrier);
+    _≈_ = maybe-rel setoid;
+    isEquivalence = record {
+        refl = λ { {nothing} → maybe-rel-nothing; {just x} → maybe-rel-just (setoid .Setoid.refl)};
+        sym = λ {
+            {nothing} {nothing} maybe-rel-nothing → maybe-rel-nothing;
+            {just x} {just y} (maybe-rel-just x≈₂y) → maybe-rel-just (setoid .Setoid.sym x≈₂y)
+            };
+        trans = λ {
+            {nothing} {nothing} {nothing} maybe-rel-nothing maybe-rel-nothing → maybe-rel-nothing;
+            {just x} {just y} {just z} (maybe-rel-just x≈₂y) (maybe-rel-just y≈₂z) → maybe-rel-just (setoid .Setoid.trans x≈₂y y≈₂z)
+            }
+        }
     }
