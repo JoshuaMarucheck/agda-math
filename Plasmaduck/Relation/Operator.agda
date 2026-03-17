@@ -44,10 +44,6 @@ variable
 
 
 
--- Reflexive wrt the ambient equality relation
-Refl : Rel A ℓ₂ → Set (a ⊔ ℓ ⊔ ℓ₂)
-Refl _~_ = ∀ {x y} → x ≈ y → x ~ y
-
 SameRel : Rel A ℓ₂ → Rel A ℓ₃ → Set (a ⊔ ℓ₂ ⊔ ℓ₃)
 SameRel _#_ _#'_ = (_#'_ Extends _#_) × (_#_ Extends _#'_)
 
@@ -175,20 +171,20 @@ congruence-transferrable (#→#' , #'→#) #-cong {x₁} {x₂} {y₁} {y₂} x�
 --- Reflexive Closure ---
 -------------------------
 
-reflexive-closure : Rel A ℓ₂ → Rel A (ℓ ⊔ ℓ₂)
-reflexive-closure _#_ x y = x # y ⊎ x ≈ y
+reflexive-closure : Rel A ℓ₂ → Rel A (a ⊔ ℓ₂)
+reflexive-closure _#_ x y = x # y ⊎ x ≡ y
 
-reflexive-closure-is-reflexive : (_#_ : Rel A ℓ₂) → Refl (reflexive-closure _#_)
-reflexive-closure-is-reflexive _#_ {x} {y} x≈y = inj₂ x≈y
+reflexive-closure-is-reflexive : (_#_ : Rel A ℓ₂) → Reflexive (reflexive-closure _#_)
+reflexive-closure-is-reflexive _#_ {x} = inj₂ ≡-refl
 
-reflexive-closure-is-minimal : MinimalOperator ℓ₂ Refl reflexive-closure
+reflexive-closure-is-minimal : MinimalOperator ℓ₂ Reflexive reflexive-closure
 reflexive-closure-is-minimal _#_ _#'_ #'-extends-# #'-refl {x} {y} (inj₁ x#y) = #'-extends-# x#y
-reflexive-closure-is-minimal _#_ _#'_ #'-extends-# #'-refl {x} {y} (inj₂ x≈y) = #'-refl x≈y
+reflexive-closure-is-minimal _#_ _#'_ #'-extends-# #'-refl {x} {y} (inj₂ ≡-refl) = #'-refl
 
 reflexive-closure-is-extensive : ExtensiveOperator ℓ₂ reflexive-closure
 reflexive-closure-is-extensive _#_ = inj₁
 
-reflexive-closure-is-idempotent : IdempotentOperator (ℓ ⊔ ℓ₂) reflexive-closure
+reflexive-closure-is-idempotent : IdempotentOperator (a ⊔ ℓ₂) reflexive-closure
 reflexive-closure-is-idempotent _#_ = (λ {x} {y} → λ {(inj₁ rel) → rel ; (inj₂ x≈y) → inj₂ x≈y }) , inj₁
 
 reflexive-closure-is-rel-congruent : SameRelCongruentOperator (a ⊔ ℓ₂) (a ⊔ ℓ₃) reflexive-closure
@@ -197,8 +193,8 @@ reflexive-closure-is-rel-congruent = prove-rel-congruence reflexive-closure λ {
     (inj₂ x≈y) → inj₂ x≈y
     }}
 
-reflexivity-transferrable : TransferrableProperty ℓ₂ Refl
-reflexivity-transferrable (#→#' , #'→#) #-refl {x} {y} x≈y = #→#' (#-refl x≈y)
+reflexivity-transferrable : TransferrableProperty ℓ₂ Reflexive
+reflexivity-transferrable (#→#' , #'→#) #-refl {x} = #→#' #-refl
 
 
 -------------------------
@@ -265,50 +261,48 @@ transitivity-transferrable (#→#' , #'→#) #-trans {x} {y} {z} x#'y y#'z = #�
 --- Joint properties ---
 ------------------------
 
-refl-sym-commute : CommutativeOperators (ℓ ⊔ ℓ₂) reflexive-closure symmetric-closure
+refl-sym-commute : CommutativeOperators (a ⊔ ℓ₂) reflexive-closure symmetric-closure
 refl-sym-commute {_#_ = _#_} #-cong = (λ {
     (inj₁ (inj₁ x#y)) → inj₁ (inj₁ x#y);
     (inj₁ (inj₂ y#x)) → inj₂ (inj₁ y#x);
-    (inj₂ x≈y) → inj₁ (inj₂ x≈y)
+    (inj₂ x≡y) → inj₁ (inj₂ x≡y)
     }) , (λ {
     (inj₁ (inj₁ x#y)) → inj₁ (inj₁ x#y);
-    (inj₁ (inj₂ x≈y)) → inj₂ x≈y;
+    (inj₁ (inj₂ x≡y)) → inj₂ x≡y;
     (inj₂ (inj₁ y#x)) → inj₁ (inj₂ y#x);
-    (inj₂ (inj₂ y≈x)) → inj₂ (≈-eq .sym y≈x)
+    (inj₂ (inj₂ y≡x)) → inj₂ (≡-sym y≡x)
     })
 
 squeeze-reflexive-branch :
     {_#_ : Rel A ℓ₁} →
-    (CongruentRel _#_) →
     {x y : A} →
     transitive-closure (reflexive-closure _#_) x y →
     reflexive-closure (transitive-closure _#_) x y
 squeeze-reflexive-tree :
     {_#_ : Rel A ℓ₁} →
-    (CongruentRel _#_) →
     {x y : A} →
     RelTree (reflexive-closure _#_) x y →
     reflexive-closure (transitive-closure _#_) x y
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , wTx , _ , yTz) with squeeze-reflexive-tree #-cong wTx | squeeze-reflexive-tree #-cong yTz
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₁ wBx | inj₁ yBz = inj₁ (x , y , branch wBx , x#y , branch yBz)
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₁ wBx | inj₂ y≈z = inj₁ (x , z , branch wBx , #-cong (≈-eq .refl) y≈z x#y , leaf z)
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₂ w≈x | inj₁ yBz = inj₁ (w , y , leaf w , #-cong (sym ≈-eq w≈x) (refl ≈-eq) x#y , branch yBz)
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₂ w≈x | inj₂ y≈z = inj₁ (w , z , leaf w , #-cong (sym ≈-eq w≈x) y≈z x#y , leaf z)
-squeeze-reflexive-branch {_#_ = _#_} #-cong {x = w} {z} (x , y , _ , inj₂ x≈y , _) | inj₁ wBx | inj₁ yBz with pop-first _#_ yBz
-...                                                                                                         | q , y#q , qTz = inj₁ (x , q , branch wBx , #-cong (sym ≈-eq x≈y) (refl ≈-eq) y#q , qTz)
-squeeze-reflexive-branch {_#_ = _#_} #-cong {x = w} {z} (x , y , _ , inj₂ x≈y , _) | inj₁ wBx | inj₂ y≈z with pop-last _#_ wBx
-...                                                                                                         | q , wTq , q#x = inj₁ (q , z , wTq , #-cong (refl ≈-eq) (trans ≈-eq x≈y y≈z) q#x , leaf z)
-squeeze-reflexive-branch {_#_ = _#_} #-cong {x = w} {z} (x , y , _ , inj₂ x≈y , _) | inj₂ w≈x | inj₁ yBz with pop-first _#_ yBz
-...                                                                                                         | q , y#q , qTz = inj₁ (w , q , leaf w , #-cong (sym ≈-eq (trans ≈-eq w≈x x≈y)) (refl ≈-eq) y#q , qTz)
-squeeze-reflexive-branch #-cong {x = w} {z} (x , y , _ , inj₂ x≈y , _) | inj₂ w≈x | inj₂ y≈z = inj₂ (trans ≈-eq (trans ≈-eq w≈x x≈y) y≈z)
-squeeze-reflexive-tree #-cong (leaf x) = inj₂ (≈-eq .refl)
-squeeze-reflexive-tree #-cong (branch b) = squeeze-reflexive-branch #-cong b
+squeeze-reflexive-branch {x = w} {z} (x , y , wTx , _ , yTz) with squeeze-reflexive-tree wTx | squeeze-reflexive-tree yTz
+squeeze-reflexive-branch {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₁ wBx | inj₁ yBz = inj₁ (x , y , branch wBx , x#y , branch yBz)
+squeeze-reflexive-branch {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₁ wBx | inj₂ y≡z rewrite y≡z = inj₁ (x , z , branch wBx , x#y , leaf z)
+squeeze-reflexive-branch {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₂ w≡x | inj₁ yBz rewrite ≡-sym w≡x = inj₁ (w , y , leaf w , x#y , branch yBz)
+squeeze-reflexive-branch {x = w} {z} (x , y , _ , inj₁ x#y , _) | inj₂ w≡x | inj₂ y≡z rewrite y≡z rewrite ≡-sym w≡x = inj₁ (w , z , leaf w , x#y , leaf z)
+squeeze-reflexive-branch {_#_ = _#_} {x = w} {z} (x , y , _ , inj₂ x≡y , _) | inj₁ wBx | inj₁ yBz with pop-first _#_ yBz
+...                                                                                                         | q , y#q , qTz rewrite ≡-sym x≡y = inj₁ (x , q , branch wBx , y#q , qTz)
+squeeze-reflexive-branch {_#_ = _#_} {x = w} {z} (x , y , _ , inj₂ x≡y , _) | inj₁ wBx | inj₂ y≡z with pop-last _#_ wBx
+...                                                                                                         | q , wTq , q#x rewrite ≡-trans x≡y y≡z = inj₁ (q , z , wTq , q#x , leaf z)
+squeeze-reflexive-branch {_#_ = _#_} {x = w} {z} (x , y , _ , inj₂ x≡y , _) | inj₂ w≡x | inj₁ yBz with pop-first _#_ yBz
+...                                                                                                         | q , y#q , qTz rewrite (≡-sym (≡-trans w≡x x≡y)) = inj₁ (w , q , leaf w , y#q , qTz)
+squeeze-reflexive-branch {x = w} {z} (x , y , _ , inj₂ x≡y , _) | inj₂ w≡x | inj₂ y≡z = inj₂ (≡-trans (≡-trans w≡x x≡y) y≡z)
+squeeze-reflexive-tree (leaf x) = inj₂ ≡-refl
+squeeze-reflexive-tree (branch b) = squeeze-reflexive-branch b
 
 refl-trans-commute : CommutativeOperators (a ⊔ ℓ ⊔ ℓ₂) reflexive-closure transitive-closure
 refl-trans-commute {_#_ = _#_} #-cong = (λ {
     (inj₁ xBy) → map-branch id inj₁ xBy;
     (inj₂ x≈y) → lift-rel-to-branch (reflexive-closure _#_) (inj₂ x≈y)
-    }) , squeeze-reflexive-branch #-cong
+    }) , squeeze-reflexive-branch
 
 {-
     Symmetric and transitive closure are not commutative, as long as A has at least 3 distinct things in it.
