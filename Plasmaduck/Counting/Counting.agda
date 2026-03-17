@@ -28,6 +28,9 @@ HasSize setoid n = Bijection (fin-setoid n) setoid
 
 open Setoid using (Carrier; _≈_)
 
+AtLeastSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
+AtLeastSize setoid n = Injection (fin-setoid n) setoid
+
 
 fin-⊎-bijection : (m n : ℕ) → Bijection (discrete-setoid (Fin (m + n))) (discrete-setoid (Fin m ⊎ Fin n))
 fin-⊎-bijection m n = record {
