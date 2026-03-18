@@ -74,6 +74,52 @@ SameRel-eq = record {
 --- Properties of Operators ---
 -------------------------------
 
+
+{-
+    Worth considering: what if instead of operators, we just had properties?
+
+    A property is a set of relations. This may or may not have a minimum.
+    Examples:
+    - Reflexivity
+    - Transitivity
+    - Extends relation _#_ (for some relation _#_)
+    - Relates a < b
+    - Does not relate a < b
+    - Every element relates to something
+
+    Then, if the property is upward-closed so talking of minimal elements makes sense,
+    We can ask if it has a minimum.
+
+    But for example, the reflexive-closure operator below finds the
+    minimum Reflexive relation that extends some relation _#_.
+    Note the two properties here:
+    - Reflexive
+    - extends _#_
+    It took the minimum of the second property and returned the minimum of their intersection.
+
+
+    Also consider: two properties without a minimum may intersect and have a minimum. For example:
+    let the set have 5 things {a, b, c, d, e}
+    Let there be 3 relations {_#_, _#'_, _#''_}
+    where
+    a # b
+    b # c
+    b #' c
+    c #' d
+    c #'' d
+    d #'' e
+    and these are the only things that hold of these relations. Consider the two properties:
+    - extends _#_ or extends _#'_
+    - extends _#'_ or extends _#''_
+
+    The first has two minimal relations (_#_ and _#'_), and since the two are not comparable, it has no minimum.
+    Likewise for the second property. However, for their intersection,
+    it either extends _#_ or _#'_, so in particular, it relates b ^ c
+    it also either extends _#'_ or _#''_, so in particular, it relates c ^ d
+    which means it extends _#'_. So since _#'_ is a valid item in this set of relations, it must be the minimum.
+
+-}
+
 -- Sometimes, the operators are polymorphic over level. This makes the below definitions exotic sometimes,
 -- since operators usually need to be able to change the level of the set the relation is over.
 
