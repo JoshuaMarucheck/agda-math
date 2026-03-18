@@ -18,7 +18,6 @@ open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respec
 open import Plasmaduck.Relation.Order using (Comparable; ComparableAt; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Relation.RelationVector using (RelTree; leaf; branch; branch-type; trans-branch; map-branch; trans-flatten-branch; lift-rel-to-branch; flatten-branches; pop-first; pop-last)
-open import Plasmaduck.Function.Function using (_↔_)
 open import Plasmaduck.Counting.Counting using (AtLeastSize)
 
 
