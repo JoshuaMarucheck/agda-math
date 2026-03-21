@@ -38,35 +38,15 @@ _≈_ = A-setoid .Setoid._≈_
 open IsEquivalence ≈-eq renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans)
 open IsEquivalence using (refl; sym; trans)
 
+open import Plasmaduck.Relation.OperatorDefs A using (SameRel; SameRel-refl; SameRel-sym; SameRel-trans; SameRel-eq)
+
 variable
     ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level
 
 
-
-SameRel : Rel A ℓ₂ → Rel A ℓ₃ → Set (a ⊔ ℓ₂ ⊔ ℓ₃)
-SameRel _#_ _#'_ = (_#'_ Extends _#_) × (_#_ Extends _#'_)
-
 -- Congruent wrt the ambient equality relation, which is necessary for some of the proofs
 CongruentRel : Rel A ℓ₂ → Set (a ⊔ ℓ ⊔ ℓ₂)
 CongruentRel _~_ = ∀ {x₁ x₂ y₁ y₂ : A} → (x₁ ≈ x₂) → (y₁ ≈ y₂) → (x₁ ~ y₁) → (x₂ ~ y₂)
-
-
-SameRel-refl : {_#_ : Rel A ℓ₁} → SameRel _#_ _#_
-SameRel-refl = id , id
-
-SameRel-sym : {_#_ : Rel A ℓ₁} {_#'_ : Rel A ℓ₂} → SameRel _#_ _#'_ → SameRel _#'_ _#_
-SameRel-sym (#→#' , #'→#) = #'→# , #→#'
-
-SameRel-trans : {_#_ : Rel A ℓ₁} {_#'_ : Rel A ℓ₂} {_#''_ : Rel A ℓ₃} → SameRel _#_ _#'_ → SameRel _#'_ _#''_ → SameRel _#_ _#''_
-SameRel-trans {#} {#'} {#''} (#→#' , #'→#) (#'→#'' , #''→#') = #'→#'' ∘ #→#' , #'→# ∘ #''→#'
-
--- Weaker than the above for sym and trans. Use the above if the relation levels are not all the same.
-SameRel-eq : IsEquivalence (SameRel {ℓ₂ = ℓ₂} {ℓ₃ = ℓ₂})
-SameRel-eq = record {
-    refl = SameRel-refl;
-    sym = SameRel-sym;
-    trans = SameRel-trans
-    }
 
 
 -------------------------------

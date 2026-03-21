@@ -18,6 +18,8 @@ open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsSt
 
 module Plasmaduck.Relation.Equivalence where
 
+open import Plasmaduck.Util.TypeChange using (cong₂-dependent) public
+
 variable
     ℓ α β : Level
     A : Set ℓ
