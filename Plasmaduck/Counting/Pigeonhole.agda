@@ -2,7 +2,7 @@ open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero t
 open import Relation.Binary.PropositionalEquality using (_≢_; _≡_; inspect; cong; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Relation.Binary.Bundles using (Setoid)
-open import Relation.Binary using (Rel; IsEquivalence)
+open import Relation.Binary using (Rel; IsEquivalence; Decidable)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Function using (_∋_; _∘_; id; typeOf; Bijective; Injective; Surjective; Congruent; Bijection; Injection)
@@ -33,6 +33,41 @@ variable
     a b c ℓ ℓ₁ ℓ₂ : Level
 
 
+module _ (A-setoid : Setoid c ℓ) where
+    private
+        A = A-setoid .Setoid.Carrier
+        _~_ = A-setoid .Setoid._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
+
+        reflexive : {x y : A} → x ≡ y → x ~ y
+        reflexive {x = x} {.x} ≡-refl = refl 
+    
+    any-zero-eq : Decidable _~_ → {m' : ℕ} → (f : Fin (suc-ℕ m') → A) → Dec (Σ (Fin m') λ y → f zero ~ f (suc y))
+    any-zero-eq _~?_ {m' = zero-ℕ} f = no λ { (() , _) }
+    any-zero-eq _~?_ {m' = m'@(suc-ℕ m'')} f = fz~?fi 
+        where
+            m = suc-ℕ m'
+
+            hunt : (j : ℕ) .(j<m' : j < m') → Dec (Σ (Fin m') λ i → toℕ i ≤ j × f zero ~ f (suc i))
+            hunt j j<m'          with (f zero) ~? (f (fromℕ< {m = suc-ℕ j} {n = m} (s≤s j<m')))
+            ...                  | yes f0~fsj = yes (fromℕ< {m = j} {n = m'} j<m' , ≤-reflexive (toℕ-fromℕ< j<m') , f0~fsj)
+            hunt zero-ℕ z<m'     | no f0≁f1 = no λ { (zero , z≤n , f0≡f1) → f0≁f1 f0≡f1 }
+            hunt j@(suc-ℕ j') sj'<m' | no f0≁fsj with hunt j' (<-trans (s≤s⁻¹ sj'<m') n<sn)
+            ...                               | yes (k , k≤j' , f0~fsk) = yes (k , ≤-trans k≤j' n≤sn , f0~fsk)
+            ...                               | no pf' = no λ { (k , k≤j , f0~fsk) → case ≤→<≡ k≤j of λ {
+                (inj₁ k<j) → pf' (k , s≤s⁻¹ k<j , f0~fsk);
+                (inj₂ k≡j) → f0≁fsj (trans f0~fsk (reflexive (cong (f ∘ suc) (≡-trans (≡-sym (fromℕ<-toℕ k (≤-<-trans k≤j sj'<m'))) (fromℕ<-cong (toℕ k) j k≡j (≤-<-trans k≤j sj'<m') sj'<m')))))
+                }}
+
+            zero-match-type : Set ℓ
+            zero-match-type = Σ (Fin m') λ i → f zero ~ f (suc i)
+
+            fz~?fi : Dec zero-match-type
+            fz~?fi with hunt m'' n<sn
+            ...       | yes (i , _ , fz~fsi) = yes (i , fz~fsi)
+            ...       | no no-zero-match = no λ { (i , fz~fsi) → no-zero-match (i , s≤s⁻¹ (toℕ<n i) , fz~fsi) }
+        
+
 pigeonhole-principle-fin : {m n : ℕ} → m > n → (f : Fin m → Fin n) → Σ (Fin m) λ i → Σ (Fin m) λ j → i ≢ j × f i ≡ f j
 pigeonhole-principle-fin {zero-ℕ} {zero-ℕ} ()
 pigeonhole-principle-fin {suc-ℕ _} {zero-ℕ} _ f with f zero
@@ -44,29 +79,16 @@ pigeonhole-principle-fin {m@(suc-ℕ m'@(suc-ℕ m''))} {n@(suc-ℕ n')} n<m f =
     (no no-zero-match) → get-sol-for-no-case no-zero-match
         }
     where
-        hunt : (j : ℕ) .(j<m' : j < m') → Dec (Σ (Fin m') λ i → toℕ i ≤ j × f zero ≡ f (suc i))
-        hunt j j<m'          with fin-≡-dec (f zero) (f (fromℕ< {m = suc-ℕ j} {n = m} (s≤s j<m')))
-        ...                  | yes f0≡fsj = yes (fromℕ< {m = j} {n = m'} j<m' , ≤-reflexive (toℕ-fromℕ< j<m') , f0≡fsj)
-        hunt zero-ℕ z<m'     | no f0≢f1 = no λ { (zero , z≤n , f0≡f1) → f0≢f1 f0≡f1 }
-        hunt j@(suc-ℕ j') sj'<m' | no f0≢fsj with hunt j' (<-trans (s≤s⁻¹ sj'<m') n<sn)
-        ...                               | yes (k , k≤j' , f0≡fsk) = yes (k , ≤-trans k≤j' n≤sn , f0≡fsk)
-        ...                               | no pf' = no λ { (k , k≤j , f0≡fsk) → case ≤→<≡ k≤j of λ {
-            (inj₁ k<j) → pf' (k , s≤s⁻¹ k<j , f0≡fsk);
-            (inj₂ k≡j) → f0≢fsj (≡-trans f0≡fsk (cong (f ∘ suc) (≡-trans (≡-sym (fromℕ<-toℕ k (≤-<-trans k≤j sj'<m'))) (fromℕ<-cong (toℕ k) j k≡j (≤-<-trans k≤j sj'<m') sj'<m'))))
-            }}
-
         zero-match-type : Set
         zero-match-type = Σ (Fin m') λ i → f zero ≡ f (suc i)
 
+        disc-fin : ℕ → Setoid lzero lzero
+        disc-fin = discrete-setoid ∘ Fin
+
         fz≡?fi : Dec zero-match-type
-        fz≡?fi with hunt m'' n<sn
-        ...       | yes (i , _ , fz≡fsi) = yes (i , fz≡fsi)
-        ...       | no no-zero-match = no λ { (i , fz≡fsi) → no-zero-match (i , s≤s⁻¹ (toℕ<n i) , fz≡fsi) }
+        fz≡?fi = any-zero-eq (disc-fin n) fin-≡-dec f
 
         module NoZeroMatch (no-zero-match : ¬ zero-match-type) where
-
-            disc-fin : ℕ → Setoid lzero lzero
-            disc-fin = discrete-setoid ∘ Fin
 
             full-bijection : Bijection (property-subset-setoid (disc-fin n) (λ i → i ≢ f zero)) (disc-fin n')
             full-bijection = delete-one-bijection (f zero)
