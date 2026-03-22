@@ -23,6 +23,7 @@ open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→�
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans; change-type-trans'; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-bijective'; cong₂-dependent)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse)
+open import Plasmaduck.Counting.Counting using (HasSize)
 
 
 module Plasmaduck.Counting.Pigeonhole where
@@ -359,3 +360,20 @@ pigeonhole-principle-fin {m@(suc-ℕ m'@(suc-ℕ m''))} {n@(suc-ℕ n')} n<m f =
                     back = proj₁ ∘ bij-inv
 
         open NoZeroMatch renaming (sol to get-sol-for-no-case)
+
+module _ {m n : ℕ} (m>n : m > n) {A-setoid : Setoid a ℓ₁} (A-size-m : HasSize A-setoid m) {B-setoid : Setoid b ℓ₂} (B-size-n : HasSize B-setoid n) (f : A-setoid .Setoid.Carrier → B-setoid .Setoid.Carrier) where
+    private
+        A = A-setoid .Setoid.Carrier
+        B = B-setoid .Setoid.Carrier
+
+        _~_ = A-setoid .Setoid._≈_
+        _≈_ = B-setoid .Setoid._≈_
+
+        open Bijection using (to)
+
+        f' : Fin m → Fin n
+        f' = ((invert-bijection B-size-n) .to) ∘ f ∘ (A-size-m .to)
+
+    pigeonhole-principle : Σ A λ x → Σ A λ y → (¬ x ~ y) × (f x ≈ f y)
+    pigeonhole-principle with pigeonhole-principle-fin m>n f'
+    ... | (i , j , i≢j , f'i≡f'j) = A-size-m .to i , A-size-m .to j , i≢j ∘ (A-size-m .Bijection.bijective .proj₁) , (invert-bijection B-size-n) .Bijection.bijective .proj₁ f'i≡f'j
