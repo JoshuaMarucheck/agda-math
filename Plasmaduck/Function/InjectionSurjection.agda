@@ -107,6 +107,24 @@ module _
       ; surjective = bij .Bijection.bijective .proj₂
       }
 
+    {-
+        Am I certain that the right inverse is congruent?
+
+        f is surjective. This means that it hits every output (up to setoid equality)
+
+        ∀ y → ∃ λ x → ∀ {z} → z ≈₁ x → f z ≈₂ y
+        For everything in the output set, there is an input where everything equal to that input is equal to the given output. 
+        (but like, obviously by congruence of the function. So I think this is equal to congruence + there is an input which maps to something equal to the output.)
+
+        For each output equality class, grab all the corresponding inputs.
+        mmm, this is not congruent. It doesn't pick one input equality class.
+
+        For example, consider:
+        setoid {{0} {1}} and setoid {{0 , 1}}
+        id maps from the first to the second, and so is surjective.
+        the obvious inverse maps equality class {0,1} to classes {0} and {1}, which means it is not congruent.
+    -}
+
 module _
     {a b c ℓ₁ ℓ₂ ℓ₃ : Level}
     {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} {C-setoid : Setoid c ℓ₃}
