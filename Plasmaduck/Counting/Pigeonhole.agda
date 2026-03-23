@@ -5,7 +5,7 @@ open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (Rel; IsEquivalence; Decidable)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
-open import Function using (_∋_; _∘_; id; typeOf; Bijective; Injective; Surjective; Congruent; Bijection; Injection)
+open import Function using (_on_; _∋_; _∘_; id; typeOf; Bijective; Injective; Surjective; Congruent; Bijection; Injection)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -17,20 +17,25 @@ open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; com
 open import Data.Fin.Properties using (join-splitAt; splitAt-join; splitAt-↑ˡ; splitAt-↑ʳ; splitAt⁻¹-↑ʳ; combine-injective; combine-surjective; toℕ<n; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ-↑ʳ)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; property-subset-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂)
-open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_)
+open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; discrete-id-bijection)
 open import Plasmaduck.Number.Fin using (fin-≡-dec; _↑ˡ-inverted_; splitAt-≥; fromℕ<-cong₂)
 open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans; change-type-trans'; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-bijective'; cong₂-dependent)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse)
-open import Plasmaduck.Counting.Counting using (HasSize)
+open import Plasmaduck.Counting.Counting using (HasSize; any-related-to-dec; any-related-to)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
+open import Plasmaduck.Relation.Defs using (CongruentRel)
 
 
 module Plasmaduck.Counting.Pigeonhole where
 
 variable
     a b c ℓ ℓ₁ ℓ₂ : Level
+
+private
+    disc-fin : ℕ → Setoid lzero lzero
+    disc-fin = discrete-setoid ∘ Fin
 
 
 module _ (A-setoid : Setoid c ℓ) where
@@ -40,33 +45,34 @@ module _ (A-setoid : Setoid c ℓ) where
         open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
 
         reflexive : {x y : A} → x ≡ y → x ~ y
-        reflexive {x = x} {.x} ≡-refl = refl 
-    
+        reflexive {x = x} {.x} ≡-refl = refl
+
     any-zero-eq : Decidable _~_ → {m' : ℕ} → (f : Fin (suc-ℕ m') → A) → Dec (Σ (Fin m') λ y → f zero ~ f (suc y))
-    any-zero-eq _~?_ {m' = zero-ℕ} f = no λ { (() , _) }
-    any-zero-eq _~?_ {m' = m'@(suc-ℕ m'')} f = fz~?fi 
+    any-zero-eq _~?_ {m'} f = sol
         where
             m = suc-ℕ m'
+            _#_ : Rel (Fin m) ℓ
+            _#_ i j = i ≢ j × (f i) ~ (f j)
 
-            hunt : (j : ℕ) .(j<m' : j < m') → Dec (Σ (Fin m') λ i → toℕ i ≤ j × f zero ~ f (suc i))
-            hunt j j<m'          with (f zero) ~? (f (fromℕ< {m = suc-ℕ j} {n = m} (s≤s j<m')))
-            ...                  | yes f0~fsj = yes (fromℕ< {m = j} {n = m'} j<m' , ≤-reflexive (toℕ-fromℕ< j<m') , f0~fsj)
-            hunt zero-ℕ z<m'     | no f0≁f1 = no λ { (zero , z≤n , f0≡f1) → f0≁f1 f0≡f1 }
-            hunt j@(suc-ℕ j') sj'<m' | no f0≁fsj with hunt j' (<-trans (s≤s⁻¹ sj'<m') n<sn)
-            ...                               | yes (k , k≤j' , f0~fsk) = yes (k , ≤-trans k≤j' n≤sn , f0~fsk)
-            ...                               | no pf' = no λ { (k , k≤j , f0~fsk) → case ≤→<≡ k≤j of λ {
-                (inj₁ k<j) → pf' (k , s≤s⁻¹ k<j , f0~fsk);
-                (inj₂ k≡j) → f0≁fsj (trans f0~fsk (reflexive (cong (f ∘ suc) (≡-trans (≡-sym (fromℕ<-toℕ k (≤-<-trans k≤j sj'<m'))) (fromℕ<-cong (toℕ k) j k≡j (≤-<-trans k≤j sj'<m') sj'<m')))))
-                }}
+            _#?_ : Decidable _#_
+            i #? j with fin-≡-dec i j | (f i) ~? (f j)
+            ... | yes i≡j | yes fi~fj = no λ { (i≢j' , fi~fj') → i≢j' i≡j }
+            ... | yes i≡j | no fi≁fj = no λ { (i≢j' , fi~fj') → i≢j' i≡j }
+            ... | no i≢j | yes fi~fj = yes (i≢j , fi~fj)
+            ... | no i≢j | no fi≁fj = no λ { (i≢j' , fi~fj') → fi≁fj fi~fj' }
 
-            zero-match-type : Set ℓ
-            zero-match-type = Σ (Fin m') λ i → f zero ~ f (suc i)
+            #-cong : CongruentRel (disc-fin m) _#_
+            #-cong ≡-refl ≡-refl x#y = x#y
 
-            fz~?fi : Dec zero-match-type
-            fz~?fi with hunt m'' n<sn
-            ...       | yes (i , _ , fz~fsi) = yes (i , fz~fsi)
-            ...       | no no-zero-match = no λ { (i , fz~fsi) → no-zero-match (i , s≤s⁻¹ (toℕ<n i) , fz~fsi) }
-        
+            pre-sol : Dec (any-related-to (m , discrete-id-bijection (Fin m)) _#?_ #-cong zero)
+            pre-sol = any-related-to-dec (m , discrete-id-bijection (Fin m)) _#?_ #-cong zero
+
+            sol : Dec (Σ (Fin m') λ y → f zero ~ f (suc y))
+            sol with pre-sol
+            ... | yes (zero , z≢z , _) = ⊥-elim (z≢z ≡-refl)
+            ... | yes (suc i , _ , fz~fsi) = yes (i , fz~fsi)
+            ... | no pf = no λ { (i , fz~fsi) → pf (suc i , (λ ()) , fz~fsi)}
+
 
 pigeonhole-principle-fin : {m n : ℕ} → m > n → (f : Fin m → Fin n) → Σ (Fin m) λ i → Σ (Fin m) λ j → i ≢ j × f i ≡ f j
 pigeonhole-principle-fin {zero-ℕ} {zero-ℕ} ()
@@ -81,9 +87,6 @@ pigeonhole-principle-fin {m@(suc-ℕ m'@(suc-ℕ m''))} {n@(suc-ℕ n')} n<m f =
     where
         zero-match-type : Set
         zero-match-type = Σ (Fin m') λ i → f zero ≡ f (suc i)
-
-        disc-fin : ℕ → Setoid lzero lzero
-        disc-fin = discrete-setoid ∘ Fin
 
         fz≡?fi : Dec zero-match-type
         fz≡?fi = any-zero-eq (disc-fin n) fin-≡-dec f

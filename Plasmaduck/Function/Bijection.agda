@@ -17,6 +17,16 @@ open Setoid using (Carrier; _≈_)
 open Bijection using (to; cong; bijective)
 
 
+id-bijection : (A-setoid : Setoid a ℓ₁) → Bijection A-setoid A-setoid
+id-bijection A-setoid = record {
+    to = id;
+    cong = id;
+    bijective = id , λ y → (y , id)
+    }
+
+discrete-id-bijection : (A : Set a) → Bijection (discrete-setoid A) (discrete-setoid A) 
+discrete-id-bijection = id-bijection ∘ discrete-setoid 
+
 module InverseFunction {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} (bij : Bijection s₁ s₂) where
     private
         f = bij .Bijection.to
