@@ -24,6 +24,7 @@ open import Plasmaduck.Counting.Counting using (AtLeastSize)
 
 module Plasmaduck.Relation.Operator {a ℓ : Level} (A-setoid : Setoid a ℓ) where
 
+open import Plasmaduck.Relation.Defs A-setoid using (CongruentRel)
 open Setoid using (Carrier)
 
 A : Set a
@@ -42,11 +43,6 @@ open import Plasmaduck.Relation.OperatorDefs A using (SameRel; SameRel-refl; Sam
 
 variable
     ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level
-
-
--- Congruent wrt the ambient equality relation, which is necessary for some of the proofs
-CongruentRel : Rel A ℓ₂ → Set (a ⊔ ℓ ⊔ ℓ₂)
-CongruentRel _~_ = ∀ {x₁ x₂ y₁ y₂ : A} → (x₁ ≈ x₂) → (y₁ ≈ y₂) → (x₁ ~ y₁) → (x₂ ~ y₂)
 
 
 -------------------------------
