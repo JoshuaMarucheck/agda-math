@@ -16,7 +16,7 @@ open Setoid using (Carrier; isEquivalence)
 
 module _
     {a b ℓ₁ ℓ₂ : Level}
-    (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
+    {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂}
     ((f which-is-cong f-cong) : SetoidFunction A-setoid B-setoid)
     where
 
@@ -90,7 +90,7 @@ module _
 
 module _
     {a b ℓ₁ ℓ₂ : Level}
-    (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
+    {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂}
     where
 
     bijection→injection : Bijection A-setoid B-setoid → Injection A-setoid B-setoid
