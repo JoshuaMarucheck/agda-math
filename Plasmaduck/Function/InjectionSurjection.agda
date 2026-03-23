@@ -15,7 +15,9 @@ module Plasmaduck.Function.InjectionSurjection
     ((f which-is-cong f-cong) : SetoidFunction A-setoid B-setoid)
     where
 
+open Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _which-is-cong_) public
 open Setoid using (Carrier; isEquivalence)
+
 A = A-setoid .Carrier
 B = B-setoid .Carrier
 
@@ -42,29 +44,29 @@ BothInverse g = LeftInverse g × RightInverse g
 
 -- Technically this is too strong; g only needs to be congruent when its domain is restricted to the range of f.
 HasLeftInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-HasLeftInverse = Σ (B → A) λ g → Congruent _≈_ _~_ g × LeftInverse g
+HasLeftInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → LeftInverse g }
 
 left-inv→injective : HasLeftInverse → Injective _~_ _≈_ f
-left-inv→injective (g , g-cong , gfx~x) fx≈fy = ~-trans (~-trans (~-sym gfx~x) (g-cong fx≈fy)) gfx~x
+left-inv→injective (g which-is-cong g-cong , gfx~x) fx≈fy = ~-trans (~-trans (~-sym gfx~x) (g-cong fx≈fy)) gfx~x
 
 
 -- Likewise, I suspect this one is too strong too
 HasRightInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-HasRightInverse = Σ (B → A) λ g → Congruent _≈_ _~_ g × RightInverse g
+HasRightInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → RightInverse g }
 
 right-inv→surjective : HasRightInverse → Surjective _~_ _≈_ f
-right-inv→surjective (g , g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
+right-inv→surjective (g which-is-cong g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
 
 
 -- This, however, is just right
 HasBothInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-HasBothInverse = Σ (B → A) λ g → Congruent _≈_ _~_ g × BothInverse g
+HasBothInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → BothInverse g }
 
 both-inv→bijective : HasBothInverse → Bijective _~_ _≈_ f
-both-inv→bijective (g , g-cong , left-inv , right-inv) = left-inv→injective  (g , g-cong , left-inv) , right-inv→surjective (g , g-cong , right-inv)
+both-inv→bijective (g , left-inv , right-inv) = left-inv→injective  (g , left-inv) , right-inv→surjective (g , right-inv)
 
 bijective→both-inv : Bijective _~_ _≈_ f → HasBothInverse
-bijective→both-inv (injective , surjective) = g , g-cong , (λ {x} →  gfx~x) , (λ {y} → fgy≈y)
+bijective→both-inv (injective , surjective) = g which-is-cong g-cong , (λ {x} →  gfx~x) , (λ {y} → fgy≈y)
     where
         g : B → A
         g = proj₁ ∘ surjective

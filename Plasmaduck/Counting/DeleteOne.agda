@@ -16,7 +16,7 @@ open import Data.Nat.Properties using (+-comm; <-trans; ≤-trans; ≤-<-trans; 
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; fromℕ<; toℕ) renaming (_<_ to _<-fin_; _≤_ to _≤-fin_; reduce≥ to reduce≥-fin)
 open import Data.Fin.Properties using (join-splitAt; splitAt-join; splitAt-↑ˡ; splitAt-↑ʳ; splitAt⁻¹-↑ʳ; combine-injective; combine-surjective; toℕ<n; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ-↑ʳ)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; property-subset-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; property-subset-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; SetoidFunction; _which-is-cong_)
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_)
 open import Plasmaduck.Number.Fin using (fin-≡-dec; _↑ˡ-inverted_; splitAt-≥; fromℕ<-cong₂)
 open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc)
@@ -63,16 +63,18 @@ delete-one-bijection {n = n'} q = full-bijection
         split-bij {i = i} qℕ≤i = record {
             to = to;
             cong = to-cong;
-            bijective = both-inv→bijective A B to to-cong (inv , inv-cong , (λ {x} → join-splitAt qℕ (i ∸ qℕ) x) , λ {y} → splitAt-join qℕ (i ∸ qℕ) y)
+            bijective = both-inv→bijective A B to-func (inv-func , (λ {x} → join-splitAt qℕ (i ∸ qℕ) x) , λ {y} → splitAt-join qℕ (i ∸ qℕ) y)
             }
             where
                 A = (disc-fin (twist i))
                 B = (discrete-setoid (Fin qℕ ⊎ Fin (i ∸ qℕ)))
                 to = splitAt qℕ {n = i ∸ qℕ}
                 to-cong = from-discrete-cong B to
+                to-func = to which-is-cong to-cong
 
                 inv = join qℕ (i ∸ qℕ)
                 inv-cong = from-discrete-cong A inv
+                inv-func = inv which-is-cong inv-cong
 
         n∸qℕ-spin : {i : ℕ} → qℕ ≤ i → suc-ℕ (i ∸ qℕ) ≡ suc-ℕ i ∸ qℕ
         n∸qℕ-spin {i = i} qℕ≤i = ∸-suc i qℕ qℕ≤i
@@ -84,7 +86,7 @@ delete-one-bijection {n = n'} q = full-bijection
         spin-bij {i = i} qℕ≤i = record {
             to = to;
             cong = to-cong;
-            bijective = both-inv→bijective A-setoid B-setoid to to-cong (inv , inv-cong , is-left-inv , is-right-inv)
+            bijective = both-inv→bijective A-setoid B-setoid to-func (inv-func , is-left-inv , is-right-inv)
             }
             where
 
@@ -99,16 +101,22 @@ delete-one-bijection {n = n'} q = full-bijection
                 to-cong : Congruent _≡_ _≡_ to
                 to-cong = from-discrete-cong B-setoid to
 
+                to-func : SetoidFunction A-setoid B-setoid
+                to-func = to which-is-cong to-cong
+
                 inv : B → A
                 inv = change-type (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i))
 
                 inv-cong : Congruent _≡_ _≡_ inv
                 inv-cong = from-discrete-cong A-setoid inv
 
-                is-left-inv : LeftInverse A-setoid B-setoid to to-cong inv
+                inv-func : SetoidFunction B-setoid A-setoid
+                inv-func = inv which-is-cong inv-cong
+
+                is-left-inv : LeftInverse A-setoid B-setoid to-func inv
                 is-left-inv = change-type-trans' (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) ≡-refl
 
-                is-right-inv : RightInverse A-setoid B-setoid to to-cong inv
+                is-right-inv : RightInverse A-setoid B-setoid to-func inv
                 is-right-inv = change-type-trans' (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) ≡-refl
 
         half : {i : ℕ} → qℕ ≤ i → Bijection (disc-fin (suc-ℕ i)) (discrete-setoid (Fin qℕ ⊎ (Fin (suc-ℕ (i ∸ qℕ)))))
@@ -248,7 +256,7 @@ delete-one-bijection {n = n'} q = full-bijection
         oops-property-bij = record {
             to = id;
             cong = to-cong;
-            bijective = both-inv→bijective A-setoid B-setoid to to-cong (inv , inv-cong , is-left-inv , is-right-inv)
+            bijective = both-inv→bijective A-setoid B-setoid to-func (inv-func , is-left-inv , is-right-inv)
             }
             where
                 A-setoid = ⊎-setoid (discrete-setoid (Fin qℕ)) (property-subset-setoid (discrete-setoid (Fin (suc-ℕ (n' ∸ qℕ)))) (λ x → x ≢ zero))
@@ -266,23 +274,29 @@ delete-one-bijection {n = n'} q = full-bijection
                 to-cong (rel₁ ≡-refl) = ≡-refl
                 to-cong (rel₂ ≡-refl) = ≡-refl
 
+                to-func : SetoidFunction A-setoid B-setoid
+                to-func = to which-is-cong to-cong
+
                 inv : B → A
                 inv = id
 
                 inv-cong : Congruent _≈_ _~_ inv
                 inv-cong ≡-refl = A-setoid .Setoid.isEquivalence .IsEquivalence.refl
 
-                is-left-inv : LeftInverse A-setoid B-setoid to to-cong inv
+                inv-func : SetoidFunction B-setoid A-setoid
+                inv-func = inv which-is-cong inv-cong
+
+                is-left-inv : LeftInverse A-setoid B-setoid to-func inv
                 is-left-inv = A-setoid .Setoid.isEquivalence .IsEquivalence.refl
 
-                is-right-inv : RightInverse A-setoid B-setoid to to-cong inv
+                is-right-inv : RightInverse A-setoid B-setoid to-func inv
                 is-right-inv = B-setoid .Setoid.isEquivalence .IsEquivalence.refl
 
         del-bij : Bijection (discrete-setoid (Fin qℕ ⊎ Fin (n' ∸ qℕ))) (discrete-setoid (Fin qℕ ⊎ Σ (Fin (suc-ℕ (n' ∸ qℕ))) λ x → x ≢ zero))
         del-bij = record {
             to = to;
             cong = to-cong;
-            bijective = both-inv→bijective A-setoid B-setoid to to-cong (inv , inv-cong , is-left-inv , is-right-inv)
+            bijective = both-inv→bijective A-setoid B-setoid to-func (inv-func , is-left-inv , is-right-inv)
             }
             where
                 A = Fin qℕ ⊎ Fin (n' ∸ qℕ)
@@ -296,6 +310,9 @@ delete-one-bijection {n = n'} q = full-bijection
                 to-cong : Congruent _≡_ _≡_ to
                 to-cong = from-discrete-cong B-setoid to
 
+                to-func : SetoidFunction A-setoid B-setoid
+                to-func = to which-is-cong to-cong
+
                 inv : B → A
                 inv (inj₁ x) = inj₁ x
                 inv (inj₂ (zero , z≠z)) = ⊥-elim (z≠z ≡-refl)
@@ -304,11 +321,14 @@ delete-one-bijection {n = n'} q = full-bijection
                 inv-cong : Congruent _≡_ _≡_ inv
                 inv-cong = from-discrete-cong A-setoid inv
 
-                is-left-inv : LeftInverse A-setoid B-setoid to to-cong inv
+                inv-func : SetoidFunction B-setoid A-setoid
+                inv-func = inv which-is-cong inv-cong
+
+                is-left-inv : LeftInverse A-setoid B-setoid to-func inv
                 is-left-inv {inj₁ x} = ≡-refl
                 is-left-inv {inj₂ x} = ≡-refl
 
-                is-right-inv : RightInverse A-setoid B-setoid to to-cong inv
+                is-right-inv : RightInverse A-setoid B-setoid to-func inv
                 is-right-inv {inj₁ x} = ≡-refl
                 is-right-inv {inj₂ (zero , z≠z)} = ⊥-elim (z≠z ≡-refl)
                 is-right-inv {inj₂ (suc x , _)} = ≡-refl
