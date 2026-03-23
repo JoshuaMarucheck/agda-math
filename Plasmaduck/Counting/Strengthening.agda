@@ -26,15 +26,16 @@ open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective;
 open import Plasmaduck.Counting.Counting using (HasSize)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
-open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite)
+open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
-
+open import Plasmaduck.Relation.Defs using (CongruentProperty)
+open import Plasmaduck.Relation.Decidable using (decidable-push)
 
 
 module Plasmaduck.Counting.Strengthening where
 
 variable
-    a b c ℓ : Level
+    a b c ℓ ℓ₁ : Level
 
 
 module _ (A-setoid : Setoid c ℓ) where
@@ -81,23 +82,23 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
         open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
 
 
-    strengthen-core : {n : ℕ} → AtMostSize A-setoid n → IsFinite A-setoid
-    strengthen-core (inj₂ ¬A) = 0 , record {
+    strengthen-core : {n : ℕ} → AtMostSize A-setoid n → Σ ℕ λ m → HasSize A-setoid m × m ≤ n
+    strengthen-core (inj₂ ¬A) = zero-ℕ , record {
         to = λ ();
         cong = λ {};
         bijective = (λ {}) , ⊥-elim ∘ ¬A
-        }
+        } , z≤n
     strengthen-core {zero-ℕ} (inj₁ n-surjection) = zero-ℕ , record {
         to = n-surjection .Surjection.to;
         cong = λ {};
         bijective = (λ {}) , n-surjection .Surjection.surjective
-        }
+        } , z≤n
     strengthen-core {n = n@(suc-ℕ n')} (inj₁ n-surjection) with any-eq A-setoid _~?_ (n-surjection .Surjection.to)
     ... | no pf = n , record {
         to = to;
         cong = from-discrete-cong A-setoid to;
         bijective = injective , n-surjection .Surjection.surjective
-        }
+        } , ≤-refl
         where
             to : (Fin n) → A
             to = n-surjection .Surjection.to
@@ -106,7 +107,7 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
             injective {x = x} {y} fx~fy with fin-≡-dec x y
             ... | yes x≡y = x≡y
             ... | no x≢y = ⊥-elim (pf (x , y , x≢y , fx~fy))
-    ... | yes (x , y , x≢y , fx~fy) = strengthen-core {n = n'} (inj₁ surjection)
+    ... | yes (x , y , x≢y , fx~fy) with strengthen-core {n = n'} (inj₁ surjection)
         where
             old-to : (Fin n) → A
             old-to = n-surjection .Surjection.to
@@ -137,6 +138,27 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
 
             surjection : Surjection (discrete-setoid (Fin n')) A-setoid
             surjection = bijection→surjection (invert-bijection del-bij) ∘-surjection to'-surjection
+    ...         | m , A-size-m , m≤n' = m , A-size-m , ≤-trans m≤n' n≤sn
 
     strengthen : IsWeaklyFinite A-setoid → IsFinite A-setoid
-    strengthen (_ , A-size-upper-bound) = strengthen-core A-size-upper-bound
+    strengthen (_ , A-size-upper-bound) with strengthen-core A-size-upper-bound
+    ... | m , A-size-m , _ = m , A-size-m
+
+module _
+    {A-setoid : Setoid a ℓ}
+    (_~?_ : Decidable (A-setoid .Setoid._≈_))
+    {P : A-setoid .Setoid.Carrier → Set ℓ₁}
+    (P-cong : CongruentProperty A-setoid P)
+    (P-dec : ∀ x → Dec (P x))
+    where
+
+    subset-of-finite-is-finite' :
+        {n : ℕ} → HasSize A-setoid n →
+        Σ ℕ λ m → HasSize (property-subset-setoid A-setoid P) m × m ≤ n
+    subset-of-finite-is-finite' A-size-n = strengthen-core (decidable-push A-setoid _~?_) (subset-of-finite-is-upper-bounded P-cong P-dec A-size-n) --
+
+    subset-of-finite-is-finite :
+        IsFinite A-setoid →
+        IsFinite (property-subset-setoid A-setoid P)
+    subset-of-finite-is-finite (_ , A-size) with subset-of-finite-is-finite' A-size
+    ... | (m , A-with-P-size-m , _) = m , A-with-P-size-m

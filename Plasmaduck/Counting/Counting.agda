@@ -236,13 +236,13 @@ module _
 finite-is-weakly-finite : (s : Setoid c ℓ) → IsFinite s → IsWeaklyFinite s
 finite-is-weakly-finite s (n , n-bij-s) = n , inj₁ (bijection→surjection n-bij-s)
 
-subset-of-finite-is-finite :
+subset-of-finite-is-upper-bounded :
     {s : Setoid c ℓ} →
     {P : s .Carrier → Set ℓ₁} → CongruentProperty s P → (∀ x → Dec (P x)) →
     {n : ℕ} → HasSize s n →
     AtMostSize (property-subset-setoid s P) n
-subset-of-finite-is-finite {s = s} {P} P-cong dec-P {zero-ℕ} s-size-n = inj₂ λ (x , _) → case invert-bijection s-size-n .Bijection.to x of λ ()
-subset-of-finite-is-finite {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-size-n with any-P
+subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {zero-ℕ} s-size-n = inj₂ λ (x , _) → case invert-bijection s-size-n .Bijection.to x of λ ()
+subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-size-n with any-P
     where
         s-finite : IsFinite s
         s-finite = n , s-size-n
