@@ -1,7 +1,7 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
-open import Function using (Bijective; Injective; Surjective; Bijection; Injection)
+open import Function using (Bijective; Injective; Surjective; Bijection; Injection; Surjection)
 open import Relation.Binary.Bundles using (Setoid)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
@@ -30,6 +30,15 @@ open Setoid using (Carrier; _≈_)
 
 AtLeastSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
 AtLeastSize setoid n = Injection (fin-setoid n) setoid
+
+AtMostSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
+AtMostSize setoid n = Surjection (fin-setoid n) setoid
+
+IsWeaklyFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
+IsWeaklyFinite setoid = Σ ℕ λ n → AtMostSize setoid n
+
+IsFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
+IsFinite setoid = Σ ℕ λ n → HasSize setoid n
 
 
 fin-⊎-bijection : (m n : ℕ) → Bijection (discrete-setoid (Fin (m + n))) (discrete-setoid (Fin m ⊎ Fin n))
