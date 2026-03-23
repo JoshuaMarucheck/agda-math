@@ -18,14 +18,12 @@ open Setoid using (Carrier; _≈_; isEquivalence)
 variable
     a b c d e f ℓ ℓ₁ ℓ₂ : Level
 
-SetoidRespectsType : (S₁ : Setoid a b) (S₂ : Setoid c d) (f : S₁ .Carrier → S₂ .Carrier) → Set (a ⊔ b ⊔ d)
-SetoidRespectsType S₁ S₂ func = ∀ {x y : S₁ .Carrier} (x≈y : S₁ ._≈_ x y) → S₂ ._≈_ (func x) (func y)
-
 
 record SetoidFunction (S₁ : Setoid a b) (S₂ : Setoid c d) : Set (a ⊔ b ⊔ c ⊔ d) where
+    constructor _which-is-cong_
     field
         func : S₁ .Carrier → S₂ .Carrier
-        respects : SetoidRespectsType S₁ S₂ func
+        respects : Congruent (S₁ ._≈_) (S₂ ._≈_) func
 
 SetoidFunctionEquality : (S₁ : Setoid a b) (S₂ : Setoid c d) → Rel (SetoidFunction S₁ S₂) (a ⊔ b ⊔ d)
 SetoidFunctionEquality S₁ S₂ = λ f g → ∀ {x y : S₁ .Carrier} → (S₁ ._≈_ x y) → S₂ ._≈_ (f .SetoidFunction.func x) (g .SetoidFunction.func y)

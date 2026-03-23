@@ -6,14 +6,13 @@ open import Function using (Bijective; Injective; Surjective; Congruent; Bijecti
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (IsEquivalence)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_)
 
 
 module Plasmaduck.Function.InjectionSurjection
     {a b ℓ₁ ℓ₂ : Level}
     (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
-    (f : A-setoid .Setoid.Carrier → B-setoid .Setoid.Carrier)
-    (f-cong : Congruent (A-setoid .Setoid._≈_) (B-setoid .Setoid._≈_) f)
+    ((f which-is-cong f-cong) : SetoidFunction A-setoid B-setoid)
     where
 
 open Setoid using (Carrier; isEquivalence)
