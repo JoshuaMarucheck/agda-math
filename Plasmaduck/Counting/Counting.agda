@@ -1,7 +1,7 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
-open import Function using (_∘_; flip; Bijective; Injective; Surjective; Bijection; Injection; Surjection)
+open import Function using (_∘_; flip; Bijective; Injective; Surjective; Bijection; Injection; Surjection; Congruent)
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (Rel; Decidable; IsEquivalence)
 open import Relation.Nullary.Negation using (¬_)
@@ -15,8 +15,9 @@ open import Data.Nat.Properties using (≤-reflexive; <-trans; ≤-trans; ≤-<-
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; toℕ; fromℕ<)
 open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; property-subset-setoid)
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
+open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
 open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
@@ -40,14 +41,27 @@ open Setoid using (Carrier; _≈_)
 AtLeastSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
 AtLeastSize setoid n = Injection (fin-setoid n) setoid
 
+-- Defined like this since if the target set is empty, no surjection exists since no functions exist. oops.
+-- Of course, such a definition means the target set is decidable.
 AtMostSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
-AtMostSize setoid n = Surjection (fin-setoid n) setoid
+AtMostSize setoid n = Surjection (fin-setoid n) setoid ⊎ ¬ (setoid .Carrier)
 
 IsWeaklyFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
 IsWeaklyFinite setoid = Σ ℕ λ n → AtMostSize setoid n
 
 IsFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
 IsFinite setoid = Σ ℕ λ n → HasSize setoid n
+
+
+-- This property makes me question my definition of AtMostSize.
+-- Ideally, we could have a property setoid with some undecidable property (like the axiom of choice or double-negation inversion or something).
+-- Then the setoid would have one element in universes where it is true, and zero elements in universes where it is false.
+--   (Both universes are extensions of base Agda, so of course we cannot prove one or the other.)
+-- I'd still like to be able to say that such a setoid has at most one element in it, since in all universes it has at most one element.
+at-most-size-implies-decidable : {setoid : Setoid c ℓ} {n : ℕ} → AtMostSize setoid n → Dec (setoid .Carrier)
+at-most-size-implies-decidable (inj₂ ¬S) = no ¬S
+at-most-size-implies-decidable {n = zero-ℕ} (inj₁ surj) = no λ x → case surj .Surjection.surjective x of λ { (() , _) }
+at-most-size-implies-decidable {n = suc-ℕ _} (inj₁ surj) = yes (surj .Surjection.to zero)
 
 
 module _
@@ -218,6 +232,65 @@ module _
         all-related-dec = all A-finite (all-related-to A-finite #-cong) (λ x≈y all-x-proof → λ z → #-cong x≈y refl (all-x-proof z)) (all-related-to-dec A-finite #-cong _#?_)
 
 
+
+finite-is-weakly-finite : (s : Setoid c ℓ) → IsFinite s → IsWeaklyFinite s
+finite-is-weakly-finite s (n , n-bij-s) = n , inj₁ (bijection→surjection n-bij-s)
+
+subset-of-finite-is-finite :
+    {s : Setoid c ℓ} →
+    {P : s .Carrier → Set ℓ₁} → CongruentProperty s P → (∀ x → Dec (P x)) →
+    {n : ℕ} → HasSize s n →
+    AtMostSize (property-subset-setoid s P) n
+subset-of-finite-is-finite {s = s} {P} P-cong dec-P {zero-ℕ} s-size-n = inj₂ λ (x , _) → case invert-bijection s-size-n .Bijection.to x of λ ()
+subset-of-finite-is-finite {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-size-n with any-P
+    where
+        s-finite : IsFinite s
+        s-finite = n , s-size-n
+
+        any-P : Dec (any-type s-finite P P-cong dec-P)
+        any-P = any s-finite P P-cong dec-P
+
+... | no pf = inj₂ pf
+... | yes (x , P[x]) =
+    inj₁ record {
+    to = to;
+    cong = to-cong;
+    surjective = to-surjective
+    }
+    where
+        old-to = s-size-n .Bijection.to
+        A-setoid = property-subset-setoid s P
+        A = A-setoid .Carrier
+        _~_ = A-setoid .Setoid._≈_
+
+        -- So it turns out that _~_ reduces to equivalence in setoid s.
+        -- This wouldn't normally matter, but _~_ has to keep track of all of the
+        -- proofs of inclusion that don't matter but are part of the elements of A-setoid.
+        -- It then complains about hidden variables.
+        -- Thus, using equality in s directly is easier to reason about.
+        open IsEquivalence (s .Setoid.isEquivalence) renaming (reflexive to ~-reflexive; refl to ~-refl; sym to ~-sym; trans to ~-trans)
+        open import Relation.Binary.Reasoning.Setoid A-setoid
+
+        to : Fin n → A
+        to i with dec-P (old-to i)
+        ... | yes P[to-i] = old-to i , P[to-i]
+        ... | no ¬P[to-i] = x , P[x]
+
+        to-cong : Congruent _≡_ _~_ to
+        to-cong {x = i} {y = .i} ≡-refl with dec-P (old-to i)
+        ... | yes P[to-i] = ~-refl
+        ... | no ¬P[to-i] = ~-refl
+
+        to-surjective : Surjective _≡_ _~_ to
+        to-surjective (y , P[y]) with s-size-n .Bijection.bijective .proj₂ y
+        ... | (i , refl→to-i~y) with dec-P (old-to i) | inspect (proj₁ ∘ to) i
+        ...     | no ¬P[to-i] | _ = ⊥-elim (¬P[to-i] (P-cong (~-sym (refl→to-i~y ≡-refl)) P[y]))
+        ...     | yes P[to-i] | [ proj₁-to-i≡old-to-i ]
+            = i , λ { {.i} ≡-refl → begin
+                to i                    ≈⟨ ~-reflexive proj₁-to-i≡old-to-i ⟩
+                (old-to i , P[to-i])    ≈⟨ refl→to-i~y ≡-refl ⟩
+                (y , P[y])              ∎
+                }
 
 fin-⊎-bijection : (m n : ℕ) → Bijection (discrete-setoid (Fin (m + n))) (discrete-setoid (Fin m ⊎ Fin n))
 fin-⊎-bijection m n = record {

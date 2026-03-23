@@ -82,12 +82,17 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
 
 
     strengthen-core : {n : ℕ} → AtMostSize A-setoid n → IsFinite A-setoid
-    strengthen-core {zero-ℕ} n-surjection = zero-ℕ , record {
+    strengthen-core (inj₂ ¬A) = 0 , record {
+        to = λ ();
+        cong = λ {};
+        bijective = (λ {}) , ⊥-elim ∘ ¬A
+        }
+    strengthen-core {zero-ℕ} (inj₁ n-surjection) = zero-ℕ , record {
         to = n-surjection .Surjection.to;
         cong = λ {};
         bijective = (λ {}) , n-surjection .Surjection.surjective
         }
-    strengthen-core {n = n@(suc-ℕ n')} n-surjection with any-eq A-setoid _~?_ (n-surjection .Surjection.to)
+    strengthen-core {n = n@(suc-ℕ n')} (inj₁ n-surjection) with any-eq A-setoid _~?_ (n-surjection .Surjection.to)
     ... | no pf = n , record {
         to = to;
         cong = from-discrete-cong A-setoid to;
@@ -101,7 +106,7 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
             injective {x = x} {y} fx~fy with fin-≡-dec x y
             ... | yes x≡y = x≡y
             ... | no x≢y = ⊥-elim (pf (x , y , x≢y , fx~fy))
-    ... | yes (x , y , x≢y , fx~fy) = strengthen-core {n = n'} surjection
+    ... | yes (x , y , x≢y , fx~fy) = strengthen-core {n = n'} (inj₁ surjection)
         where
             old-to : (Fin n) → A
             old-to = n-surjection .Surjection.to
