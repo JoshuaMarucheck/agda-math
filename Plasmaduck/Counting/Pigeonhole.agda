@@ -64,8 +64,8 @@ module _ (A-setoid : Setoid c ℓ) where
             #-cong : CongruentRel (disc-fin m) _#_
             #-cong ≡-refl ≡-refl x#y = x#y
 
-            pre-sol : Dec (any-related-to (m , discrete-id-bijection (Fin m)) _#?_ #-cong zero)
-            pre-sol = any-related-to-dec (m , discrete-id-bijection (Fin m)) _#?_ #-cong zero
+            pre-sol : Dec (any-related-to (m , discrete-id-bijection (Fin m)) #-cong zero)
+            pre-sol = any-related-to-dec (m , discrete-id-bijection (Fin m)) #-cong _#?_ zero
 
             sol : Dec (Σ (Fin m') λ y → f zero ~ f (suc y))
             sol with pre-sol
