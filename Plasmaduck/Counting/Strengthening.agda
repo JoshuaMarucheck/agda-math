@@ -28,7 +28,7 @@ open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
 open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
-open import Plasmaduck.Relation.Defs using (CongruentProperty)
+open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
 
 
@@ -149,7 +149,7 @@ module _
     (_~?_ : Decidable (A-setoid .Setoid._≈_))
     {P : A-setoid .Setoid.Carrier → Set ℓ₁}
     (P-cong : CongruentProperty A-setoid P)
-    (P-dec : ∀ x → Dec (P x))
+    (P-dec : DecidableProperty P)
     where
 
     subset-of-finite-is-finite' :

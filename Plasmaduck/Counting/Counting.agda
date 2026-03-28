@@ -19,6 +19,7 @@ open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; 
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
+open import Plasmaduck.Property.Defs using (DecidableProperty)
 open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
@@ -81,7 +82,7 @@ module _
     (A-finite : IsFinite A-setoid)
     (P : A-setoid .Carrier → Set ℓ₂)
     (P-cong : CongruentProperty A-setoid P)
-    (dec-P : ∀ x → Dec (P x))
+    (dec-P : DecidableProperty P)
     where
 
     private
@@ -133,7 +134,7 @@ module _
     (A-finite : IsFinite A-setoid)
     (P : A-setoid .Carrier → Set ℓ₂)
     (P-cong : CongruentProperty A-setoid P)
-    (dec-P : ∀ x → Dec (P x))
+    (dec-P : DecidableProperty P)
     where
 
     private
@@ -150,7 +151,7 @@ module _
         Q-cong : CongruentProperty A-setoid Q
         Q-cong x≈y ¬P[x] P[y] = ¬P[x] (P-cong (sym x≈y) P[y])
 
-        dec-Q : ∀ x → Dec (Q x)
+        dec-Q : DecidableProperty Q
         dec-Q x with dec-P x
         ... | yes P[x] = no (¬¬-lift P[x])
         ... | no ¬P[x] = yes ¬P[x]
@@ -186,10 +187,10 @@ module _
         (_#?_ : Decidable _#_)
         where
 
-        any-related-to-dec : (x : A) → Dec (any-related-to x)
+        any-related-to-dec : DecidableProperty any-related-to
         any-related-to-dec x = any A-finite (x #_) (rel-property A-setoid #-cong x) (x #?_)
 
-        all-related-to-dec : (x : A) → Dec (all-related-to x)
+        all-related-to-dec : DecidableProperty all-related-to
         all-related-to-dec x = all A-finite (x #_) (rel-property A-setoid #-cong x) (x #?_)
 
 module _
@@ -231,10 +232,10 @@ module _
             _#'?_ : Decidable _#'_
             _#'?_ = flip _#?_
 
-        any-related-to'-dec : (x : A) → Dec (any-related-to' x)
+        any-related-to'-dec : DecidableProperty any-related-to'
         any-related-to'-dec x = any-related-to-dec A-finite #'-cong _#'?_ x
 
-        all-related-to'-dec : (x : A) → Dec (all-related-to' x)
+        all-related-to'-dec : DecidableProperty all-related-to'
         all-related-to'-dec x = all-related-to-dec A-finite #'-cong _#'?_ x
 
         any-related-dec : Dec any-related
@@ -250,7 +251,7 @@ finite-is-weakly-finite s (n , n-bij-s) = n , inj₁ (bijection→surjection n-b
 
 subset-of-finite-is-upper-bounded :
     {s : Setoid c ℓ} →
-    {P : s .Carrier → Set ℓ₁} → CongruentProperty s P → (∀ x → Dec (P x)) →
+    {P : s .Carrier → Set ℓ₁} → CongruentProperty s P → DecidableProperty P →
     {n : ℕ} → HasSize s n →
     AtMostSize (property-subset-setoid s P) n
 subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {zero-ℕ} s-size-n = inj₂ λ (x , _) → case invert-bijection s-size-n .Bijection.to x of λ ()
