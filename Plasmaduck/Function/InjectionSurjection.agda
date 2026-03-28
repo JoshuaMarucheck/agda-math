@@ -133,15 +133,15 @@ module _
     infixr 9 _∘-injection_
     infixr 9 _∘-surjection_
 
-    _∘-injection_ : Injection A-setoid B-setoid → Injection B-setoid C-setoid → Injection A-setoid C-setoid
-    _∘-injection_ f g = record {
+    _∘-injection_ :  Injection B-setoid C-setoid → Injection A-setoid B-setoid → Injection A-setoid C-setoid
+    _∘-injection_ g f = record {
         to = g .Injection.to ∘ f .Injection.to;
         cong = g .Injection.cong ∘ f .Injection.cong;
         injective = f .Injection.injective ∘ g .Injection.injective
         }
 
-    _∘-surjection_ : Surjection A-setoid B-setoid → Surjection B-setoid C-setoid → Surjection A-setoid C-setoid
-    _∘-surjection_ f g = record {
+    _∘-surjection_ : Surjection B-setoid C-setoid → Surjection A-setoid B-setoid → Surjection A-setoid C-setoid
+    _∘-surjection_ g f = record {
         to = g .Surjection.to ∘ f .Surjection.to;
         cong = g .Surjection.cong ∘ f .Surjection.cong;
         surjective = λ y →

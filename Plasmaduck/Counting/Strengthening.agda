@@ -137,7 +137,7 @@ module _ {A-setoid : Setoid c ℓ} (_~?_ : Decidable (A-setoid .Setoid._≈_)) w
             del-bij = delete-one-bijection y
 
             surjection : Surjection (discrete-setoid (Fin n')) A-setoid
-            surjection = bijection→surjection (invert-bijection del-bij) ∘-surjection to'-surjection
+            surjection = to'-surjection ∘-surjection bijection→surjection (invert-bijection del-bij)
     ...         | m , A-size-m , m≤n' = m , A-size-m , ≤-trans m≤n' n≤sn
 
     strengthen : IsWeaklyFinite A-setoid → IsFinite A-setoid
