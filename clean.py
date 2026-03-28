@@ -88,7 +88,8 @@ def clean_file(target: Path) -> None:
                 if idx != -1:
                     s: str = line[: idx - 1]
 
-                    if len(using_imports1) > 0:
+                    if "using" in line:
+                        # Even if there are no imports, we want this to prevent importing all names in the module
                         s += " using ("
                         s += "; ".join(using_imports1)
                         s += ")"
