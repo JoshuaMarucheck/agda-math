@@ -46,8 +46,20 @@ AtLeastSize setoid n = Injection (fin-setoid n) setoid
 AtMostSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
 AtMostSize setoid n = Surjection (fin-setoid n) setoid ⊎ ¬ (setoid .Carrier)
 
+-- Or maybe this definition would be easier to use
+-- Certainly, it's easier to restrict.
+-- But this version is not enumerable, not necessarily.
+-- Classic example: A datatype with one constructor, taking a proof of Axiom of Choice.
+--   The setoid over that set with all equal then injects into Fin 1,
+--   but it has no concrete size, so does not biject with Fin anything.
+AtMostSize' : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
+AtMostSize' setoid n = Injection setoid (fin-setoid n)
+
 IsWeaklyFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
 IsWeaklyFinite setoid = Σ ℕ λ n → AtMostSize setoid n
+
+IsWeaklyFinite' : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
+IsWeaklyFinite' setoid = Σ ℕ λ n → AtMostSize' setoid n
 
 IsFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
 IsFinite setoid = Σ ℕ λ n → HasSize setoid n
