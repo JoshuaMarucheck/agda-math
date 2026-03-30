@@ -11,25 +11,27 @@ open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Nat using (ℕ; _∸_; _+_; _*_; _≤_; _≥_; _<_; _>_; _<?_; <-cmp; s≤s; z≤n; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
-open import Data.Nat.Properties using (+-comm; <-trans; ≤-trans; ≤-<-trans; <-≤-trans; ≤-reflexive; ≤-refl; m+[n∸m]≡n; +-cancelˡ-<; +-monoʳ-<; ∸-monoˡ-<; m≤n+m; m≤m+n; +-suc; n∸n≡0; <-irrefl)
+open import Data.Nat using (ℕ; pred; _≟_; _∸_; _+_; _*_; _≤_; _≥_; _<_; _>_; _<?_; <-cmp; s≤s; z≤n; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
+open import Data.Nat.Properties using (module ≤-Reasoning; +-comm; <-trans; ≤-trans; ≤-<-trans; <-≤-trans; ≤-reflexive; ≤-refl; m+[n∸m]≡n; +-cancelˡ-<; +-mono-≤; +-monoʳ-<; ∸-monoˡ-<; m≤n+m; m≤m+n; +-suc; n∸n≡0; <-irrefl; m+n≤o⇒m≤o)
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; fromℕ<; toℕ) renaming (_<_ to _<-fin_; _≤_ to _≤-fin_; reduce≥ to reduce≥-fin)
 open import Data.Fin.Properties using (join-splitAt; splitAt-join; splitAt-↑ˡ; splitAt-↑ʳ; splitAt⁻¹-↑ʳ; combine-injective; combine-surjective; toℕ<n; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ-↑ʳ)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; property-subset-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; SetoidFunction; _which-is-cong_)
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_)
 open import Plasmaduck.Number.Fin using (fin-≡-dec; _↑ˡ-inverted_; splitAt-≥; fromℕ<-cong₂)
-open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc)
+open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc; m≡spm)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans; change-type-trans'; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-bijective'; cong₂-dependent)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_; subset-surjection)
-open import Plasmaduck.Counting.Counting using (HasSize)
+open import Plasmaduck.Counting.Counting using (HasSize; has-size→at-most-raise)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
 open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
+open import Plasmaduck.Property.Negation using (negation-dec; negation-cong)
+open import Plasmaduck.Counting.StrongCounting using (⊎-property-split-size-theorem)
 
 
 module Plasmaduck.Counting.Strengthening where
@@ -168,3 +170,66 @@ module _
     at-most-size-subset {suc-ℕ n'} (inj₁ surj) with any-via-surjection surj P P-cong P-dec
     ... | no pf = inj₂ pf
     ... | yes (_ , P[y]) = inj₁ (subset-surjection _~?_  P-cong P-dec P[y] ∘-surjection surj)
+
+module _
+    {A-setoid : Setoid a ℓ}
+    (_~?_ : Decidable (A-setoid .Setoid._≈_))
+    {P : A-setoid .Setoid.Carrier → Set ℓ₁}
+    (P-cong : CongruentProperty A-setoid P)
+    (P-dec : DecidableProperty P)
+    where
+
+    private
+        A = A-setoid .Setoid.Carrier
+        _~_ = A-setoid .Setoid._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (reflexive; refl; sym; trans)
+
+    at-most-size-subset-decr :
+        {x : A} → ¬ P x →
+        {n : ℕ} → AtMostSize A-setoid (suc-ℕ n) →
+        AtMostSize (property-subset-setoid A-setoid P) n
+    at-most-size-subset-decr {x = x} ¬P[x] (inj₂ ¬A) = ⊥-elim (¬A x)
+    at-most-size-subset-decr {x = x} ¬P[x] {n = n} (inj₁ surj) = has-size→at-most-raise (property-subset-setoid A-setoid P) A-with-P-size-p p≤n
+        where
+            B-setoid = property-subset-setoid A-setoid P
+            B = B-setoid .Setoid.Carrier
+            _≈_ = B-setoid .Setoid._≈_
+
+            strengthened-size : Σ ℕ (λ m → HasSize A-setoid m × m ≤ suc-ℕ n)
+            strengthened-size = strengthen-core _~?_ (inj₁ surj)
+
+            m = strengthened-size .proj₁
+            A-size-m = strengthened-size .proj₂ .proj₁
+            m≤sn = strengthened-size .proj₂ .proj₂
+
+            A-with-P-finite : IsFinite (property-subset-setoid A-setoid P)
+            A-with-P-finite = subset-of-finite-is-finite _~?_ P-cong P-dec (m , A-size-m)
+
+            A-without-P-finite : IsFinite (property-subset-setoid A-setoid (¬_ ∘ P))
+            A-without-P-finite = subset-of-finite-is-finite _~?_ (negation-cong A-setoid P P-cong) (negation-dec A-setoid P P-dec) (m , A-size-m)
+
+            p = A-with-P-finite .proj₁
+            A-with-P-size-p = A-with-P-finite .proj₂
+            q = A-without-P-finite .proj₁
+            A-without-P-size-q = A-without-P-finite .proj₂
+
+            m≡p+q : m ≡ p + q
+            m≡p+q = ⊎-property-split-size-theorem P P-cong P-dec A-size-m A-with-P-size-p A-without-P-size-q
+
+            q≢0 : q ≢ 0
+            q≢0 q≡0 = case change-type (cong Fin q≡0) ((invert-bijection A-without-P-size-q) .Bijection.to (x , ¬P[x])) of λ ()
+
+            q' : ℕ
+            q' = pred q
+
+            p≤n : p ≤ n
+            p≤n = s≤s⁻¹ (begin
+                suc-ℕ p             ≤⟨ ≤-reflexive (+-comm zero-ℕ (suc-ℕ p)) ⟩
+                suc-ℕ p + zero-ℕ    ≤⟨ +-mono-≤ (n≤n {n = suc-ℕ p}) (z≤n {n = q'}) ⟩
+                suc-ℕ p + q'        ≤⟨ ≤-reflexive (≡-sym (+-suc p q')) ⟩
+                p + suc-ℕ q'        ≤⟨ ≤-reflexive (cong (p +_) (≡-sym (m≡spm q≢0))) ⟩
+                p + q               ≤⟨ ≤-reflexive (≡-sym m≡p+q) ⟩
+                m                   ≤⟨ m≤sn ⟩
+                suc-ℕ n             ∎
+                )
+                where open ≤-Reasoning
