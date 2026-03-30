@@ -22,11 +22,11 @@ open import Plasmaduck.Number.Fin using (fin-≡-dec; _↑ˡ-inverted_; splitAt-
 open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans; change-type-trans'; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-bijective'; cong₂-dependent)
 open import Plasmaduck.Util.Case using (case_of_)
-open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse; bijection→surjection; _∘-surjection_)
+open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_; subset-surjection)
 open import Plasmaduck.Counting.Counting using (HasSize)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
-open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded)
+open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
@@ -39,14 +39,11 @@ variable
 
 
 module _ (A-setoid : Setoid c ℓ) where
+
     private
         A = A-setoid .Setoid.Carrier
         _~_ = A-setoid .Setoid._≈_
-        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
-
-        reflexive : {x y : A} → x ≡ y → x ~ y
-        reflexive {x = x} {.x} ≡-refl = refl
-
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (reflexive; refl; sym; trans)
 
     any-eq : Decidable _~_ → {m : ℕ} → (f : Fin m → A) → Dec (Σ (Fin m) λ x → Σ (Fin m) λ y → x ≢ y × f x ~ f y)
     any-eq _~?_ {m = zero-ℕ} f = no λ { (() , _) }
@@ -155,10 +152,19 @@ module _
     subset-of-finite-is-finite' :
         {n : ℕ} → HasSize A-setoid n →
         Σ ℕ λ m → HasSize (property-subset-setoid A-setoid P) m × m ≤ n
-    subset-of-finite-is-finite' A-size-n = strengthen-core (decidable-push A-setoid _~?_) (subset-of-finite-is-upper-bounded P-cong P-dec A-size-n) --
+    subset-of-finite-is-finite' A-size-n = strengthen-core (decidable-push A-setoid _~?_) (subset-of-finite-is-upper-bounded P-cong P-dec A-size-n)
 
     subset-of-finite-is-finite :
         IsFinite A-setoid →
         IsFinite (property-subset-setoid A-setoid P)
     subset-of-finite-is-finite (_ , A-size) with subset-of-finite-is-finite' A-size
     ... | (m , A-with-P-size-m , _) = m , A-with-P-size-m
+
+    at-most-size-subset :
+        {n : ℕ} → AtMostSize A-setoid n →
+        AtMostSize (property-subset-setoid A-setoid P) n
+    at-most-size-subset (inj₂ ¬A) = inj₂ (¬A ∘ proj₁)
+    at-most-size-subset {zero-ℕ} (inj₁ surj) = inj₂ λ (x , _) → case surj .Surjection.surjective x of λ { (() , _) }
+    at-most-size-subset {suc-ℕ n'} (inj₁ surj) with any-via-surjection surj P P-cong P-dec
+    ... | no pf = inj₂ pf
+    ... | yes (_ , P[y]) = inj₁ (subset-surjection _~?_  P-cong P-dec P[y] ∘-surjection surj)

@@ -1,12 +1,16 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; Injection; Surjection; _∘_; id)
 open import Relation.Binary.Bundles using (Setoid)
-open import Relation.Binary using (IsEquivalence)
+open import Relation.Binary using (IsEquivalence; Decidable)
+open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid)
+open import Plasmaduck.Relation.Defs using (CongruentProperty)
+open import Plasmaduck.Property.Defs using (DecidableProperty)
 
 
 module Plasmaduck.Function.InjectionSurjection where
@@ -152,3 +156,49 @@ module _
                (f .Surjection.surjective (g .Surjection.surjective y .proj₁)
                 .proj₂ z₁))
         }
+
+
+module _
+    {a ℓ ℓ₁ : Level}
+    {A-setoid : Setoid a ℓ}
+    (_~?_ : Decidable (A-setoid .Setoid._≈_))
+    {P : A-setoid .Setoid.Carrier → Set ℓ₁}
+    (P-cong : CongruentProperty A-setoid P)
+    (P-dec : DecidableProperty P)
+    where
+
+    private
+        A = A-setoid .Setoid.Carrier
+        _~_ = A-setoid .Setoid._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (reflexive; refl; sym; trans)
+
+    subset-surjection : {w : A} → P w → Surjection A-setoid (property-subset-setoid A-setoid P)
+    subset-surjection {w} P[w] = record {
+        to = to;
+        cong = to-cong;
+        surjective = to-surj
+        }
+        where
+            B-setoid = property-subset-setoid A-setoid P
+            B = B-setoid .Carrier
+            _≈_ = B-setoid .Setoid._≈_
+
+            to : A → B
+            to x with P-dec x
+            ... | yes P[x] = x , P[x]
+            ... | no ¬P[x] = w , P[w]
+
+            to-cong : Congruent _~_ _≈_ to
+            to-cong {x = x} {y} x~y with P-dec x | P-dec y
+            ... | yes P[x] | yes P[y] = x~y
+            ... | yes P[x] | no ¬P[y] = ⊥-elim (¬P[y] (P-cong x~y P[x]))
+            ... | no ¬P[x] | yes P[y] = ⊥-elim (¬P[x] (P-cong (sym x~y) P[y]))
+            ... | no ¬P[x] | no ¬P[y] = refl
+
+            to-surj' : (z : B) → {z₁ : A} → z₁ ~ z .proj₁ → to z₁ ≈ z
+            to-surj' (z , P[z]) {z₁} z₁~z with P-dec z₁
+            ... | yes P[z₁] = z₁~z
+            ... | no ¬P[z₁] = ⊥-elim (¬P[z₁] (P-cong (sym z₁~z) P[z]))
+
+            to-surj : Surjective _~_ _≈_ to
+            to-surj (z , P[z]) = z , to-surj' (z , P[z])

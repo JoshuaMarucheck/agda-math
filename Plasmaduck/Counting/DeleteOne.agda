@@ -32,6 +32,13 @@ module Plasmaduck.Counting.DeleteOne where
 variable
     a : Level
 
+{-
+    For more general deletion on Fin sets,
+    try combining:
+        subset-surjection from Plasmaduck.Function.InjectionSurjection
+        strengthen-core or strengthen from Plasmaduck.Counting.Strengthening
+-}
+
 delete-one-bijection : {n : ℕ} → (i : Fin (suc-ℕ n)) → Bijection (property-subset-setoid (discrete-setoid (Fin (suc-ℕ n))) λ j → j ≢ i) (discrete-setoid (Fin n))
 delete-one-bijection {n = n'} q = full-bijection
     where
