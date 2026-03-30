@@ -78,8 +78,19 @@ at-most-size-implies-decidable {n = suc-ℕ _} (inj₁ surj) = yes (surj .Surjec
 
 
 module _
+    (A-setoid : Setoid a ℓ)
+    (P : A-setoid .Carrier → Set ℓ₂)
+    where
+    any-type : Set (a ⊔ ℓ₂)
+    any-type = Σ (A-setoid .Carrier) λ x → P x
+
+    all-type : Set (a ⊔ ℓ₂)
+    all-type = ∀ x → P x
+
+module _
     {A-setoid : Setoid a ℓ}
-    (A-finite : IsFinite A-setoid)
+    {n : ℕ}
+    (A-bounded : Surjection (fin-setoid n) A-setoid)
     (P : A-setoid .Carrier → Set ℓ₂)
     (P-cong : CongruentProperty A-setoid P)
     (dec-P : DecidableProperty P)
@@ -88,24 +99,17 @@ module _
     private
         A = A-setoid .Carrier
         _~_ = A-setoid .Setoid._≈_
-        n = A-finite .proj₁
 
         open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; reflexive; sym; trans)
 
-        A-size-n : Bijection (fin-setoid n) A-setoid
-        A-size-n = A-finite .proj₂
-
         to : Fin n → A
-        to = A-size-n .Bijection.to
+        to = A-bounded .Surjection.to
 
         inv : A → Fin n
-        inv = proj₁ ∘ A-size-n .Bijection.bijective .proj₂
+        inv = proj₁ ∘ A-bounded .Surjection.surjective
 
-    any-type : Set (a ⊔ ℓ₂)
-    any-type = Σ A λ x → P x
-
-    any : Dec any-type
-    any = sol
+    any-via-surjection : Dec (any-type A-setoid P)
+    any-via-surjection = sol
         where
             hunt : (j : ℕ) .(j≤n : j ≤ n) → Dec (Σ (Fin n) λ i → toℕ i < j × P (to i))
             hunt zero-ℕ _ = no λ { (_ , () , _) }
@@ -127,7 +131,26 @@ module _
             sol : Dec (Σ A λ x → P x)
             sol with pre-sol
             ... | yes (i , P[i]) = yes (to i , P[i])
-            ... | no pf = no λ { (y , P[y]) → pf (inv y , P-cong (sym (A-finite .proj₂ .Bijection.bijective .proj₂ y .proj₂ ≡-refl)) P[y]) }
+            ... | no pf = no λ { (y , P[y]) → pf (inv y , P-cong (sym (A-bounded .Surjection.surjective y .proj₂ ≡-refl)) P[y]) }
+
+any' :
+    {A-setoid : Setoid a ℓ}
+    {n : ℕ} (A-bounded : AtMostSize A-setoid n) →
+    (P : A-setoid .Carrier → Set ℓ₂) →
+    (P-cong : CongruentProperty A-setoid P) →
+    (dec-P : DecidableProperty P) →
+    Dec (any-type A-setoid P)
+any' (inj₁ surj) P P-cong dec-P = any-via-surjection surj P P-cong dec-P
+any' (inj₂ ¬A) P P-cong dec-P = no (¬A ∘ proj₁)
+
+any :
+    {A-setoid : Setoid a ℓ}
+    (A-finite : IsFinite A-setoid) →
+    (P : A-setoid .Carrier → Set ℓ₂) →
+    (P-cong : CongruentProperty A-setoid P) →
+    (dec-P : DecidableProperty P) →
+    Dec (any-type A-setoid P)
+any A-finite P P-cong dec-P = any-via-surjection (bijection→surjection (A-finite .proj₂)) P P-cong dec-P
 
 module _
     {A-setoid : Setoid a ℓ}
@@ -156,10 +179,7 @@ module _
         ... | yes P[x] = no (¬¬-lift P[x])
         ... | no ¬P[x] = yes ¬P[x]
 
-    all-type : Set (a ⊔ ℓ₂)
-    all-type = ∀ x → P x
-
-    all : Dec all-type
+    all : Dec (all-type A-setoid P)
     all with any A-finite Q Q-cong dec-Q
     ... | yes (x , ¬P[x]) = no λ all-proof → ¬P[x] (all-proof x)
     ... | no ¬¬P-proof = yes λ x → case dec-P x of λ {
@@ -260,7 +280,7 @@ subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-si
         s-finite : IsFinite s
         s-finite = n , s-size-n
 
-        any-P : Dec (any-type s-finite P P-cong dec-P)
+        any-P : Dec (any-type s P)
         any-P = any s-finite P P-cong dec-P
 
 ... | no pf = inj₂ pf
