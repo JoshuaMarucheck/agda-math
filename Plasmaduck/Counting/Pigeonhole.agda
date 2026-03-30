@@ -22,7 +22,6 @@ open import Plasmaduck.Number.Fin using (fin-≡-dec; _↑ˡ-inverted_; splitAt-
 open import Plasmaduck.Number.Nat using (n<sn; n≤n; n≤sn; ≤→<≡; <→≤; s≡s⁻¹; sm∸n≡so→m∸n≡o; ∸-suc)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans; change-type-trans'; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-bijective'; cong₂-dependent)
 open import Plasmaduck.Util.Case using (case_of_)
-open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse)
 open import Plasmaduck.Counting.Counting using (HasSize; any-related-to-dec; any-related-to)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 open import Plasmaduck.Relation.Defs using (CongruentRel)

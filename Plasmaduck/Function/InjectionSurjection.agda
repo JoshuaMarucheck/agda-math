@@ -20,7 +20,7 @@ open Setoid using (Carrier; isEquivalence)
 
 module _
     {a b ℓ₁ ℓ₂ : Level}
-    {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂}
+    (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
     ((f which-is-cong f-cong) : SetoidFunction A-setoid B-setoid)
     where
 
@@ -58,6 +58,7 @@ module _
 
 
     -- Likewise, I suspect this one is too strong too
+    -- See below comment, but basically we can't prove that the inverse given by Surjective is congruent.
     HasRightInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
     HasRightInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → RightInverse g }
 
@@ -117,7 +118,7 @@ module _
         f is surjective. This means that it hits every output (up to setoid equality)
 
         ∀ y → ∃ λ x → ∀ {z} → z ≈₁ x → f z ≈₂ y
-        For everything in the output set, there is an input where everything equal to that input is equal to the given output. 
+        For everything in the output set, there is an input where everything equal to that input is equal to the given output.
         (but like, obviously by congruence of the function. So I think this is equal to congruence + there is an input which maps to something equal to the output.)
 
         For each output equality class, grab all the corresponding inputs.
