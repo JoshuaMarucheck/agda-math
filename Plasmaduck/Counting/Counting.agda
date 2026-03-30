@@ -373,6 +373,24 @@ subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-si
                 (y , P[y])              ∎
                 }
 
+module _ (A-setoid : Setoid a ℓ) where
+    private
+        A = A-setoid .Carrier
+        _~_ = A-setoid ._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
+
+    one-equal-item : (x : A) → HasSize (property-subset-setoid A-setoid (x ~_)) 1
+    one-equal-item x = record {
+        to = to;
+        cong = from-discrete-cong B-setoid to;
+        bijective = (λ { {zero} {zero} _ → ≡-refl }) , λ (z , x~z) → zero , λ { ≡-refl → x~z }
+        }
+        where
+            B-setoid = property-subset-setoid A-setoid (x ~_)
+            B = B-setoid .Carrier
+            to : Fin 1 → B
+            to _ = (x , refl)
+
 fin-⊎-bijection : (m n : ℕ) → Bijection (discrete-setoid (Fin (m + n))) (discrete-setoid (Fin m ⊎ Fin n))
 fin-⊎-bijection m n = record {
     to = splitAt m {n};

@@ -26,6 +26,9 @@ CongruentProperty P = ∀ {x y : A} → x ≈ y → P x → P y
 rel-property : {_~_ : Rel A ℓ₂} → CongruentRel _~_ → (x : A) → CongruentProperty (x ~_)
 rel-property ~-cong _ = ~-cong refl
 
+≈-cong : CongruentRel _≈_
+≈-cong x₁≈x₂ y₁≈y₂ x₁≈y₁ = trans (trans (sym x₁≈x₂) x₁≈y₁) y₁≈y₂
+
 -- Oops, it turns out CongruentProperty is (essentially) the same as _Respects₂_
 respects→cong-rel : {_~_ : Rel A ℓ₂} → _~_ Respects₂ _≈_ → CongruentRel _~_
 respects→cong-rel (~-resp-≈₁ , ~-resp-≈₂) x₁≈x₂ y₁≈y₂ x₁~y₁ = ~-resp-≈₂ x₁≈x₂ (~-resp-≈₁ y₁≈y₂ x₁~y₁)
