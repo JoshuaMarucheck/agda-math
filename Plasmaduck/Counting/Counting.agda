@@ -10,19 +10,20 @@ open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_; z≤n; s≤s; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
-open import Data.Nat.Properties using (≤-reflexive; <-trans; ≤-trans; ≤-<-trans)
+open import Data.Nat using (ℕ; _+_; _*_; _∸_; _≤_; _≥_; _<_; z≤n; s≤s; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
+open import Data.Nat.Properties using (≤-reflexive; <-trans; ≤-trans; ≤-<-trans; _<?_; m+[n∸m]≡n)
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; toℕ; fromℕ<)
-open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
+open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; toℕ-↑ˡ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; property-subset-setoid)
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
-open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection)
+open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
 open import Plasmaduck.Property.Defs using (DecidableProperty)
 open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
+open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance)
 
 
 
@@ -265,6 +266,53 @@ module _
         all-related-dec = all A-finite (all-related-to A-finite #-cong) (λ x≈y all-x-proof → λ z → #-cong x≈y refl (all-x-proof z)) (all-related-to-dec A-finite #-cong _#?_)
 
 
+
+≤-bound : {m n : ℕ} → (m ≤ n) → AtMostSize (fin-setoid m) n
+≤-bound {zero-ℕ} {_} m≤n = inj₂ λ ()
+≤-bound {m@(suc-ℕ m')} {n@(suc-ℕ n')} m≤n = inj₁ record {
+    to = to;
+    cong = from-discrete-cong (fin-setoid m) to;
+    surjective = to-surj
+    }
+    where
+        open ≡-Reasoning
+
+        to : Fin n → Fin m
+        to x with toℕ x <? m
+        ... | yes x<m = fromℕ< {m = toℕ x} x<m
+        ... | no ¬x<m = zero
+
+        inv : Fin m → Fin n
+        inv y = change-type (cong Fin (m+[n∸m]≡n m≤n)) (y ↑ˡ (n ∸ m))
+
+        inv-y≈y : ∀ (y : Fin m) → toℕ (inv y) ≡ toℕ y
+        inv-y≈y y =
+            toℕ (change-type (cong Fin (m+[n∸m]≡n m≤n)) (y ↑ˡ (n ∸ m)))     ≡⟨ change-type-input-dependence-irrelevance Fin toℕ (m+[n∸m]≡n m≤n) (y ↑ˡ (n ∸ m)) ⟩
+            toℕ (y ↑ˡ (n ∸ m))                                              ≡⟨ toℕ-↑ˡ y (n ∸ m) ⟩
+            toℕ y                                                           ∎
+
+        is-right-inv : ∀ (y : Fin m) → to (inv y) ≡ y
+        is-right-inv y with toℕ (inv y) <? m
+        ... | yes y<m =
+            fromℕ< {m = toℕ (inv y)} y<m  ≡⟨ fromℕ<-cong (toℕ (inv y)) (toℕ y) (inv-y≈y y) y<m (toℕ<n y) ⟩
+            fromℕ< {m = toℕ y} (toℕ<n y)  ≡⟨ fromℕ<-toℕ y (toℕ<n y) ⟩
+            y                             ∎
+        ... | no ¬y<m = ⊥-elim (¬y<m (change-type (cong (_< m) (≡-sym (inv-y≈y y))) (toℕ<n y)))
+
+        to-surj : Surjective _≡_ _≡_ to
+        to-surj y = inv y , λ { ≡-refl → is-right-inv y }
+
+raise-at-most : (s : Setoid c ℓ) → {m n : ℕ} → AtMostSize s m → m ≤ n → AtMostSize s n
+raise-at-most s {m} {n} (inj₂ ¬s) m≤n = inj₂ ¬s
+raise-at-most s {m} {n} (inj₁ s-size-m) m≤n with ≤-bound m≤n
+... | inj₂ ¬Fin-m = inj₂ λ x → ¬Fin-m (s-size-m .Surjection.surjective x .proj₁)
+... | inj₁ n-m-surj = inj₁ (s-size-m ∘-surjection n-m-surj)
+
+has-size→at-most : (s : Setoid c ℓ) → {n : ℕ} → HasSize s n → AtMostSize s n
+has-size→at-most s {n = n} s-size-n = inj₁ (bijection→surjection s-size-n)
+
+has-size→at-most-raise : (s : Setoid c ℓ) → {m n : ℕ} → HasSize s m → m ≤ n → AtMostSize s n
+has-size→at-most-raise s s-size-m m≤n = raise-at-most s (has-size→at-most s s-size-m) m≤n
 
 finite-is-weakly-finite : (s : Setoid c ℓ) → IsFinite s → IsWeaklyFinite s
 finite-is-weakly-finite s (n , n-bij-s) = n , inj₁ (bijection→surjection n-bij-s)
