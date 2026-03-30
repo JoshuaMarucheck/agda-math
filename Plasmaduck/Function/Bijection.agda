@@ -1,12 +1,17 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 
+open import Data.Empty using (⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; _∘_; id)
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (IsEquivalence)
+open import Relation.Nullary.Negation using (¬_)
+open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; property-subset-setoid; _which-is-cong_)
+open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
+open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse)
 
 module Plasmaduck.Function.Bijection where
 
@@ -24,8 +29,8 @@ id-bijection A-setoid = record {
     bijective = id , λ y → (y , id)
     }
 
-discrete-id-bijection : (A : Set a) → Bijection (discrete-setoid A) (discrete-setoid A) 
-discrete-id-bijection = id-bijection ∘ discrete-setoid 
+discrete-id-bijection : (A : Set a) → Bijection (discrete-setoid A) (discrete-setoid A)
+discrete-id-bijection = id-bijection ∘ discrete-setoid
 
 module InverseFunction {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} (bij : Bijection s₁ s₂) where
     private
@@ -166,6 +171,56 @@ _∘-bijection_ {s₁ = s₁} {s₂} {s₃} bij₂ bij₁ = record {
         surjective : Surjective _≡_ (⊎-rel (discrete-setoid A) (discrete-setoid B)) f
         surjective (inj₁ x) = inj₁ x , λ { {inj₁ y} ≡-refl → rel₁ ≡-refl }
         surjective (inj₂ x) = inj₂ x , λ { {inj₂ y} ≡-refl → rel₂ ≡-refl }
+
+⊎-property-split-bijection :
+    (s : Setoid a ℓ₁) (P : s .Carrier → Set ℓ₂) →
+    (P-cong : CongruentProperty s P) →
+    (P-dec : DecidableProperty P) →
+    Bijection s (⊎-setoid (property-subset-setoid s P) (property-subset-setoid s (¬_ ∘ P)))
+⊎-property-split-bijection s₁ P P-cong P-dec = record {
+    to = f;
+    cong = f-cong;
+    bijective = both-inv→bijective s₁ s₂ (f which-is-cong f-cong) ((inv which-is-cong inv-cong) , is-left-inv , is-right-inv)
+    }
+    where
+        s₂ = (⊎-setoid (property-subset-setoid s₁ P) (property-subset-setoid s₁ (¬_ ∘ P)))
+        A = s₁ .Carrier
+        B = s₂ .Carrier
+        _≈₁_ = s₁ ._≈_
+        _≈₂_ = s₂ ._≈_
+
+        f : A → B
+        f x with P-dec x
+        ... | yes pf = inj₁ (x , pf)
+        ... | no pf = inj₂ (x , pf)
+
+        f-cong : Congruent _≈₁_ _≈₂_ f
+        f-cong {x = x} {y} x≈₁y with P-dec x | P-dec y
+        ... | yes P[x] | yes P[y] = rel₁ x≈₁y
+        ... | yes P[x] | no ¬P[y] = ⊥-elim (¬P[y] (P-cong x≈₁y P[x]))
+        ... | no ¬P[x] | yes P[y] = ⊥-elim (¬P[x] (P-cong (IsEquivalence.sym (Setoid.isEquivalence s₁) x≈₁y) P[y]))
+        ... | no ¬P[x] | no ¬P[y] = rel₂ x≈₁y
+
+        inv : B → A
+        inv (inj₁ (x , _)) = x
+        inv (inj₂ (x , _)) = x
+
+        inv-cong : Congruent _≈₂_ _≈₁_ inv
+        inv-cong {x = inj₁ (x , P[x])} {inj₁ (y , P[y])} (rel₁ x≈₁y) = x≈₁y
+        inv-cong {x = inj₂ (x , ¬P[x])} {inj₂ (y , ¬P[y])} (rel₂ x≈₁y) = x≈₁y
+
+        is-left-inv : LeftInverse s₁ s₂ (f which-is-cong f-cong) inv
+        is-left-inv {x = x} with P-dec x
+        ... | yes _ = IsEquivalence.refl (Setoid.isEquivalence s₁)
+        ... | no _ = IsEquivalence.refl (Setoid.isEquivalence s₁)
+
+        is-right-inv : RightInverse s₁ s₂ (f which-is-cong f-cong) inv
+        is-right-inv {inj₁ (x , P[x])} with P-dec x
+        ... | yes P[x]' = rel₁ (IsEquivalence.refl (Setoid.isEquivalence s₁))
+        ... | no ¬P[x]' = ⊥-elim (¬P[x]' P[x])
+        is-right-inv {inj₂ (x , ¬P[x])} with P-dec x
+        ... | yes P[x]' = ⊥-elim (¬P[x] P[x]')
+        ... | no ¬P[x]' = rel₂ (IsEquivalence.refl (Setoid.isEquivalence s₁))
 
 
 ×-bijection :
