@@ -19,7 +19,7 @@ open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; 
 open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
-open import Plasmaduck.Property.Defs using (DecidableProperty)
+open import Plasmaduck.Property.Defs using (DecidableProperty; any-type; all-type)
 open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
@@ -79,16 +79,6 @@ at-most-size-implies-decidable {n = suc-ℕ _} (inj₁ surj) = yes (surj .Surjec
 
 
 module _
-    (A-setoid : Setoid a ℓ)
-    (P : A-setoid .Carrier → Set ℓ₂)
-    where
-    any-type : Set (a ⊔ ℓ₂)
-    any-type = Σ (A-setoid .Carrier) λ x → P x
-
-    all-type : Set (a ⊔ ℓ₂)
-    all-type = ∀ x → P x
-
-module _
     {A-setoid : Setoid a ℓ}
     {n : ℕ}
     (A-bounded : Surjection (fin-setoid n) A-setoid)
@@ -109,7 +99,7 @@ module _
         inv : A → Fin n
         inv = proj₁ ∘ A-bounded .Surjection.surjective
 
-    any-via-surjection : Dec (any-type A-setoid P)
+    any-via-surjection : Dec (any-type P)
     any-via-surjection = sol
         where
             hunt : (j : ℕ) .(j≤n : j ≤ n) → Dec (Σ (Fin n) λ i → toℕ i < j × P (to i))
@@ -140,7 +130,7 @@ any' :
     (P : A-setoid .Carrier → Set ℓ₂) →
     (P-cong : CongruentProperty A-setoid P) →
     (dec-P : DecidableProperty P) →
-    Dec (any-type A-setoid P)
+    Dec (any-type P)
 any' (inj₁ surj) P P-cong dec-P = any-via-surjection surj P P-cong dec-P
 any' (inj₂ ¬A) P P-cong dec-P = no (¬A ∘ proj₁)
 
@@ -150,7 +140,7 @@ any :
     (P : A-setoid .Carrier → Set ℓ₂) →
     (P-cong : CongruentProperty A-setoid P) →
     (dec-P : DecidableProperty P) →
-    Dec (any-type A-setoid P)
+    Dec (any-type P)
 any A-finite P P-cong dec-P = any-via-surjection (bijection→surjection (A-finite .proj₂)) P P-cong dec-P
 
 module _
@@ -180,7 +170,7 @@ module _
         ... | yes P[x] = no (¬¬-lift P[x])
         ... | no ¬P[x] = yes ¬P[x]
 
-    all : Dec (all-type A-setoid P)
+    all : Dec (all-type P)
     all with any A-finite Q Q-cong dec-Q
     ... | yes (x , ¬P[x]) = no λ all-proof → ¬P[x] (all-proof x)
     ... | no ¬¬P-proof = yes λ x → case dec-P x of λ {
@@ -328,7 +318,7 @@ subset-of-finite-is-upper-bounded {s = s} {P} P-cong dec-P {n@(suc-ℕ n')} s-si
         s-finite : IsFinite s
         s-finite = n , s-size-n
 
-        any-P : Dec (any-type s P)
+        any-P : Dec (any-type P)
         any-P = any s-finite P P-cong dec-P
 
 ... | no pf = inj₂ pf
