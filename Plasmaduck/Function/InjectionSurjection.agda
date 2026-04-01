@@ -10,7 +10,7 @@ open import Relation.Nullary using (Dec; yes; no)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid)
 open import Plasmaduck.Relation.Defs using (CongruentProperty)
-open import Plasmaduck.Property.Defs using (DecidableProperty)
+open import Plasmaduck.Property.Defs using (DecidableProperty; _Extends_)
 
 
 module Plasmaduck.Function.InjectionSurjection where
@@ -232,3 +232,47 @@ module _
 
             to-surj : Surjective _~_ _≈_ to
             to-surj (z , P[z]) = z , to-surj' (z , P[z])
+
+    property-extension-surjection :
+        {Q : A → Set ℓ'} → (Q-cong : CongruentProperty A-setoid Q) → (Q-dec : DecidableProperty Q) → P Extends Q →
+        (Q-not-empty : Σ A Q) →
+        Surjection (property-subset-setoid A-setoid P) (property-subset-setoid A-setoid Q)
+    property-extension-surjection {Q = Q} Q-cong Q-dec Q→P (w , Q[w]) = record {
+        to = to;
+        cong = to-cong;
+        surjective = to-surjective
+        }
+        where
+            B-setoid = property-subset-setoid A-setoid P
+            C-setoid = property-subset-setoid A-setoid Q
+            B = B-setoid .Carrier
+            C = C-setoid .Carrier
+            _≈b_ = B-setoid .Setoid._≈_
+            _≈c_ = C-setoid .Setoid._≈_
+
+            to : B → C
+            to (x , P[x]) with Q-dec x
+            ... | yes Q[x] = x , Q[x]
+            ... | no ¬Q[x] = w , Q[w]
+
+            to-cong : Congruent _≈b_ _≈c_ to
+            to-cong {x , P[x]} {y , P[y]} x~y with Q-dec x | Q-dec y
+            ... | yes Q[x] | yes Q[y] = x~y
+            ... | no ¬Q[x] | no ¬Q[y] = refl
+            ... | yes Q[x] | no ¬Q[y] = ⊥-elim (¬Q[y] (Q-cong x~y Q[x]))
+            ... | no ¬Q[x] | yes Q[y] = ⊥-elim (¬Q[x] (Q-cong (sym x~y) Q[y]))
+
+            weak-inv : C → B
+            weak-inv (z , Q[z]) = (z , Q→P Q[z])
+
+            to-surj' :
+                (z : C)
+                {z₁ : B} →
+                z₁ ≈b weak-inv z →
+                to z₁ ≈c z
+            to-surj' (z , Q[z]) {z₁ , P[z₁} z₁≈inv-z with Q-dec z₁
+            ... | yes Q[z₁] = z₁≈inv-z
+            ... | no ¬Q[z₁] = ⊥-elim (¬Q[z₁] (Q-cong (sym z₁≈inv-z) Q[z]))
+
+            to-surjective : Surjective _≈b_ _≈c_ to
+            to-surjective z = weak-inv z , to-surj' z

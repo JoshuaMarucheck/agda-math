@@ -26,12 +26,13 @@ open import Plasmaduck.Function.InjectionSurjection using (bijection→surjectio
 open import Plasmaduck.Counting.Counting using (HasSize; has-size→at-most-raise)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
-open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection)
+open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection; any')
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
 open import Plasmaduck.Property.Negation using (negation-dec; negation-cong)
 open import Plasmaduck.Counting.StrongCounting using (⊎-property-split-size-theorem)
+open import Plasmaduck.Function.Surjectionish using (subset-surjectionish; _∘-surjectionish_)
 
 
 module Plasmaduck.Counting.Strengthening where
@@ -165,11 +166,7 @@ module _
     at-most-size-subset :
         {n : ℕ} → AtMostSize A-setoid n →
         AtMostSize (property-subset-setoid A-setoid P) n
-    at-most-size-subset (inj₂ ¬A) = inj₂ (¬A ∘ proj₁)
-    at-most-size-subset {zero-ℕ} (inj₁ surj) = inj₂ λ (x , _) → case surj .Surjection.surjective x of λ { (() , _) }
-    at-most-size-subset {suc-ℕ n'} (inj₁ surj) with any-via-surjection surj P P-cong P-dec
-    ... | no pf = inj₂ pf
-    ... | yes (_ , P[y]) = inj₁ (subset-surjection _~?_  P-cong P-dec P[y] ∘-surjection surj)
+    at-most-size-subset n-covers-A = subset-surjectionish _~?_ P-cong P-dec (any' n-covers-A P P-cong P-dec) ∘-surjectionish n-covers-A
 
 module _
     {A-setoid : Setoid a ℓ}
