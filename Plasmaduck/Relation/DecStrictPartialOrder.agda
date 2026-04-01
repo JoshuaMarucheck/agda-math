@@ -7,7 +7,7 @@ open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Function using (_∘_; _on_; flip; id; Injective; Surjective; Bijection; Congruent)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _+_; _∸_; z≤n) renaming (suc to suc-ℕ; zero to zero-ℕ; _≤_ to _≤ℕ_; _<_ to _<ℕ_; _≥_ to _≥ℕ_; _>_ to _>ℕ_)
+open import Data.Nat using (ℕ; _+_; _∸_; z≤n; s≤s) renaming (suc to suc-ℕ; zero to zero-ℕ; _≤_ to _≤ℕ_; _<_ to _<ℕ_; _≥_ to _≥ℕ_; _>_ to _>ℕ_)
 open import Data.Fin using () renaming (suc to suc-fin; zero to zero-fin)
 open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsStrictTotalOrder; Reflexive; Irreflexive; Transitive; Trans; Rel; IsEquivalence; _Respects₂_; _Respectsˡ_; _Respectsʳ_; Decidable; IsStrictPartialOrder; Trichotomous; Tri; tri<; tri≈; tri>; Asymmetric; IsDecStrictPartialOrder)
 open import Relation.Binary.Bundles using (Setoid)
@@ -16,13 +16,19 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respects-≡)
 open import Plasmaduck.Relation.Order using (ComparableAt; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
-open import Plasmaduck.Counting.Counting using (HasSize; IsFinite; AtMostSize; any; all; subset-of-finite-is-upper-bounded; one-equal-item; fin-setoid; ⊎-size-theorem)
+open import Plasmaduck.Counting.Counting using (HasSize; IsFinite; AtMostSize; any; all; subset-of-finite-is-upper-bounded; one-equal-item; fin-setoid; ⊎-size-theorem; _∘-at-most-size_)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; respects→cong-rel; rel-property) renaming (≈-cong to ≈-cong')
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; from-discrete-cong; ⊎-setoid; rel₁; rel₂)
-open import Plasmaduck.Counting.Strengthening using (subset-of-finite-is-finite; strengthen-core)
+open import Plasmaduck.Counting.Strengthening using (subset-of-finite-is-finite; strengthen-core; at-most-size-subset-decr; n∸1-unequal-items)
 open import Plasmaduck.Function.Bijection using (invert-bijection; id-bijection; ⊎-bijection; _∘-bijection_)
-open import Plasmaduck.Relation.RelationVector using (RelTree; branch-type; lift-rel-to-branch)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
+open import Plasmaduck.Relation.Restriction using (restrict-relation-dec)
+open import Plasmaduck.Property.Restriction using (restrict-property; restrict-property-dec; restrict-collapse)
+open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
+open import Plasmaduck.Function.Surjectionish using (surjection→surjectionish)
+open import Plasmaduck.Relation.RelationVector using (module RelationTree)
+
+
 
 module Plasmaduck.Relation.DecStrictPartialOrder where
 
@@ -385,6 +391,12 @@ module Trees where
         separation : (x y z : A) → Set ℓ₂
         separation x y z = x < z × z < y
 
+        ¬separation-edge-refl₁ : (x y : A) → ¬ separation x y x
+        ¬separation-edge-refl₁ x y (x<x , _) = irrefl refl x<x
+
+        ¬separation-edge-refl₂ : (x y : A) → ¬ separation x y y
+        ¬separation-edge-refl₂ x y (_ , y<y) = irrefl refl y<y
+
         separation-dec : (x y z : A) → Dec (separation x y z)
         separation-dec x y z with x <? z | z <? y
         ... | yes pf₁ | yes pf₂ = yes (pf₁ , pf₂)
@@ -422,78 +434,121 @@ module Trees where
         count-children A-finite x = subset-of-finite-is-finite _≈?_ (rel-property A-setoid {_~_ = flip _child-of_} (flip is-child-cong) x) (λ q → is-child-dec A-finite q x) A-finite
 
         module DescendentToChild where
+            open RelationTree _child-of_ using (RelTree; branch-type; lift-rel-to-branch; trans-branch; pop-last)
 
-            find-separation : {x y : A} → x < y → branch-type _child-of_ x y
-            find-separation = {!   !}
+            -- Note that this finds *a* path from x to y, not every path
+            find-separation : IsFinite A-setoid → {x y : A} → x < y → branch-type x y
+            find-separation A-finite@(n , A-size-n) {x} {y} x<y = find-separation-helper x<y (subset-of-finite-is-upper-bounded (separated-cong x y) (separation-dec x y) A-size-n)
                 where
-                    -- by strong induction on n
+                    -- by what amounts to strong induction on n
                     find-separation-helper :
                         {x y : A} → x < y →
                         {n : ℕ} → AtMostSize (property-subset-setoid A-setoid (separation x y)) n →
-                        branch-type _child-of_ x y
-                    find-separation-helper {x = x} {y} x<y (inj₂ no-sep) = lift-rel-to-branch _child-of_ (x<y , λ z x<z<y → no-sep (z , x<z<y))
+                        branch-type x y
+                    find-separation-helper {x = x} {y} x<y (inj₂ no-sep) = lift-rel-to-branch (x<y , λ z x<z<y → no-sep (z , x<z<y))
                     find-separation-helper {x = x} {y} x<y {zero-ℕ} (inj₁ n-items-at-most) with strengthen-core (λ x₂ y₂ → x₂ .proj₁ ≈? y₂ .proj₁) (inj₁ n-items-at-most)
-                    ... | zero-ℕ , m-items , z≤n = lift-rel-to-branch _child-of_ (x<y , λ z x<z<y → case invert-bijection m-items .Bijection.to (z , x<z<y) of λ ())
+                    ... | zero-ℕ , m-items , z≤n = lift-rel-to-branch (x<y , λ z x<z<y → case invert-bijection m-items .Bijection.to (z , x<z<y) of λ ())
                     find-separation-helper {x = x} {y} x<y {suc-ℕ n'} (inj₁ n-items-at-most) with strengthen-core (λ x₂ y₂ → x₂ .proj₁ ≈? y₂ .proj₁) (inj₁ n-items-at-most)
-                    ... | zero-ℕ , m-items , z≤n = lift-rel-to-branch _child-of_ (x<y , λ z x<z<y → case invert-bijection m-items .Bijection.to (z , x<z<y) of λ ())
-                    ... | suc-ℕ m' , m-items , m≤n = {!   !}
+                    ... | zero-ℕ , m-items , z≤n = lift-rel-to-branch (x<y , λ z x<z<y → case invert-bijection m-items .Bijection.to (z , x<z<y) of λ ())
+                    ... | suc-ℕ m' , m-items , m≤n = recursive-call
                         where
+                            base-setoid = property-subset-setoid A-setoid (separation x y)
+
                             xy-separation : separated x y
                             xy-separation = m-items .Bijection.to zero-fin
 
                             z = xy-separation .proj₁
-                            x<z = xy-separation .proj₂ .proj₁
-                            z<y = xy-separation .proj₂ .proj₂
+                            x<z<y = xy-separation .proj₂
+                            x<z = x<z<y .proj₁
+                            z<y = x<z<y .proj₂
+
+                            xz-double-separation-size-n' : AtMostSize (property-subset-setoid base-setoid (restrict-property A-setoid (separation x y) (separation x z))) n'
+                            xz-double-separation-size-n' =
+                                at-most-size-subset-decr
+                                    {A-setoid = base-setoid}
+                                    (restrict-relation-dec A-setoid (separation x y) _≈?_)
+                                    {P = restrict-property A-setoid (separation x y) (separation x z)}
+                                    (separated-cong x z)
+                                    (restrict-property-dec A-setoid (separation x y) ((separation-dec x z)))
+                                    {x = (z , x<z<y)} (λ (_ , z<z) → irrefl refl z<z) {n = n'}
+                                    (inj₁ n-items-at-most)
 
                             xz-separation-size-n' : AtMostSize (property-subset-setoid A-setoid (separation x z)) n'
-                            xz-separation-size-n' = {!   !}
+                            xz-separation-size-n' = surjection→surjectionish (bijection→surjection (restrict-collapse A-setoid (separation x y) (separation x z) (λ (x<q , q<z) → x<q , <-trans q<z z<y))) ∘-at-most-size xz-double-separation-size-n' --
 
-                            recursive-call₁ : branch-type _child-of_ x z
-                            recursive-call₁ = {! find-separation-helper {x = x} {y = z} x<z  !}
-                    -- find-separation-helper {x = x} {y} x<y {suc-ℕ n'} (inj₁ n-items-at-most) = {!   !}
+                            recursive-call₁ : branch-type x z
+                            recursive-call₁ = find-separation-helper {x = x} {y = z} x<z xz-separation-size-n'
+
+                            zy-double-separation-size-n' : AtMostSize (property-subset-setoid base-setoid (restrict-property A-setoid (separation x y) (separation z y))) n'
+                            zy-double-separation-size-n' =
+                                at-most-size-subset-decr
+                                {A-setoid = base-setoid}
+                                (restrict-relation-dec A-setoid (separation x y) _≈?_)
+                                {P = restrict-property A-setoid (separation x y) (separation z y)}
+                                (separated-cong z y)
+                                (restrict-property-dec A-setoid (separation x y) ((separation-dec z y)))
+                                {x = (z , x<z<y)} (λ (z<z , _) → irrefl refl z<z) {n = n'}
+                                (inj₁ n-items-at-most)
+
+                            zy-separation-size-n' : AtMostSize (property-subset-setoid A-setoid (separation z y)) n'
+                            zy-separation-size-n' = surjection→surjectionish (bijection→surjection (restrict-collapse A-setoid (separation x y) (separation z y) (λ (z<q , q<y) → <-trans x<z z<q , q<y))) ∘-at-most-size zy-double-separation-size-n' --
+
+                            recursive-call₂ : branch-type z y
+                            recursive-call₂ = find-separation-helper {x = z} {y = y} z<y zy-separation-size-n'
+
+                            recursive-call : branch-type x y
+                            recursive-call = trans-branch recursive-call₁ recursive-call₂
 
 
-            descendent→child : IsFinite A-setoid → (x : A) → LocalDescendentsOf x .Setoid.Carrier → (children-size : IsFinite (ChildrenOf x)) → children-size .proj₁ >ℕ 0
-            descendent→child A-finite x descendent (suc-ℕ n' , x-has-n-children) = _≤ℕ_.s≤s _≤ℕ_.z≤n
-            descendent→child A-finite x (y , y-descendent-of-x) (zero-ℕ , x-has-zero-children) = case invert-bijection x-has-zero-children .Bijection.to (y , y-descendent-of-x , (case separated-dec A-finite y x of λ {
-                (yes pf) → {!   !};
-                (no no-separation) → λ z z-separates-xy → no-separation (z , z-separates-xy)
-                })) of λ ()
+            descendent→child : IsFinite A-setoid → (x : A) → LocalDescendentsOf x .Setoid.Carrier → ChildrenOf x .Setoid.Carrier
+            descendent→child A-finite x (y , y<x) with pop-last (find-separation A-finite y<x)
+            ... | z , (y<z , z-child-of-x) = z , z-child-of-x
+
+            descendent→child-count : IsFinite A-setoid → (x : A) → LocalDescendentsOf x .Setoid.Carrier → (children-size : IsFinite (ChildrenOf x)) → children-size .proj₁ >ℕ 0
+            descendent→child-count A-finite x descendent (suc-ℕ n' , x-has-n-children) = s≤s z≤n
+            descendent→child-count A-finite x (y , y-descendent-of-x) (zero-ℕ , x-has-zero-children) with descendent→child A-finite x (y , y-descendent-of-x)
+            ... | z , z-child-of-x = case invert-bijection x-has-zero-children .Bijection.to (z , z-child-of-x) of λ ()
 
             descendents→children : IsFinite A-setoid → (x : A) → (descendents-size : IsFinite (LocalDescendentsOf x)) → (descendents-size .proj₁ >ℕ 0) → (children-size : IsFinite (ChildrenOf x)) → children-size .proj₁ >ℕ 0
-            descendents→children A-finite x (m , x-has-m-descendents) m>0 (suc-ℕ n' , x-has-n-children) = _≤ℕ_.s≤s _≤ℕ_.z≤n
-            descendents→children A-finite x (m , x-has-m-descendents) m>0 (zero-ℕ , x-has-zero-children) = ⊥-elim {!   !}
+            descendents→children A-finite x (suc-ℕ _ , x-has-m-descendents) (s≤s z≤n) children-size = descendent→child-count A-finite x (x-has-m-descendents .Bijection.to zero-fin) children-size
 
-        if-global-then-children : {n : ℕ} → HasSize A-setoid n → (x : A) → HasGlobalPosition x → ¬ IsLocallyNthPlace x (Data.Nat._∸_ n 1) → (ChildrenOf x) .Setoid.Carrier
-        if-global-then-children {n = zero-ℕ} A-size-n x _ _ = case invert-bijection A-size-n .Bijection.to x of λ ()
-        if-global-then-children {n = n@(suc-ℕ n')} A-size-n x x-is-global x-not-last-place with count-children (n , A-size-n) x
-        ... | (suc-ℕ m' , x-has-m-children) = {!   !}
-        ... | (zero-ℕ , x-has-zero-children) = ⊥-elim {!   !}
+        no-children-then-last : (Decidable (A-setoid .Setoid._≈_)) → {n : ℕ} → HasSize A-setoid n → (x : A) → HasGlobalPosition x → ¬ (ChildrenOf x) .Setoid.Carrier → IsLocallyNthPlace x (Data.Nat._∸_ n 1)
+        no-children-then-last _~?_ {n = zero-ℕ} A-size-n x _ _ = case invert-bijection A-size-n .Bijection.to x of λ ()
+        no-children-then-last _~?_ {n = n@(suc-ℕ n')} A-size-n x x-is-global x-has-no-children = x-is-last
             where
-                in-a-place : IsFinite (LocalAncestorsOf x)
+                open DescendentToChild using (descendent→child)
 
-                all-ancestors : (y : A) → ¬ x ≈ y → x < y
-                all-ancestors y x≉y with x-is-global y
+                all-ancestors : {y : A} → ¬ x ≈ y → x < y
+                all-ancestors {y} x≉y with x-is-global y
                 ... | cmp₁ x<y = x<y
                 ... | cmp₂ x≈y = ⊥-elim (x≉y x≈y)
-                ... | cmp₃ x>y = {!  x-has-zero-children !}
-
-
+                ... | cmp₃ x>y = case x-has-no-children (descendent→child (n , A-size-n) x (y , x>y)) of λ ()
 
                 all-ancestors-bijection : Bijection (property-subset-setoid A-setoid (λ y → ¬ x ≈ y)) (LocalAncestorsOf x)
                 all-ancestors-bijection = record {
-                    to = {!   !};
-                    cong = {!   !};
-                    bijective = {!   !}
+                    to = to;
+                    cong = id;
+                    bijective = id , to-surj
                     }
                     where
                         s₁ = property-subset-setoid A-setoid (λ y → ¬ x ≈ y)
                         s₂ = LocalAncestorsOf x
                         B = s₁ .Setoid.Carrier
                         C = s₂ .Setoid.Carrier
+                        _~₁_ = s₁ .Setoid._≈_
+                        _~₂_ = s₂ .Setoid._≈_
 
                         to : B → C
-                        to (x , x≉y) = x , {!   !}
+                        to (x , x≉y) = x , all-ancestors x≉y
+
+                        to-surj : Surjective _~₁_ _~₂_ to
+                        to-surj (y , x<y) = (y , λ x~y → irrefl x~y x<y) , λ z~y → z~y
 
                 x-is-last : IsLocallyNthPlace x n'
-                x-is-last = {!   !}
+                x-is-last = all-ancestors-bijection ∘-bijection n∸1-unequal-items A-setoid _~?_ {n = n'} A-size-n x
+
+        if-global-then-children : (Decidable (A-setoid .Setoid._≈_)) → {n : ℕ} → HasSize A-setoid n → (x : A) → HasGlobalPosition x → ¬ IsLocallyNthPlace x (Data.Nat._∸_ n 1) → (ChildrenOf x) .Setoid.Carrier
+        if-global-then-children _~?_ {n = zero-ℕ} A-size-n x _ _ = case invert-bijection A-size-n .Bijection.to x of λ ()
+        if-global-then-children _~?_ {n = n@(suc-ℕ n')} A-size-n x x-is-global x-not-last-place with count-children (n , A-size-n) x
+        ... | (suc-ℕ m' , x-has-m-children) = x-has-m-children .Bijection.to zero-fin
+        ... | (zero-ℕ , x-has-zero-children) = ⊥-elim (x-not-last-place (no-children-then-last _~?_ A-size-n x x-is-global ((λ ()) ∘ invert-bijection x-has-zero-children .Bijection.to)))

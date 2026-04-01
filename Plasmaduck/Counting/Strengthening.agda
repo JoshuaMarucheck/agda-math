@@ -26,10 +26,11 @@ open import Plasmaduck.Function.InjectionSurjection using (bijection→surjectio
 open import Plasmaduck.Counting.Counting using (HasSize; has-size→at-most-raise)
 open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
-open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection; any')
+open import Plasmaduck.Counting.Counting using (HasSize; AtMostSize; IsFinite; IsWeaklyFinite; subset-of-finite-is-upper-bounded; any-via-surjection; any'; one-equal-item)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin; any-zero-eq)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
+open import Plasmaduck.Relation.Defs using (rel-property; ≈-cong)
 open import Plasmaduck.Property.Negation using (negation-dec; negation-cong)
 open import Plasmaduck.Counting.StrongCounting using (⊎-property-split-size-theorem)
 open import Plasmaduck.Function.Surjectionish using (subset-surjectionish; _∘-surjectionish_)
@@ -230,3 +231,38 @@ module _
                 suc-ℕ n             ∎
                 )
                 where open ≤-Reasoning
+
+
+module _ (A-setoid : Setoid a ℓ) (_~?_ : Decidable (A-setoid .Setoid._≈_)) where
+    private
+        A = A-setoid .Setoid.Carrier
+        _~_ = A-setoid .Setoid._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans)
+
+    n∸1-unequal-items : {n : ℕ} → HasSize A-setoid (suc-ℕ n) → (x : A) → HasSize (property-subset-setoid A-setoid (λ y → ¬ x ~ y)) n
+    n∸1-unequal-items {n} A-size-n+1 x = n-other-items
+        where
+            is-x-cong : CongruentProperty A-setoid (x ~_)
+            is-x-cong = rel-property A-setoid (≈-cong A-setoid) x
+
+            is-x-dec : DecidableProperty (x ~_)
+            is-x-dec = x ~?_
+
+            not-x = λ y → ¬ x ~ y
+
+            not-x-cong : CongruentProperty A-setoid not-x
+            not-x-cong = negation-cong A-setoid (x ~_) is-x-cong
+
+            not-x-dec : DecidableProperty not-x
+            not-x-dec = negation-dec A-setoid (x ~_) is-x-dec
+
+            non-inclusion-is-finite : IsFinite (property-subset-setoid A-setoid (λ y → ¬ x ~ y))
+            non-inclusion-is-finite = subset-of-finite-is-finite {A-setoid = A-setoid} _~?_ {P = λ y → ¬ x ~ y} not-x-cong not-x-dec (suc-ℕ n , A-size-n+1)
+
+            m = non-inclusion-is-finite .proj₁
+            m-other-items = non-inclusion-is-finite .proj₂
+            n=m : n ≡ m
+            n=m = s≡s⁻¹ (⊎-property-split-size-theorem {A-setoid = A-setoid} (x ~_) is-x-cong is-x-dec A-size-n+1 (one-equal-item A-setoid x) m-other-items)
+
+            n-other-items : HasSize (property-subset-setoid A-setoid (λ y → ¬ x ~ y)) n
+            n-other-items = change-type (cong (HasSize (property-subset-setoid A-setoid (λ y → ¬ x ~ y))) (≡-sym n=m)) m-other-items
