@@ -18,6 +18,23 @@ module Plasmaduck.Function.InjectionSurjection where
 open Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _which-is-cong_) public
 open Setoid using (Carrier; isEquivalence)
 
+variable
+    ℓ' : Level
+
+
+module _
+    {a b ℓ₁ ℓ₂ : Level}
+    (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
+    where
+
+    private
+        A = A-setoid .Carrier
+        B = B-setoid .Carrier
+
+    surjection-weak-right-inv : Surjection A-setoid B-setoid → B → A
+    surjection-weak-right-inv surj = proj₁ ∘ surj .Surjection.surjective
+
+
 module _
     {a b ℓ₁ ℓ₂ : Level}
     (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
@@ -56,6 +73,8 @@ module _
     left-inv→injective : HasLeftInverse → Injective _~_ _≈_ f
     left-inv→injective (g which-is-cong g-cong , gfx~x) fx≈fy = ~-trans (~-trans (~-sym gfx~x) (g-cong fx≈fy)) gfx~x
 
+    HasWeakLeftInverse : Set (a ⊔ b ⊔ ℓ₁)
+    HasWeakLeftInverse = Σ (B → A) LeftInverse
 
     -- Likewise, I suspect this one is too strong too
     -- See below comment, but basically we can't prove that the inverse given by Surjective is congruent.
@@ -65,6 +84,16 @@ module _
     right-inv→surjective : HasRightInverse → Surjective _~_ _≈_ f
     right-inv→surjective (g which-is-cong g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
 
+
+    -- Apparently, this is correct
+    HasWeakRightInverse : Set (a ⊔ b ⊔ ℓ₂)
+    HasWeakRightInverse = Σ (B → A) RightInverse
+
+    surjective→weak-right-inv : Surjective _~_ _≈_ f → HasWeakRightInverse
+    surjective→weak-right-inv f-surj = proj₁ ∘ f-surj , λ {y} → f-surj y .proj₂ ~-refl
+
+    weak-right-inv→surjective : HasWeakRightInverse → Surjective _~_ _≈_ f
+    weak-right-inv→surjective (g , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
 
     -- This, however, is just right
     HasBothInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
