@@ -24,13 +24,14 @@ open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance)
+open import Plasmaduck.Function.Surjectionish using (Surjectionish; _∘-surjectionish_)
 
 
 
 module Plasmaduck.Counting.Counting where
 
 variable
-    a c d ℓ ℓ₁ ℓ₂ : Level
+    a b c d ℓ ℓ₁ ℓ₂ : Level
 
 fin-setoid : (n : ℕ) → Setoid lzero lzero
 fin-setoid n = discrete-setoid (Fin n)
@@ -46,7 +47,7 @@ AtLeastSize setoid n = Injection (fin-setoid n) setoid
 -- Defined like this since if the target set is empty, no surjection exists since no functions exist. oops.
 -- Of course, such a definition means the target set is decidable.
 AtMostSize : (setoid : Setoid c ℓ) (n : ℕ) → Set (c ⊔ ℓ)
-AtMostSize setoid n = Surjection (fin-setoid n) setoid ⊎ ¬ (setoid .Carrier)
+AtMostSize setoid n = Surjectionish (fin-setoid n) setoid
 
 -- Or maybe this definition would be easier to use
 -- Certainly, it's easier to restrict.
@@ -293,10 +294,7 @@ module _
         to-surj y = inv y , λ { ≡-refl → is-right-inv y }
 
 raise-at-most : (s : Setoid c ℓ) → {m n : ℕ} → AtMostSize s m → m ≤ n → AtMostSize s n
-raise-at-most s {m} {n} (inj₂ ¬s) m≤n = inj₂ ¬s
-raise-at-most s {m} {n} (inj₁ s-size-m) m≤n with ≤-bound m≤n
-... | inj₂ ¬Fin-m = inj₂ λ x → ¬Fin-m (s-size-m .Surjection.surjective x .proj₁)
-... | inj₁ n-m-surj = inj₁ (s-size-m ∘-surjection n-m-surj)
+raise-at-most s {m} {n} s-size-m m≤n = s-size-m ∘-surjectionish (≤-bound m≤n)
 
 has-size→at-most : (s : Setoid c ℓ) → {n : ℕ} → HasSize s n → AtMostSize s n
 has-size→at-most s {n = n} s-size-n = inj₁ (bijection→surjection s-size-n)
@@ -306,6 +304,10 @@ has-size→at-most-raise s s-size-m m≤n = raise-at-most s (has-size→at-most 
 
 finite-is-weakly-finite : (s : Setoid c ℓ) → IsFinite s → IsWeaklyFinite s
 finite-is-weakly-finite s (n , n-bij-s) = n , inj₁ (bijection→surjection n-bij-s)
+
+infixr 9 _∘-at-most-size_
+_∘-at-most-size_ : {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} {n : ℕ} → Surjectionish A-setoid B-setoid → AtMostSize A-setoid n → AtMostSize B-setoid n
+_∘-at-most-size_ = _∘-surjectionish_
 
 subset-of-finite-is-upper-bounded :
     {s : Setoid c ℓ} →
