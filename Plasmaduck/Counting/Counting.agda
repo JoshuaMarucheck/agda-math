@@ -481,3 +481,34 @@ maybe-bijection-lemma m = record {
 record InfiniteSize (setoid : Setoid c ℓ) : Set (c ⊔ ℓ) where
     field
         infinite : Injection (discrete-setoid ℕ) setoid
+
+fin-nat-bijection : (n : ℕ) → HasSize (property-subset-setoid (discrete-setoid ℕ) (_< n)) n
+fin-nat-bijection n = record {
+    to = to;
+    cong = to-cong;
+    bijective = to-inj , to-surj
+    }
+    where
+        A-setoid = fin-setoid n
+        B-setoid = property-subset-setoid (discrete-setoid ℕ) (_< n)
+        A = A-setoid .Carrier
+        B = B-setoid .Carrier
+        _~_ = B-setoid ._≈_
+        open IsEquivalence (B-setoid .Setoid.isEquivalence) using (refl; sym; trans)
+
+        to : A → B
+        to m = toℕ m , toℕ<n m
+
+        to-cong : Congruent _≡_ _~_ to
+        to-cong {x = x} ≡-refl = refl {x = to x}
+
+        to-inj : Injective _≡_ _~_ to
+        to-inj {x = m} {o} toℕm≡toℕn =
+            m                           ≡⟨ ≡-sym (fromℕ<-toℕ m (toℕ<n m)) ⟩
+            fromℕ< {toℕ m} (toℕ<n m)    ≡⟨ fromℕ<-cong (toℕ m) (toℕ o) toℕm≡toℕn (toℕ<n m) (toℕ<n o) ⟩
+            fromℕ< {toℕ o} (toℕ<n o)    ≡⟨ fromℕ<-toℕ o (toℕ<n o) ⟩
+            o                           ∎
+            where open ≡-Reasoning
+
+        to-surj : Surjective _≡_ _~_ to
+        to-surj (z , z<n) = fromℕ< {m = z} z<n , λ { ≡-refl → toℕ-fromℕ< {m = z} {n = n} z<n }
