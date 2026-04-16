@@ -5,7 +5,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
-open import Function using (Congruent)
+open import Function using (Congruent; _∘_)
 
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
@@ -16,7 +16,7 @@ module Plasmaduck.SetoidExperiment.SetoidMachinery where
 open Setoid using (Carrier; _≈_; isEquivalence)
 
 variable
-    a b c d e f ℓ ℓ₁ ℓ₂ : Level
+    a b c d e f ℓ ℓ₁ ℓ₂ ℓ₃ : Level
 
 
 record SetoidFunction (S₁ : Setoid a b) (S₂ : Setoid c d) : Set (a ⊔ b ⊔ c ⊔ d) where
@@ -24,6 +24,13 @@ record SetoidFunction (S₁ : Setoid a b) (S₂ : Setoid c d) : Set (a ⊔ b ⊔
     field
         func : S₁ .Carrier → S₂ .Carrier
         respects : Congruent (S₁ ._≈_) (S₂ ._≈_) func
+
+_∘'_ : {S₁ : Setoid a ℓ₁} {S₂ : Setoid b ℓ₂} {S₃ : Setoid c ℓ₃} →
+    SetoidFunction S₂ S₃ → SetoidFunction S₁ S₂ → SetoidFunction S₁ S₃
+f ∘' g = record {
+    func = (f .SetoidFunction.func) ∘  (g .SetoidFunction.func);
+    respects = (f .SetoidFunction.respects) ∘ (g .SetoidFunction.respects)
+    }
 
 SetoidFunctionEquality : (S₁ : Setoid a b) (S₂ : Setoid c d) → Rel (SetoidFunction S₁ S₂) (a ⊔ b ⊔ d)
 SetoidFunctionEquality S₁ S₂ = λ f g → ∀ {x y : S₁ .Carrier} → (S₁ ._≈_ x y) → S₂ ._≈_ (f .SetoidFunction.func x) (g .SetoidFunction.func y)

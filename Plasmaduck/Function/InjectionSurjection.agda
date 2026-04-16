@@ -8,7 +8,7 @@ open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (IsEquivalence; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid; _∘'_)
 open import Plasmaduck.Relation.Defs using (CongruentProperty)
 open import Plasmaduck.Property.Defs using (DecidableProperty; _Extends_)
 
@@ -84,6 +84,16 @@ module _
     right-inv→surjective : HasRightInverse → Surjective _~_ _≈_ f
     right-inv→surjective (g which-is-cong g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
 
+    weak-right-inv-is-injective : {g : B → A} → RightInverse g → Injective _≈_ _~_ g
+    weak-right-inv-is-injective {g} fgy~y {x} {y} gx~gy = begin
+        x       ≈⟨ ≈-sym fgy~y ⟩
+        f (g x) ≈⟨ f-cong gx~gy ⟩
+        f (g y) ≈⟨ fgy~y ⟩
+        y       ∎
+        where open import Relation.Binary.Reasoning.Setoid B-setoid
+
+    right-inv-is-injective : (right-inv : HasRightInverse) → Injective _≈_ _~_ (right-inv .proj₁ .SetoidFunction.func)
+    right-inv-is-injective (_ , fgy~y) = weak-right-inv-is-injective fgy~y
 
     -- Apparently, this is correct
     HasWeakRightInverse : Set (a ⊔ b ⊔ ℓ₂)
@@ -94,6 +104,7 @@ module _
 
     weak-right-inv→surjective : HasWeakRightInverse → Surjective _~_ _≈_ f
     weak-right-inv→surjective (g , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
+
 
     -- This, however, is just right
     HasBothInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
@@ -121,6 +132,35 @@ module _
                 y           ≈⟨ ≈-sym (fgy≈y) ⟩
                 f (g y)   ∎)
                 where open import Relation.Binary.Reasoning.Setoid B-setoid
+
+
+module _
+    {a b c ℓ₁ ℓ₂ ℓ₃ : Level}
+    {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} {C-setoid : Setoid c ℓ₃}
+    (g-func : SetoidFunction B-setoid C-setoid)
+    (f-func : SetoidFunction A-setoid B-setoid)
+    where
+    private
+        A = A-setoid .Carrier
+        B = B-setoid .Carrier
+        C = C-setoid .Carrier
+
+    RightInverse-conjunct :
+        {g-inv : C → B} →
+        RightInverse B-setoid C-setoid g-func g-inv →
+        {f-inv : B → A} →
+        RightInverse A-setoid B-setoid f-func f-inv →
+        RightInverse A-setoid C-setoid (g-func ∘' f-func) (f-inv ∘ g-inv)
+    RightInverse-conjunct = λ z {f-inv} z₁ {y} →
+        IsEquivalence.trans (isEquivalence C-setoid)
+        (g-func .SetoidFunction.respects z₁) z
+
+    HasRightInverse-conjunct :
+        HasRightInverse B-setoid C-setoid g-func →
+        HasRightInverse A-setoid B-setoid f-func →
+        HasRightInverse A-setoid C-setoid (g-func ∘' f-func)
+    HasRightInverse-conjunct (g-inv , g-inv-is-inv) (f-inv , f-inv-is-inv) = (f-inv ∘' g-inv) , RightInverse-conjunct g-inv-is-inv f-inv-is-inv
+
 
 module _
     {a b ℓ₁ ℓ₂ : Level}
