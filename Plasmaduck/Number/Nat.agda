@@ -1,18 +1,23 @@
+open import Level using (Level)
 open import Relation.Binary.PropositionalEquality using (_≢_; _≡_; inspect; cong; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Relation.Binary using (tri<; tri≈; tri>)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_; _∸_; <-cmp; _<?_; s≤s; z≤n; s≤s⁻¹; zero; suc; pred)
-open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-trans; ≤-reflexive; +-comm; +-suc; _≟_)
+open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-trans; ≤-reflexive; +-comm; +-suc; _≟_; m∸n+n≡m)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
+
+open import Plasmaduck.Util.TypeChange using (change-type)
+
 
 module Plasmaduck.Number.Nat where
 
 
 variable
     m n o : ℕ
+    ℓ : Level
 
 n≤n : n ≤ n
 n≤n {n = zero} = z≤n
@@ -92,3 +97,25 @@ m≡spm {m = m} m≢0 | _ | m' , m≡sm' =
     suc (suc m' ∸ 1)    ≡⟨ cong (λ x → suc (x ∸ 1)) (≡-sym m≡sm') ⟩
     suc (m ∸ 1)         ∎
     where open ≡-Reasoning
+
+module _
+    (P : ℕ → Set ℓ)
+    where
+
+    inductive-step-type : Set ℓ
+    inductive-step-type = ∀ n → P n → P (suc n)
+
+    module _
+        (IH : inductive-step-type)
+        where
+
+        induction : P 0 → ∀ n → P n
+        induction P[0] zero = P[0]
+        induction P[0] (suc n) = IH n (induction P[0] n)
+
+        +-induction : ∀ m n → P m → P (n + m)
+        +-induction m zero P[m] = P[m]
+        +-induction m (suc n) P[m] = IH (n + m) (+-induction m n P[m])
+
+        ≤-induction : ∀ {m n : ℕ} → m ≤ n → P m → P n
+        ≤-induction {m = m} {n} m≤n P[m] = change-type (cong P (m∸n+n≡m m≤n)) (+-induction m (n ∸ m) P[m])
