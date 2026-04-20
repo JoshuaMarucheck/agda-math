@@ -1,11 +1,11 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary using (Setoid; Rel; IsEquivalence)
+open import Relation.Binary using (Setoid; Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
-open import Function using (Congruent; _∘_)
+open import Function using (Congruent; _∘_; _on_)
 
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
@@ -96,6 +96,28 @@ property-subset-setoid A P = record {
     where
         open IsEquivalence
 
+
+module On {A : Set ℓ} (B : Setoid b ℓ₂) (f : A → B .Carrier) where
+    _~B_ : Rel A ℓ₂
+    _~B_ = (B ._≈_) on f
+
+    ~B-eq : IsEquivalence _~B_
+    ~B-eq = record {
+        refl = B .Setoid.refl;
+        sym = B .Setoid.sym;
+        trans = B .Setoid.trans
+        }
+
+    B-setoid : Setoid ℓ ℓ₂
+    B-setoid = record {
+        Carrier = A;
+        _≈_ = _~B_;
+        isEquivalence = ~B-eq
+        }
+
+setoid-on : {A : Set ℓ} (B : Setoid b ℓ₂) (f : A → B .Carrier) → Setoid ℓ ℓ₂
+setoid-on B f = B-setoid
+    where open On B f
 
 
 data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid .Carrier ⊎ setoid₂ .Carrier) (c ⊔ ℓ ⊔ d ⊔ ℓ₂) where

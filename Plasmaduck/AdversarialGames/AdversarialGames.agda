@@ -10,8 +10,10 @@ open import Data.Nat using (ℕ; _+_; _≤_; _≥_) renaming (zero to zero-ℕ; 
 open import Data.Nat.Properties using (≤-refl; ≤-trans; <-irrefl)
 open import Data.Fin using (Fin) renaming (zero to zero-fin; suc to suc-fin)
 open import Data.Vec using (Vec; lookup; []; _∷_; reverse)
-open import Relation.Binary using (REL; Rel; IsEquivalence)
+open import Relation.Binary using (Setoid; REL; Rel; IsEquivalence)
 
+open import Plasmaduck.Relation.Vector using (VectorSetoid; VectorSetoid')
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; setoid-on)
 open import Plasmaduck.Data.Nat using (n≤sn)
 open import Plasmaduck.Data.Product using (Σ≡)
 open import Plasmaduck.Util.Case using (case_of_)
@@ -20,6 +22,8 @@ open import Plasmaduck.Util.TypeChange using (change-type; change-type-flatten)
 
 
 module Plasmaduck.AdversarialGames.AdversarialGames where
+
+open Setoid using (Carrier)
 
 variable
     a b c ℓ ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ ℓ₆ : Level
@@ -150,6 +154,26 @@ module Types
             field
                 partial-game : PartialGame n
                 is-complete : stop-condition (proj₁ (current-state partial-game))
+
+        module _ {_~_ : Rel State ℓ₅} (isEquivalence : IsEquivalence _~_) where
+            StateSetoid : Setoid a ℓ₅
+            StateSetoid = record {
+                Carrier = State;
+                _≈_ = _~_;
+                isEquivalence = isEquivalence
+                }
+
+            n-PartialGameSetoid : ℕ → Setoid (a ⊔ ℓ₃ ⊔ ℓ₄ ⊔ ℓ₂ ⊔ ℓ₆) (a ⊔ ℓ₅)
+            n-PartialGameSetoid n = setoid-on (VectorSetoid StateSetoid (suc-ℕ n)) (game-to-state-vector {n = n})
+
+            PartialGameSetoid : Setoid (a ⊔ ℓ₃ ⊔ ℓ₄ ⊔ ℓ₂ ⊔ ℓ₆) (a ⊔ ℓ₅)
+            PartialGameSetoid = setoid-on (VectorSetoid' StateSetoid) game-prod-to-vector-prod
+
+            n-FullGameSetoid : ℕ → Setoid (a ⊔ ℓ₃ ⊔ ℓ₄ ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₆) (a ⊔ ℓ₅)
+            n-FullGameSetoid n = setoid-on (VectorSetoid StateSetoid (suc-ℕ n)) (game-to-state-vector ∘ FullGame.partial-game)
+
+            FullGameSetoid : Setoid (a ⊔ ℓ₃ ⊔ ℓ₄ ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₆) (a ⊔ ℓ₅)
+            FullGameSetoid = setoid-on {A = Σ ℕ FullGame} (VectorSetoid' StateSetoid) (λ (n , game) → game-prod-to-vector-prod (n , FullGame.partial-game game))
 
 
         Strategy-takes-≥-n-moves : (n : ℕ) → Set _

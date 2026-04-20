@@ -2,9 +2,10 @@ open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero t
 open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; Reveal_·_is_; [_]; refl; sym; trans)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
-open import Data.Nat using (ℕ; z≤n; s≤s) renaming (zero to zero-ℕ; suc to suc-ℕ)
+open import Data.Nat using (ℕ; z≤n; s≤s; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
 open import Data.Nat.Properties using (+-suc)
 open import Data.Fin using (Fin; zero; suc; toℕ) renaming (_<_ to _<-fin_)
+open import Data.Vec using (Vec; []; _∷_; head; tail; lookup)
 open import Relation.Binary using (Rel; Transitive)
 open import Function using (flip)
 
@@ -14,6 +15,23 @@ module Plasmaduck.Relation.RelationVector where
 
 variable
     a b c ℓ ℓ₁ ℓ₂ : Level
+
+
+module RelationVector {A : Set a} (_~_ : Rel A ℓ) where
+    data PairwiseRelationVector : {n : ℕ} → Vec A n → Set (a ⊔ ℓ) where
+        empty : (v : Vec A 0) → PairwiseRelationVector v
+        single : (v : Vec A 1) → PairwiseRelationVector v
+        head-pair : {n : ℕ} → (vec : Vec A (suc-ℕ (suc-ℕ n))) → head vec ~ head (tail vec) → PairwiseRelationVector {n = suc-ℕ n} (tail vec) → PairwiseRelationVector vec
+
+    module _ (~-trans : Transitive _~_) where
+        lookup-trans : {n : ℕ} {vec : Vec A n} → PairwiseRelationVector vec → (i j : Fin n) → i <-fin j → lookup vec i ~ lookup vec j
+        lookup-trans {n = 0} _ ()
+        lookup-trans {n = 1} _ zero zero ()
+        lookup-trans {n = suc-ℕ (suc-ℕ n'')} (head-pair (x ∷ y ∷ xs) x~y rel-vec) i zero ()
+        lookup-trans {n = suc-ℕ (suc-ℕ n'')} (head-pair (x ∷ y ∷ xs) x~y rel-vec) zero (suc zero) i<j = x~y
+        lookup-trans {n = suc-ℕ (suc-ℕ n'')} (head-pair (x ∷ y ∷ xs) x~y rel-vec) zero (suc (suc j'')) i<j = ~-trans x~y (lookup-trans rel-vec zero (suc j'') (s≤s z≤n))
+        lookup-trans {n = suc-ℕ (suc-ℕ n'')} (head-pair (x ∷ y ∷ xs) x~y rel-vec) (suc i') (suc j') i<j = lookup-trans rel-vec i' j' (s≤s⁻¹ i<j)
+
 
 
 module RelationTree {A : Set a} (_~_ : Rel A ℓ) where
