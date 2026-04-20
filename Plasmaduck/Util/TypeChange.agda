@@ -26,6 +26,13 @@ change-type-trans refl refl = refl
 change-type-trans' : (pf₁ : A ≡ B) (pf₂ : B ≡ C) (pf₃ : A ≡ C) {x : A} → change-type pf₂ (change-type pf₁ x) ≡ change-type pf₃ x
 change-type-trans' refl refl refl = refl
 
+-- Note the following use of change-type-trans'
+change-type-flatten : (pf₁ : A ≡ B) (pf₂ : B ≡ A) {x : A} → change-type pf₂ (change-type pf₁ x) ≡ x
+change-type-flatten pf₁ pf₂ = change-type-trans' pf₁ pf₂ refl
+
+change-type-elim : (pf : A ≡ A) {x : A} → change-type pf x ≡ x
+change-type-elim refl = refl
+
 change-type-swap : (pf : A ≡ B) {x : A} {y : B} → x ≡ change-type (sym pf) y → change-type pf x ≡ y
 change-type-swap refl refl = refl
 
