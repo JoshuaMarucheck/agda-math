@@ -22,7 +22,7 @@ open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty
 open import Plasmaduck.Property.Negation using (negation-cong)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
 open import Plasmaduck.Counting.Counting using (any)
-open import Plasmaduck.Number.Nat using (n≤sn; n≤n; ≤→<≡)
+open import Plasmaduck.Data.Nat using (n≤sn; n≤n; ≤→<≡)
 open import Plasmaduck.Util.Negation using (¬¬-lift; invert-product)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.TypeChange using (change-type)

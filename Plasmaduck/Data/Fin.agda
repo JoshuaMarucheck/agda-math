@@ -14,7 +14,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.TypeChange using (change-type)
 
 
-module Plasmaduck.Number.Fin where
+module Plasmaduck.Data.Fin where
 
 suc-inj : {n : ℕ} → {x y : Fin n} → suc x ≡ suc y → x ≡ y
 suc-inj {n} {x} {y} refl = refl

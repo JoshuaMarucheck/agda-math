@@ -16,7 +16,7 @@ open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respec
 open import Plasmaduck.Relation.Order using (Comparable; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Util.TypeChange using (change-type)
-open import Plasmaduck.Number.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
+open import Plasmaduck.Data.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
 open import Plasmaduck.Relation.RelationVector using (vec-pairwise-rel)
 
 module Plasmaduck.Puzzles.FiveHorses where

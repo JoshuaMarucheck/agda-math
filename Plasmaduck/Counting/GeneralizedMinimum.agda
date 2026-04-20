@@ -14,7 +14,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; discrete-setoid)
 open import Plasmaduck.Counting.Counting using (any; all; fin-nat-bijection)
-open import Plasmaduck.Number.Nat using (n≤n; n≤sn; ≤→<≡; s≡s⁻¹)
+open import Plasmaduck.Data.Nat using (n≤n; n≤sn; ≤→<≡; s≡s⁻¹)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Defs using (from-discrete-cong-property)
 open import Plasmaduck.Util.Case using (case_of_)

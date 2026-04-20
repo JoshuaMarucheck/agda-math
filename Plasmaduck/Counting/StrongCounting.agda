@@ -20,7 +20,7 @@ open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijectio
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
 open import Plasmaduck.Property.Defs using (DecidableProperty)
-open import Plasmaduck.Number.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
+open import Plasmaduck.Data.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
 open import Plasmaduck.Counting.Counting using (fin-setoid; HasSize; fin-⊎-bijection; IsFinite)

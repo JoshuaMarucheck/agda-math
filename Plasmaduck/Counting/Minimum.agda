@@ -12,7 +12,7 @@ open import Data.Nat.Properties using (≤-trans)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; discrete-setoid)
 open import Plasmaduck.Counting.Counting using (any; fin-nat-bijection)
-open import Plasmaduck.Number.Nat using (n≤n; n≤sn)
+open import Plasmaduck.Data.Nat using (n≤n; n≤sn)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Defs using (from-discrete-cong-property)
 

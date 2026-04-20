@@ -18,7 +18,7 @@ open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; discrete-setoid; property-subset-setoid)
 open import Plasmaduck.Property.Defs using (DecidableProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
-open import Plasmaduck.Number.Nat using (+-induction; ≤-induction; n≤n; n≤sn; ≤→<≡)
+open import Plasmaduck.Data.Nat using (+-induction; ≤-induction; n≤n; n≤sn; ≤→<≡)
 open import Plasmaduck.Counting.Counting using (any; fin-nat-bijection)
 open import Plasmaduck.Function.Sequence using (module Repeat)
 

@@ -12,7 +12,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Plasmaduck.Util.TypeChange using (change-type)
 
 
-module Plasmaduck.Number.Nat where
+module Plasmaduck.Data.Nat where
 
 
 variable
