@@ -114,6 +114,28 @@ _∘-bijection_ {s₁ = s₁} {s₂} {s₃} bij₂ bij₁ = record {
             z           ∎
             where open import Relation.Binary.Reasoning.Setoid s₃
 
+module _
+    {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} (bij : Bijection s₁ s₂)
+    where
+
+    private
+        A = s₁ .Carrier
+        B = s₂ .Carrier
+
+        f-func : SetoidFunction s₁ s₂
+        f-func = (bij .Bijection.to) which-is-cong (bij .Bijection.cong)
+
+        g : B → A
+        g = (invert-bijection bij) .Bijection.to
+
+    open InverseFunction bij
+
+    invert-is-left-inverse : LeftInverse s₁ s₂ f-func g
+    invert-is-left-inverse {x = x} = is-left-inv x
+
+    invert-is-right-inverse : RightInverse s₁ s₂ f-func g
+    invert-is-right-inverse {y = y} = is-right-inv y
+
 
 ⊎-bijection :
     {s₁ : Setoid a ℓ₁} {s₂ : Setoid b ℓ₂} {s₃ : Setoid c ℓ₃} {s₄ : Setoid d ℓ₄} →
