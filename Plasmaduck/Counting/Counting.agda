@@ -3,14 +3,15 @@ open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; R
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Function using (_∘_; flip; Bijective; Injective; Surjective; Bijection; Injection; Surjection; Congruent)
 open import Relation.Binary.Bundles using (Setoid)
-open import Relation.Binary using (Rel; Decidable; IsEquivalence)
+open import Relation.Binary using (Rel; Decidable; IsEquivalence; Reflexive)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
+open import Data.Unit using (⊤; tt)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Nat using (ℕ; _+_; _*_; _∸_; _≤_; _≥_; _<_; z≤n; s≤s; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
+open import Data.Nat using (ℕ; _+_; _*_; _∸_; _/_; _≤_; _≥_; _<_; z≤n; s≤s; s≤s⁻¹; NonZero) renaming (zero to zero-ℕ; suc to suc-ℕ)
 open import Data.Nat.Properties using (≤-reflexive; <-trans; ≤-trans; ≤-<-trans; _<?_; m+[n∸m]≡n)
 open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; toℕ; fromℕ<)
 open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; toℕ-↑ˡ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
@@ -66,6 +67,10 @@ IsWeaklyFinite' setoid = Σ ℕ λ n → AtMostSize' setoid n
 
 IsFinite : (setoid : Setoid c ℓ) → Set (c ⊔ ℓ)
 IsFinite setoid = Σ ℕ λ n → HasSize setoid n
+
+
+SubsetHasSize : (A-setoid : Setoid a ℓ) → (A-setoid .Carrier → Set ℓ₂) → ℕ → Set (a ⊔ ℓ ⊔ ℓ₂)
+SubsetHasSize A-setoid P n = HasSize (property-subset-setoid A-setoid P) n
 
 
 -- This property makes me question my definition of AtMostSize.
@@ -382,6 +387,25 @@ module _ (A-setoid : Setoid a ℓ) where
             B = B-setoid .Carrier
             to : Fin 1 → B
             to _ = (x , refl)
+
+    at-least-one-related-item :
+        {_~'_ : Rel A ℓ₂} → Reflexive _~'_ →
+        (x : A) → AtLeastSize (property-subset-setoid A-setoid (x ~'_)) 1
+    at-least-one-related-item {_~'_ = _~'_} ~'-refl x = record {
+        to = to;
+        cong = from-discrete-cong (property-subset-setoid A-setoid (x ~'_)) to;
+        injective = λ { {x = zero} {y = zero} _ → ≡-refl }
+        }
+        where
+            to : Fin 1 → Σ A (x ~'_)
+            to _ = x , ~'-refl
+
+    nonzero-related-item :
+        {_~'_ : Rel A ℓ₂} → Reflexive _~'_ →
+        (x : A) → {n : ℕ} → HasSize (property-subset-setoid A-setoid (x ~'_)) n →
+        NonZero n
+    nonzero-related-item ~'-refl x {zero-ℕ} size-zero = case invert-bijection size-zero .Bijection.to (x , ~'-refl) of λ ()
+    nonzero-related-item ~'-refl x {suc-ℕ _} _ = record { nonZero = tt }
 
 fin-⊎-bijection : (m n : ℕ) → Bijection (discrete-setoid (Fin (m + n))) (discrete-setoid (Fin m ⊎ Fin n))
 fin-⊎-bijection m n = record {
