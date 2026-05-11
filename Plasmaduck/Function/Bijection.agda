@@ -429,3 +429,64 @@ module _ (A-setoid : Setoid a ℓ₁) where
 
         surjective : Surjective _≡_ (×-rel (discrete-setoid A) (discrete-setoid B)) f
         surjective (x₁ , y₁) = (x₁ , y₁) , λ { ≡-refl → ≡-refl , ≡-refl }
+
+
+-- This setoid is bad at telling exactly which item you have as the second item;
+-- the second setoid could be any of a number of setoids, and all we know is that
+-- those setoids biject with each other.
+module _ (A-setoid : Setoid a ℓ₁) where
+    private
+        A = A-setoid .Carrier
+        _~₁_ = A-setoid ._≈_
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using () renaming (refl to A-refl; sym to A-sym; trans to A-trans)
+
+    module _ (make-B-setoid : SetoidFunction A-setoid (bijection-setoid c ℓ₂)) where
+        private
+            make-B = make-B-setoid .SetoidFunction.func
+
+        -- *sigh*
+        -- Σ-rel : Rel (Σ A λ x → make-B x .Carrier) {!   !}
+        -- Σ-rel = {!   !}
+
+        -- Σ-rel : Rel (Σ A λ x → make-B x .Carrier) ?
+        -- Σ-rel (x₁ , y₁) (x₂ , y₂) = Σ (x₁ ~₁ x₂) λ x₁~x₂ → (make-B-setoid .SetoidFunction.func x₂ ._≈_) y₂ ((make-B-setoid .SetoidFunction.respects x₁~x₂) .to y₁)
+
+        -- Σ' : Setoid (a ⊔ c) {!   !}
+        -- Σ' = record {
+        --     Carrier = Σ A λ x → make-B x .Carrier;
+        --     _≈_ = Σ-rel;
+        --     isEquivalence = record {
+        --         refl = {!   !};
+        --         sym = λ { {x₁ , y₁} {x₂ , y₂} (x₁~x₂ , thing) → A-sym x₁~x₂ , {!   !} };
+        --         trans = {!   !}
+        --         }
+        --     }
+
+-- Σ-bijection :
+--     {s₁ : Setoid a ℓ₁} {s₂ : Setoid b ℓ₂} {s₃ : Setoid c ℓ₃} {s₄ : Setoid d ℓ₄} →
+--     Bijection s₁ s₂ → Bijection s₃ s₄ → Bijection (×-setoid s₁ s₃) (×-setoid s₂ s₄)
+-- Σ-bijection {s₁ = s₁} {s₂} {s₃} {s₄} bij₁₂ bij₃₄ = record {
+--     to = f;
+--     cong = f-cong;
+--     bijective = f-injective , f-surjective
+--     }
+--     where
+--         f : (×-setoid s₁ s₃) .Carrier → (×-setoid s₂ s₄) .Carrier
+--         f (x₁ , x₂) = bij₁₂ .to x₁ , bij₃₄ .to x₂
+
+--         f-cong : Congruent ((×-setoid s₁ s₃) ._≈_) ((×-setoid s₂ s₄) ._≈_) f
+--         f-cong (x₁ , x₂) = bij₁₂ .cong x₁ , bij₃₄ .cong x₂
+
+--         f-injective : Injective ((×-setoid s₁ s₃) ._≈_) ((×-setoid s₂ s₄) ._≈_) f
+--         f-injective (x₁ , x₂) =
+--             bij₁₂ .bijective .proj₁ x₁ ,
+--             bij₃₄ .bijective .proj₁ x₂
+
+--         f-surjective : Surjective ((×-setoid s₁ s₃) ._≈_) ((×-setoid s₂ s₄) ._≈_) f
+--         f-surjective (x₁ , x₂) =
+--             (bij₁₂ .bijective .proj₂ x₁ .proj₁ ,
+--              bij₃₄ .bijective .proj₂ x₂ .proj₁)
+--             ,
+--             (λ {z} z~x →
+--                bij₁₂ .bijective .proj₂ x₁ .proj₂ (z~x .proj₁) ,
+--                bij₃₄ .bijective .proj₂ x₂ .proj₂ (z~x .proj₂))
