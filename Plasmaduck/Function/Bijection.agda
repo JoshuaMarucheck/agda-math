@@ -1,26 +1,35 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 
+open import Relation.Binary.PropositionalEquality using (_≡_; inspect; Reveal_·_is_; [_]) renaming (cong to ≡-cong; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Data.Empty using (⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; _∘_; id)
+open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; _∘_; id; flip)
 open import Relation.Binary.Bundles using (Setoid)
-open import Relation.Binary using (IsEquivalence)
+open import Relation.Binary using (Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; property-subset-setoid; _which-is-cong_)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; property-subset-setoid; _which-is-cong_; SetoidFunction; SetoidFunctionEquality; SetoidFunctionEquality-eq; SetoidFunctionSetoid)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
-open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; LeftInverse; RightInverse)
+open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; bijective→both-inv; LeftInverse; RightInverse)
+open import Plasmaduck.Relation.Defs using (CongruentRel)
+open import Plasmaduck.Util.TypeChange using (change-type)
+open import Plasmaduck.SetoidExperiment.On using (setoid-on)
+
+
 
 module Plasmaduck.Function.Bijection where
 
 variable
-    a b c d e ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level
+    a b c d e ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ ℓ₆ : Level
 
 open Setoid using (Carrier; _≈_)
 open Bijection using (to; cong; bijective)
 
+
+extract-func : {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} → Bijection A-setoid B-setoid → SetoidFunction A-setoid B-setoid
+extract-func bij = bij .to which-is-cong bij .cong
 
 id-bijection : (A-setoid : Setoid a ℓ₁) → Bijection A-setoid A-setoid
 id-bijection A-setoid = record {
@@ -114,6 +123,116 @@ _∘-bijection_ {s₁ = s₁} {s₂} {s₃} bij₂ bij₁ = record {
             z           ∎
             where open import Relation.Binary.Reasoning.Setoid s₃
 
+bijection-eq : {a ℓ : Level} → IsEquivalence (Bijection {a} {ℓ})
+bijection-eq = record {
+    refl = id-bijection _;
+    sym = invert-bijection;
+    trans = flip _∘-bijection_
+    }
+
+
+
+
+BijectionSetoid : (A : Setoid a b) (B : Setoid c d) → Setoid (a ⊔ b ⊔ c ⊔ d) (a ⊔ b ⊔ d)
+BijectionSetoid A B = setoid-on (SetoidFunctionSetoid A B) extract-func
+
+same-bijection : {A : Setoid a b} {B : Setoid c d} → Rel (Bijection A B) (a ⊔ b ⊔ d)
+same-bijection {A = A} {B} = BijectionSetoid A B .Setoid._≈_
+
+module _ {A : Setoid a b} {B : Setoid c d} where
+    same-bijection-left-inverse : (f : Bijection A B) → same-bijection ((invert-bijection f) ∘-bijection f) (id-bijection A)
+    same-bijection-left-inverse f {x} {y} x~y = begin
+        (invert-bijection f ∘-bijection f) .to x    ≈⟨ is-left-inv x ⟩
+        x                                           ≈⟨ x~y ⟩
+        y                                           ≈⟨ A .Setoid.refl ⟩
+        id-bijection A .to y                        ∎
+        where
+            open import Relation.Binary.Reasoning.Setoid A
+            open InverseFunction f
+
+    same-bijection-right-inverse : (f : Bijection A B) → same-bijection (f ∘-bijection (invert-bijection f)) (id-bijection B)
+    same-bijection-right-inverse f {x} {y} x~y = begin
+        (f ∘-bijection invert-bijection f) .to x    ≈⟨ is-right-inv x ⟩
+        x                                           ≈⟨ x~y ⟩
+        y                                           ≈⟨ B .Setoid.refl ⟩
+        id-bijection B .to y                        ∎
+        where
+            open import Relation.Binary.Reasoning.Setoid B
+            open InverseFunction f
+
+module _ {A : Setoid a b} {B : Setoid c d} {C : Setoid ℓ₁ ℓ₂} where
+    ∘-bijection-respects :(g₁ g₂ : Bijection B C) (g₁~g₂ : same-bijection g₁ g₂) (f₁ f₂ : Bijection A B) (f₁~f₂ : same-bijection f₁ f₂) → same-bijection (g₁ ∘-bijection f₁) (g₂ ∘-bijection f₂)
+    ∘-bijection-respects g₁ g₂ g₁~g₂ f₁ f₂ f₁~f₂ = λ z → g₁~g₂ (f₁~f₂ z)
+
+same-bijection-left-cancel :
+    {A : Setoid a b} {B : Setoid c d} {C : Setoid ℓ₁ ℓ₂} →
+    (g : Bijection B C) (f₁ f₂ : Bijection A B) →
+    same-bijection (g ∘-bijection f₁) (g ∘-bijection f₂) →
+    same-bijection f₁ f₂
+same-bijection-left-cancel {A = A} {B} {C} g f₁ f₂ g∘f₁~g∘f₂ = begin
+    f₁                                      ≈⟨ refl {x = f₁} ⟩
+    id-bijection B ∘-bijection f₁           ≈⟨ ∘-bijection-respects (id-bijection B) (g-inv ∘-bijection g) (sym {x = g-inv ∘-bijection g} {y = id-bijection B} (same-bijection-left-inverse g)) f₁ f₁ (refl {x = f₁}) ⟩
+    g-inv ∘-bijection g ∘-bijection f₁      ≈⟨ ∘-bijection-respects g-inv g-inv (refl {x = g-inv}) (g ∘-bijection f₁) (g ∘-bijection f₂) g∘f₁~g∘f₂ ⟩
+    g-inv ∘-bijection g ∘-bijection f₂      ≈⟨ ∘-bijection-respects (g-inv ∘-bijection g) (id-bijection B) (same-bijection-left-inverse g) f₂ f₂ (refl {x = f₂}) ⟩
+    id-bijection B ∘-bijection f₂           ≈⟨ refl {x = f₂} ⟩
+    f₂                                      ∎
+    where
+        open import Relation.Binary.Reasoning.Setoid (BijectionSetoid A B)
+        module _ {S₁ : Setoid ℓ₃ ℓ₄} {S₂ : Setoid ℓ₅ ℓ₆} where
+            open Setoid (BijectionSetoid S₁ S₂) using (refl; sym; trans) public
+        g-inv = invert-bijection g
+
+
+
+
+
+-- This setoid is not terribly useful. Since a permutation is a bijection between a setoid and itself,
+-- it's an equality of setoids! Which means you can't actually tell two elements in the setoid apart.
+-- It's a blur of all possible arrangements of n-item setoids (or any other bijection-equivalent class of setoids).
+bijection-setoid : (c ℓ : Level) → Setoid (lsuc c ⊔ lsuc ℓ) (c ⊔ ℓ)
+bijection-setoid c ℓ = record {
+    Carrier = Setoid c ℓ;
+    _≈_ = Bijection;
+    isEquivalence = bijection-eq
+    }
+
+
+{-
+    So maybe instead we have a consistent bijection setoid?
+    Where we take bijections as objects.
+    and we say that two bijections are equal if they share a key setoid.
+
+    So this is the setoid of all setoids that are bijective with A-setoid, indexed by their bijection.
+    In particular, two versions of the same setoid are different if their bijections are different.
+
+    (But they're the same as long as the mapping function is essentially the same.)
+-}
+consistent-bijection-setoid : {a ℓ₁ : Level} → Setoid a ℓ₁ → (b ℓ₂ : Level) → Setoid (a ⊔ ℓ₁ ⊔ lsuc b ⊔ lsuc ℓ₂) (a ⊔ ℓ₁ ⊔ lsuc b ⊔ lsuc ℓ₂)
+consistent-bijection-setoid {a = a} {ℓ₁} A-setoid b ℓ₂ = record {
+    Carrier = Σ (Setoid b ℓ₂) (Bijection A-setoid);
+    _≈_ = is-same-bijection;
+    isEquivalence = record {
+        refl = λ {x} → is-same-bijection-refl {x};
+        sym = λ {x} {y} → is-same-bijection-sym {x} {y};
+        trans = λ {x} {y} {z} → is-same-bijection-trans {x} {y} {z}
+        }
+    }
+    where
+        open IsEquivalence
+
+        is-same-bijection : Rel (Σ (Setoid b ℓ₂) (Bijection A-setoid)) (a ⊔ ℓ₁ ⊔ lsuc b ⊔ lsuc ℓ₂)
+        is-same-bijection (B₁-setoid , bij₁) (B₂-setoid , bij₂) = Σ (B₁-setoid ≡ B₂-setoid) λ B₁≡B₂ → SetoidFunctionEquality A-setoid B₂-setoid (change-type (≡-cong (SetoidFunction A-setoid) B₁≡B₂) (extract-func bij₁)) (extract-func bij₂)
+
+        is-same-bijection-refl : Reflexive is-same-bijection
+        is-same-bijection-refl {B-setoid , bij} = ≡-refl , SetoidFunctionEquality-eq A-setoid B-setoid .refl {x = extract-func bij}
+
+        is-same-bijection-sym : Symmetric is-same-bijection
+        is-same-bijection-sym {B₁-setoid , bij₁} {B₂-setoid , bij₂} (B₁≡B₂ , f₁~f₂) rewrite B₁≡B₂ = ≡-refl , λ x~y → B₂-setoid .Setoid.sym (f₁~f₂ (A-setoid .Setoid.sym x~y))
+
+        is-same-bijection-trans : Transitive is-same-bijection
+        is-same-bijection-trans {B₁-setoid , bij₁} {B₂-setoid , bij₂} {B₃-setoid , bij₃} (B₁≡B₂ , f₁~f₂) (B₂≡B₃ , f₂~f₃) rewrite B₁≡B₂ rewrite B₂≡B₃ = ≡-refl , λ x~y → B₃-setoid .Setoid.trans (f₁~f₂ (A-setoid .Setoid.refl)) (f₂~f₃ x~y)
+
+
 module _
     {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} (bij : Bijection s₁ s₂)
     where
@@ -135,6 +254,25 @@ module _
 
     invert-is-right-inverse : RightInverse s₁ s₂ f-func g
     invert-is-right-inverse {y = y} = is-right-inv y
+
+module _ (A-setoid : Setoid a ℓ₁) where
+    private
+        A = A-setoid .Carrier
+        _~-fine_ = A-setoid ._≈_
+
+    module _ (P : A → Set ℓ₂) (all-P : (x : A) → P x) where
+        property-split : Bijection A-setoid (property-subset-setoid A-setoid P)
+        property-split = record {
+            to = f;
+            cong = id;
+            bijective = id , (λ (x , P[x]) → x , id)
+            }
+            where
+                B-setoid = (property-subset-setoid A-setoid P)
+                B = B-setoid .Carrier
+
+                f : A → B
+                f x = x , all-P x
 
 
 ⊎-bijection :
