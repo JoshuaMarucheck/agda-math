@@ -25,6 +25,12 @@ variable
     A : Set ℓ
 
 
+record Equivalence (A : Set α) (ℓ : Level) : Set (α ⊔ lsuc ℓ) where
+    field
+        _~_ : Rel A ℓ
+        isEquivalence : IsEquivalence _~_
+
+
 ≡-isEquivalence : IsEquivalence (_≡_ {A = A})
 ≡-isEquivalence = record {
     refl = λ {x} → refl;
