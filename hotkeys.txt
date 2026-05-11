@@ -1,0 +1,3 @@
+C-c C-, : show goal type
+C-c C-. : show goal type and current expression type
+(prefix either with C-u C-u to fully normalize)
