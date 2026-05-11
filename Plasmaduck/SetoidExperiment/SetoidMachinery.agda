@@ -5,10 +5,12 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
-open import Function using (Congruent; _∘_; _on_)
+open import Function using (Congruent; _∘_; _on_; Bijection)
 
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
+open import Plasmaduck.Function.Properties using (Congruent₂; Idempotent)
+
 
 
 module Plasmaduck.SetoidExperiment.SetoidMachinery where
@@ -17,6 +19,14 @@ open Setoid using (Carrier; _≈_; isEquivalence)
 
 variable
     a b c d e f ℓ ℓ₁ ℓ₂ ℓ₃ : Level
+
+
+equality→setoid : {A : Set a} {_~_ : Rel A ℓ} → IsEquivalence _~_ → Setoid a ℓ
+equality→setoid {A = A} {_~_} ~-eq = record {
+    Carrier = A;
+    _≈_ = _~_;
+    isEquivalence = ~-eq
+    }
 
 
 record SetoidFunction (S₁ : Setoid a b) (S₂ : Setoid c d) : Set (a ⊔ b ⊔ c ⊔ d) where
@@ -32,22 +42,51 @@ f ∘' g = record {
     respects = (f .SetoidFunction.respects) ∘ (g .SetoidFunction.respects)
     }
 
+_←_ : {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} → SetoidFunction A B → A .Carrier → B .Carrier
+_←_ f = f .SetoidFunction.func
+infixl 100 _←_
+
 SetoidFunctionEquality : (S₁ : Setoid a b) (S₂ : Setoid c d) → Rel (SetoidFunction S₁ S₂) (a ⊔ b ⊔ d)
 SetoidFunctionEquality S₁ S₂ = λ f g → ∀ {x y : S₁ .Carrier} → (S₁ ._≈_ x y) → S₂ ._≈_ (f .SetoidFunction.func x) (g .SetoidFunction.func y)
+
+SetoidFunctionEquality-eq : (S₁ : Setoid a b) (S₂ : Setoid c d) → IsEquivalence (SetoidFunctionEquality S₁ S₂)
+SetoidFunctionEquality-eq S₁ S₂ = record
+    { refl = λ {f} x≈y → f .respects x≈y
+    ; sym = λ {f} {g} f≈g {x} {y} x≈y → S₂ .isEquivalence .sym (f≈g (S₁ .isEquivalence .sym x≈y))
+    ; trans = λ {f} {g} {h} f≈g g≈h {x} {y} x≈y → S₂ .isEquivalence .trans (f≈g (S₁ .isEquivalence .refl)) (g≈h x≈y)
+    }
+    where
+        open IsEquivalence
+        open SetoidFunction
 
 SetoidFunctionSetoid : (S₁ : Setoid a b) (S₂ : Setoid c d) → Setoid (a ⊔ b ⊔ c ⊔ d) (a ⊔ b ⊔ d)
 SetoidFunctionSetoid S₁ S₂ = record
     { Carrier = SetoidFunction S₁ S₂
     ; _≈_ = SetoidFunctionEquality S₁ S₂
-    ; isEquivalence = record
-        { refl = λ {f} x≈y → f .respects x≈y
-        ; sym = λ {f} {g} f≈g {x} {y} x≈y → S₂ .isEquivalence .sym (f≈g (S₁ .isEquivalence .sym x≈y))
-        ; trans = λ {f} {g} {h} f≈g g≈h {x} {y} x≈y → S₂ .isEquivalence .trans (f≈g (S₁ .isEquivalence .refl)) (g≈h x≈y)
-        }
+    ; isEquivalence = SetoidFunctionEquality-eq S₁ S₂
     }
-    where
-        open IsEquivalence
-        open SetoidFunction
+
+record SetoidFunction₂ (A : Setoid a ℓ₁) (B : Setoid b ℓ₂) (C : Setoid c ℓ₃) : Set (a ⊔ b ⊔ c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₃) where
+    constructor _which-is-cong₂_
+    field
+        func : A .Carrier → B .Carrier → C .Carrier
+        respects : Congruent₂ (A ._≈_) (B ._≈_) (C ._≈_) func
+
+SetoidFunction₂→SetoidFunction :
+    {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} →
+    SetoidFunction₂ A B C →
+    SetoidFunction A (SetoidFunctionSetoid B C)
+SetoidFunction₂→SetoidFunction {A = A} (f which-is-cong₂ cong) = record {
+    func = λ x → record {
+        func = f x;
+        respects = λ y₁~y₂ → cong (A .Setoid.refl) y₁~y₂
+        };
+    respects = λ x₁~x₂ y₁~y₂ → cong x₁~x₂ y₁~y₂
+    }
+
+_←₂_ : {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} → SetoidFunction₂ A B C → A .Carrier → B .Carrier → C .Carrier
+_←₂_ f = f .SetoidFunction₂.func
+infixl 100 _←₂_
 
 PropSetoid : (a : Level) → Setoid (lsuc a) a
 PropSetoid a = record
@@ -96,28 +135,6 @@ property-subset-setoid A P = record {
     where
         open IsEquivalence
 
-
-module On {A : Set ℓ} (B : Setoid b ℓ₂) (f : A → B .Carrier) where
-    _~B_ : Rel A ℓ₂
-    _~B_ = (B ._≈_) on f
-
-    ~B-eq : IsEquivalence _~B_
-    ~B-eq = record {
-        refl = B .Setoid.refl;
-        sym = B .Setoid.sym;
-        trans = B .Setoid.trans
-        }
-
-    B-setoid : Setoid ℓ ℓ₂
-    B-setoid = record {
-        Carrier = A;
-        _≈_ = _~B_;
-        isEquivalence = ~B-eq
-        }
-
-setoid-on : {A : Set ℓ} (B : Setoid b ℓ₂) (f : A → B .Carrier) → Setoid ℓ ℓ₂
-setoid-on B f = B-setoid
-    where open On B f
 
 
 data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid .Carrier ⊎ setoid₂ .Carrier) (c ⊔ ℓ ⊔ d ⊔ ℓ₂) where
@@ -183,3 +200,6 @@ maybe-setoid setoid = record {
             }
         }
     }
+
+IdempotentFunc : {A-setoid : Setoid a ℓ₁} → (f-func : SetoidFunction A-setoid A-setoid) → Set (a ⊔ ℓ₁)
+IdempotentFunc {A-setoid = A-setoid} (f which-is-cong _) = Idempotent A-setoid f
