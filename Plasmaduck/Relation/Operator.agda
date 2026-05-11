@@ -19,12 +19,13 @@ open import Plasmaduck.Relation.Order using (Comparable; ComparableAt; show-tota
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Relation.RelationVector using (RelTree; leaf; branch; branch-type; trans-branch; map-branch; trans-flatten-branch; lift-rel-to-branch; flatten-branches; pop-first; pop-last)
 open import Plasmaduck.Counting.Counting using (AtLeastSize)
+open import Plasmaduck.Relation.Defs using (module BasicDefs)
 
 
 
 module Plasmaduck.Relation.Operator {a ℓ : Level} (A-setoid : Setoid a ℓ) where
 
-open import Plasmaduck.Relation.Defs A-setoid using (CongruentRel)
+open BasicDefs A-setoid using (CongruentRel)
 open Setoid using (Carrier)
 
 A : Set a
@@ -102,62 +103,79 @@ variable
 -- (that is, a minimum of things are related (in the partial order of orders on A))
 -- such that the property holds.
 MinimalOperator :
-    (ℓ₂ : Level) →
-    (property : Rel A ℓ₃ → Set ℓ₅) →
-    (operator : Rel A ℓ₂ → Rel A ℓ₃) →
-    Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₃ ⊔ ℓ₅)
-MinimalOperator {ℓ₃ = ℓ₃} ℓ₂ property operator = (_#_ : Rel A ℓ₂) → (_#'_ : Rel A ℓ₃) → _#'_ Extends _#_ → property _#'_ → _#'_ Extends (operator _#_)
+    (ℓ₂ ℓ₃ : Level) →
+    {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
+    {lₒ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (lₒ ℓ')) →
+    Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₃ ⊔ lₚ ℓ₃ ⊔ lₒ ℓ₂)
+MinimalOperator ℓ₂ ℓ₃ property operator = (_#_ : Rel A ℓ₂) → (_#'_ : Rel A ℓ₃) → _#'_ Extends _#_ → property _#'_ → _#'_ Extends (operator _#_)
 
 OperatorPreserves :
-    (property : Rel A ℓ₁ → Set ℓ₅) →
-    (operator : Rel A ℓ₁ → Rel A ℓ₁) →
-    Set (a ⊔ lsuc ℓ₁ ⊔ ℓ₅)
-OperatorPreserves {ℓ₁ = ℓ₁} property operator = (_#_ : Rel A ℓ₁) → property _#_ → property (operator _#_)
+    (ℓ₁ : Level)
+    {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
+    {lₒ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (lₒ ℓ')) →
+    Set (a ⊔ lsuc ℓ₁ ⊔ lₚ ℓ₁ ⊔ lₚ (lₒ ℓ₁))
+OperatorPreserves ℓ₁ property operator = (_#_ : Rel A ℓ₁) → property _#_ → property (operator _#_)
+
+OperatorPreserves₂ :
+    (ℓ₁ ℓ₂ : Level)
+    {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
+    {lₒ : Level → Level → Level} → (operator : {ℓ' ℓ'' : Level} → Rel A ℓ' → Rel A ℓ'' → Rel A (lₒ ℓ' ℓ'')) →
+    Set (a ⊔ lsuc ℓ₁ ⊔ lsuc ℓ₂ ⊔ lₚ ℓ₁ ⊔ lₚ ℓ₂ ⊔ lₚ (lₒ ℓ₁ ℓ₂))
+OperatorPreserves₂ ℓ₁ ℓ₂ property operator = {_#_ : Rel A ℓ₁} → property _#_ → {_~_ : Rel A ℓ₂} → property _~_ → property (operator _#_ _~_)
 
 ExtensiveOperator :
     (ℓ₂ : Level) →
-    (operator : Rel A ℓ₂ → Rel A ℓ₃) →
-    Set (a ⊔ lsuc ℓ₂ ⊔ ℓ₃)
+    {lₒ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (lₒ ℓ')) →
+    Set (a ⊔ lsuc ℓ₂ ⊔ lₒ ℓ₂)
 ExtensiveOperator ℓ₂ operator = (_#_ : Rel A ℓ₂) → operator _#_ Extends _#_
 
 IdempotentOperator :
     (ℓ₂ : Level) →
-    (operator : Rel A ℓ₂ → Rel A ℓ₂) →
-    Set (a ⊔ lsuc ℓ₂)
+    {lₒ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (lₒ ℓ')) →
+    Set (a ⊔ lsuc ℓ₂ ⊔ lₒ ℓ₂ ⊔ lₒ (lₒ ℓ₂))
 IdempotentOperator ℓ₂ operator = (_#_ : Rel A ℓ₂) → SameRel (operator (operator _#_)) (operator _#_)
 
 CommutativeOperators :
     (ℓ₂ : Level) →
-    (operator₁ operator₂ : Rel A ℓ₂ → Rel A ℓ₂) →
-    Set (a ⊔ ℓ ⊔ lsuc ℓ₂)
+    {l₁ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (l₁ ℓ')) →
+    {l₂ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (l₂ ℓ')) →
+    Set (a ⊔ ℓ ⊔ lsuc ℓ₂ ⊔ l₁ (l₂ ℓ₂) ⊔ l₂ (l₁ ℓ₂))
 CommutativeOperators ℓ₂ op₁ op₂ = {_#_ : Rel A ℓ₂} → (CongruentRel _#_) → SameRel (op₁ (op₂ _#_)) (op₂ (op₁ _#_))
 
 TransferrableProperty :
-    (ℓ₂ : Level) →
-    (property : Rel A ℓ₂ → Set ℓ₅) →
-    Set (a ⊔ ℓ₅ ⊔ lsuc ℓ₂)
-TransferrableProperty ℓ₂ property = {_#_ _#'_ : Rel A ℓ₂} → SameRel _#_ _#'_ → property _#_ → property _#'_
+    (ℓ₂ ℓ₃ : Level) →
+    {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
+    Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₃ ⊔ lₚ ℓ₂ ⊔ lₚ ℓ₃)
+TransferrableProperty ℓ₂ ℓ₃ property = {_#_ : Rel A ℓ₂} {_#'_ : Rel A ℓ₃} → SameRel _#_ _#'_ → property _#_ → property _#'_
 
 SameRelCongruentOperator' :
     (ℓ₂ ℓ₄ : Level) →
-    {l : Level → Level} →
-    (operator : {b : Level} → Rel A b → Rel A (l b)) →
+    {l : Level → Level} → (operator : {b : Level} → Rel A b → Rel A (l b)) →
     Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₄ ⊔ l ℓ₂ ⊔ l ℓ₄)
 SameRelCongruentOperator' ℓ₂ ℓ₄ op = {_#_ : Rel A ℓ₂} {_#'_ : Rel A ℓ₄} → SameRel _#_ _#'_ → (op _#'_) Extends (op _#_)
 
 SameRelCongruentOperator :
     (ℓ₂ ℓ₄ : Level) →
-    {l : Level → Level} →
-    (operator : {b : Level} → Rel A b → Rel A (l b)) →
+    {l : Level → Level} → (operator : {b : Level} → Rel A b → Rel A (l b)) →
     Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₄ ⊔ l ℓ₂ ⊔ l ℓ₄)
 SameRelCongruentOperator ℓ₂ ℓ₄ op = {_#_ : Rel A ℓ₂} {_#'_ : Rel A ℓ₄} → SameRel _#_ _#'_ → SameRel (op _#_) (op _#'_)
 
 prove-rel-congruence :
-    {l : Level → Level} →
-    (operator : {b : Level} → Rel A b → Rel A (l b)) →
+    {l : Level → Level} → (operator : {b : Level} → Rel A b → Rel A (l b)) →
     ({ℓ₂ ℓ₄ : Level} → SameRelCongruentOperator' ℓ₂ ℓ₄ operator) →
     ({ℓ₂ ℓ₄ : Level} → SameRelCongruentOperator ℓ₂ ℓ₄ operator)
 prove-rel-congruence op op-rel-cong #-same-rel-#' = op-rel-cong #-same-rel-#' , op-rel-cong (SameRel-sym #-same-rel-#')
+
+
+------------
+--- Lift ---
+------------
+
+lift-rel : (ℓ₃ : Level) → Rel A ℓ₂ → Rel A (ℓ₂ ⊔ ℓ₃)
+lift-rel ℓ₃ _#_ x y = Lift ℓ₃ (x # y)
+
+lift-rel-same-rel : (ℓ₃ : Level) → (_#_ : Rel A ℓ₂) → SameRel _#_ (lift-rel ℓ₃ _#_)
+lift-rel-same-rel ℓ₃ _#_ = lift , Lift.lower
 
 
 -------------------------
@@ -170,7 +188,7 @@ congruent-closure _#_ x y = Σ A λ x₁ → Σ A λ y₁ → x₁ ≈ x × y₁
 congruent-closure-is-congruent : (_#_ : Rel A ℓ₂) → CongruentRel (congruent-closure _#_)
 congruent-closure-is-congruent _#_ {x₀} {x₂} {y₀} {y₂} x₀≈x₂ y₀≈y₂ (x₁ , y₁ , x₁≈x₀ , y₁≈y₀ , x₁#y₁) = x₁ , y₁ , ≈-trans x₁≈x₀ x₀≈x₂ , ≈-trans y₁≈y₀ y₀≈y₂ , x₁#y₁
 
-congruent-closure-is-minimal : MinimalOperator ℓ₂ CongruentRel congruent-closure
+congruent-closure-is-minimal : MinimalOperator ℓ₂ ℓ₃ CongruentRel congruent-closure
 congruent-closure-is-minimal _#_ _#'_ #'-extends-# #'-cong (x₁ , y₁ , x₁≈x , y₁≈y , x₁#y₁)  = #'-cong x₁≈x y₁≈y (#'-extends-# x₁#y₁)
 
 congruent-closure-is-extensive : ExtensiveOperator ℓ₂ congruent-closure
@@ -184,7 +202,7 @@ congruent-closure-is-idempotent _#_ = (λ {
 congruent-closure-is-rel-congruent : SameRelCongruentOperator (a ⊔ ℓ₁) (a ⊔ ℓ₂) congruent-closure
 congruent-closure-is-rel-congruent = prove-rel-congruence congruent-closure λ { (#→#' , #'→#) {x} {y} (x' , y' , x'≈x , y'≈y , x'#y') → x' , y' , x'≈x , y'≈y , #→#' x'#y' }
 
-congruence-transferrable : TransferrableProperty ℓ₂ CongruentRel
+congruence-transferrable : TransferrableProperty ℓ₂ ℓ₃ CongruentRel
 congruence-transferrable (#→#' , #'→#) #-cong {x₁} {x₂} {y₁} {y₂} x₁≈x₂ y₁≈y₂ x₁#'y₁ = #→#' (#-cong x₁≈x₂ y₁≈y₂ (#'→# x₁#'y₁))
 
 
@@ -198,7 +216,7 @@ reflexive-closure _#_ x y = x # y ⊎ x ≡ y
 reflexive-closure-is-reflexive : (_#_ : Rel A ℓ₂) → Reflexive (reflexive-closure _#_)
 reflexive-closure-is-reflexive _#_ {x} = inj₂ ≡-refl
 
-reflexive-closure-is-minimal : MinimalOperator ℓ₂ Reflexive reflexive-closure
+reflexive-closure-is-minimal : MinimalOperator ℓ₂ ℓ₃ Reflexive reflexive-closure
 reflexive-closure-is-minimal _#_ _#'_ #'-extends-# #'-refl {x} {y} (inj₁ x#y) = #'-extends-# x#y
 reflexive-closure-is-minimal _#_ _#'_ #'-extends-# #'-refl {x} {y} (inj₂ ≡-refl) = #'-refl
 
@@ -214,7 +232,7 @@ reflexive-closure-is-rel-congruent = prove-rel-congruence reflexive-closure λ {
     (inj₂ x≈y) → inj₂ x≈y
     }}
 
-reflexivity-transferrable : TransferrableProperty ℓ₂ Reflexive
+reflexivity-transferrable : TransferrableProperty ℓ₂ ℓ₃ Reflexive
 reflexivity-transferrable (#→#' , #'→#) #-refl {x} = #→#' #-refl
 
 
@@ -229,7 +247,7 @@ symmetric-closure-is-symmetric : (_#_ : Rel A ℓ₂) → Symmetric (symmetric-c
 symmetric-closure-is-symmetric _#_ {x} {y} (inj₁ x#y) = inj₂ x#y
 symmetric-closure-is-symmetric _#_ {x} {y} (inj₂ y#x) = inj₁ y#x
 
-symmetric-closure-is-minimal : MinimalOperator ℓ₂ Symmetric symmetric-closure
+symmetric-closure-is-minimal : MinimalOperator ℓ₂ ℓ₃ Symmetric symmetric-closure
 symmetric-closure-is-minimal _#_ _#'_ #'-extends-# #'-sym {x} {y} (inj₁ x#y) = #'-extends-# x#y
 symmetric-closure-is-minimal _#_ _#'_ #'-extends-# #'-sym {x} {y} (inj₂ y#x) = #'-sym (#'-extends-# y#x)
 
@@ -248,7 +266,7 @@ symmetric-closure-is-rel-congruent = prove-rel-congruence symmetric-closure λ {
     (inj₂ y#x) → inj₂ (#→#' y#x)
     }}
 
-symmetry-transferrable : TransferrableProperty ℓ₂ Symmetric
+symmetry-transferrable : TransferrableProperty ℓ₂ ℓ₃ Symmetric
 symmetry-transferrable (#→#' , #'→#) #-sym {x} {y} x#'y = #→#' (#-sym (#'→# x#'y))
 
 
@@ -262,7 +280,7 @@ transitive-closure = branch-type
 transitive-closure-is-transitive : (_#_ : Rel A ℓ₂) → Transitive (transitive-closure _#_)
 transitive-closure-is-transitive _#_ = trans-branch _#_
 
-transitive-closure-is-minimal : MinimalOperator ℓ₂ Transitive transitive-closure
+transitive-closure-is-minimal : MinimalOperator ℓ₂ ℓ₃ Transitive transitive-closure
 transitive-closure-is-minimal _#_ _#'_ #'-extends-# #'-trans {x} {y} x↔y = trans-flatten-branch _#'_ #'-trans (map-branch id #'-extends-# x↔y)
 
 transitive-closure-is-extensive : ExtensiveOperator ℓ₂ transitive-closure
@@ -274,8 +292,12 @@ transitive-closure-is-idempotent _#_ = flatten-branches , lift-rel-to-branch (tr
 transitive-closure-is-rel-congruent : SameRelCongruentOperator (a ⊔ ℓ₂) (a ⊔ ℓ₃) transitive-closure
 transitive-closure-is-rel-congruent = prove-rel-congruence transitive-closure λ { (#→#' , #'→#) x#↔y → map-branch id #→#' x#↔y }
 
-transitivity-transferrable : TransferrableProperty ℓ₂ Transitive
+transitivity-transferrable : TransferrableProperty ℓ₂ ℓ₃ Transitive
 transitivity-transferrable (#→#' , #'→#) #-trans {x} {y} {z} x#'y y#'z = #→#' (#-trans (#'→# x#'y) (#'→# y#'z))
+
+-- Keep in mind this use of minimality
+transitive-closure-fold : (_#_ : Rel A ℓ₂) → (_#'_ : Rel A ℓ₃) → _#'_ Extends _#_ → Transitive _#'_ → ∀ {x y : A} → transitive-closure _#_ x y → x #' y
+transitive-closure-fold = transitive-closure-is-minimal
 
 
 ------------------------
@@ -390,7 +412,7 @@ sym-not-trans-preserving' inj ℓ₁ = _<_ , congruent-closure-is-congruent _<-b
         ¬-~-trans : ¬ Transitive _~_
         ¬-~-trans ~-trans = j≁k (~-trans j~i i~k)
 
-sym-not-trans-preserving : AtLeastSize A-setoid 3 → (ℓ₁ : Level) → ¬ (OperatorPreserves {ℓ₁ = a ⊔ ℓ ⊔ ℓ₁} Transitive symmetric-closure)
+sym-not-trans-preserving : AtLeastSize A-setoid 3 → (ℓ₁ : Level) → ¬ (OperatorPreserves (a ⊔ ℓ ⊔ ℓ₁) Transitive symmetric-closure)
 sym-not-trans-preserving inj ℓ₁ preserving with sym-not-trans-preserving' inj ℓ₁
 ...                                           |  _<_ , _ , <-trans , ¬-~-trans = ¬-~-trans (preserving _<_ <-trans)
 
@@ -418,3 +440,69 @@ not-sym-trans-commute' inj ℓ₁ =
 not-sym-trans-commute : AtLeastSize A-setoid 3 → ¬ CommutativeOperators (a ⊔ ℓ ⊔ ℓ₂) symmetric-closure transitive-closure
 not-sym-trans-commute {ℓ₂ = ℓ₂} inj comm with not-sym-trans-commute' inj (ℓ ⊔ ℓ₂)
 ... | _<_ , <-cong , sym-trans-<-≢-trans-sym-< = sym-trans-<-≢-trans-sym-< (comm <-cong)
+
+
+
+---------------------------------------
+--- Reflexive Transitive properties ---
+---------------------------------------
+-- Since apparently this is a thing that comes up sometimes
+
+reflexive-transitive-closure : Rel A ℓ₂ → Rel A (a ⊔ ℓ₂)
+reflexive-transitive-closure = reflexive-closure ∘ transitive-closure
+
+reflexive-transitive-closure-is-transitive : (_#_ : Rel A ℓ₂) → Transitive (reflexive-transitive-closure _#_)
+reflexive-transitive-closure-is-transitive _#_ (inj₁ i~j) (inj₁ j~k) = inj₁ (trans-branch _#_ i~j j~k)
+reflexive-transitive-closure-is-transitive _#_ (inj₁ i~j) (inj₂ ≡-refl) = inj₁ i~j
+reflexive-transitive-closure-is-transitive _#_ (inj₂ ≡-refl) (inj₁ j~k) = inj₁ j~k
+reflexive-transitive-closure-is-transitive _#_ (inj₂ ≡-refl) (inj₂ ≡-refl) = inj₂ ≡-refl
+
+reflexive-transitive-closure-is-reflexive : (_#_ : Rel A ℓ₂) → Reflexive (reflexive-transitive-closure _#_)
+reflexive-transitive-closure-is-reflexive _#_ = reflexive-closure-is-reflexive (transitive-closure _#_)
+
+reflexive-transitive-closure-is-minimal : MinimalOperator ℓ₂ ℓ₃ (λ _#_ → Reflexive _#_ × Transitive _#_) reflexive-transitive-closure
+reflexive-transitive-closure-is-minimal _#_ _#'_ #'-extends-# (#'-refl , #'-trans) (inj₁ x↔y) = transitive-closure-is-minimal _#_ _#'_ #'-extends-# #'-trans x↔y
+reflexive-transitive-closure-is-minimal _#_ _#'_ #'-extends-# (#'-refl , #'-trans) (inj₂ ≡-refl) = reflexive-closure-is-minimal (transitive-closure _#_) _#'_ (transitive-closure-is-minimal _#_ _#'_ #'-extends-# #'-trans) #'-refl (inj₂ ≡-refl)
+
+reflexive-transitive-closure-is-extensive : ExtensiveOperator ℓ₂ reflexive-transitive-closure
+reflexive-transitive-closure-is-extensive _#_ = reflexive-closure-is-extensive (transitive-closure _#_) ∘ (transitive-closure-is-extensive _#_)
+
+-- reflexive-transitive-closure-is-idempotent : IdempotentOperator (a ⊔ ℓ₂) reflexive-transitive-closure
+-- reflexive-transitive-closure-is-idempotent _#_ = (λ {
+--     (inj₁ (w , z , x↔w , (inj₁ w#↔z) , z↔y)) → {!   !};
+--     (inj₁ (w , z , x↔w , (inj₂ ≡-refl) , z↔y)) → ?
+--     (inj₂ ≡-refl) → inj₂ ≡-refl
+--     }) , λ x#↔y → inj₁ (transitive-closure-is-extensive (reflexive-transitive-closure _#_) x#↔y)
+
+-- reflexive-transitive-closure-is-rel-congruent : SameRelCongruentOperator (a ⊔ ℓ₂) (a ⊔ ℓ₃) reflexive-transitive-closure
+-- reflexive-transitive-closure-is-rel-congruent = prove-rel-congruence reflexive-transitive-closure λ { (#→#' , #'→#) x#↔y → {!   !} }
+
+
+---------------
+--- Product ---
+---------------
+
+×-rel : Rel A ℓ₁ → Rel A ℓ₂ → Rel A (ℓ₁ ⊔ ℓ₂)
+×-rel _#_ _~_ x y = x # y × x ~ y
+
+×-rel-preserves-congruence : OperatorPreserves₂ ℓ₁ ℓ₂ CongruentRel ×-rel
+×-rel-preserves-congruence #-cong ~-cong x₁≈x₂ y₁≈y₂ (x₁#y₁ , x₁~y₁) = #-cong x₁≈x₂ y₁≈y₂ x₁#y₁ , ~-cong x₁≈x₂ y₁≈y₂ x₁~y₁
+
+×-rel-preserves-reflexivity : OperatorPreserves₂ ℓ₁ ℓ₂ Reflexive ×-rel
+×-rel-preserves-reflexivity #-refl ~-refl = #-refl , ~-refl
+
+×-rel-preserves-symmetry : OperatorPreserves₂ ℓ₁ ℓ₂ Symmetric ×-rel
+×-rel-preserves-symmetry #-sym ~-sym (x#y , x~y) = #-sym x#y , ~-sym x~y
+
+×-rel-preserves-transitivity : OperatorPreserves₂ ℓ₁ ℓ₂ Transitive ×-rel
+×-rel-preserves-transitivity #-trans ~-trans (x#y , x~y) (y#z , y~z) = #-trans x#y y#z , ~-trans x~y y~z
+
+×-rel-preserves-equivalence : OperatorPreserves₂ ℓ₁ ℓ₂ IsEquivalence ×-rel
+×-rel-preserves-equivalence #-eq ~-eq = record {
+    refl = λ {x} → ×-rel-preserves-reflexivity (#-refl {x}) (~-refl {x}) {x};
+    sym = λ {x} {y} → ×-rel-preserves-symmetry #-sym ~-sym {x} {y};
+    trans = λ {x} {y} {z} → ×-rel-preserves-transitivity #-trans ~-trans {x} {y} {z}
+    }
+    where
+        open IsEquivalence #-eq renaming (refl to #-refl; sym to #-sym; trans to #-trans)
+        open IsEquivalence ~-eq renaming (refl to ~-refl; sym to ~-sym; trans to ~-trans)

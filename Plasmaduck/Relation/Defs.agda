@@ -16,7 +16,7 @@ variable
 open Setoid using (Carrier)
 
 
-module _
+module BasicDefs
     {a ℓ : Level} (A-setoid : Setoid a ℓ)
     where
 
@@ -47,6 +47,8 @@ module _
     cong-rel→respects ~-cong =
         (λ y₁≈y₂ → ~-cong refl y₁≈y₂) ,
         (λ x₁≈x₂ → ~-cong x₁≈x₂ refl)
+
+open BasicDefs public
 
 module _
     {a : Level} (A : Set a)
