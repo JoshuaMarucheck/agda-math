@@ -12,9 +12,13 @@ open import Function using (_∘_)
 
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.TypeChange using (change-type)
+open import Plasmaduck.Data.Nat using () renaming (fold to fold-ℕ; fold-carrying-theorem to fold-ℕ-carrying-theorem; fold-all-theorem to fold-ℕ-all-theorem)
 
 
 module Plasmaduck.Data.Fin where
+
+variable
+    ℓ ℓ₁ : Level
 
 suc-inj : {n : ℕ} → {x y : Fin n} → suc x ≡ suc y → x ≡ y
 suc-inj {n} {x} {y} refl = refl
@@ -70,3 +74,45 @@ join₁-< m n i = ≤-<-trans (≤-reflexive (toℕ-↑ˡ i n)) (toℕ<n i)
 
 join₂-≥ : (m n : ℕ) → (i : Fin n) → toℕ (join m n (inj₂ i)) ≥ m
 join₂-≥ m n i = ≤-trans (≤-trans (≤-reflexive (+-comm 0 m)) (+-mono-≤ {m} {m} {0} {toℕ i} (≤-reflexive refl) _≤_.z≤n)) (≤-reflexive (sym (join₂-toℕ m n i)))
+
+
+---------------
+--- Folding ---
+---------------
+-- A bit like induction, but up to a finite bound
+-- The type changes made this more efficient to implement in Nat, so I'm porting the proofs over from there.
+-- Admittedly, I'm using fromℕ< in my combine function, which makes folding over Fin n quadratic in n...
+
+
+fold :
+    {A : Set ℓ}
+    (n : ℕ)
+    (combine : A → Fin n → A) →
+    A → A
+fold n combine start = fold-ℕ n (λ x i i<n → combine x (fromℕ< i<n)) start
+
+-- If a property is preserved by combining and exists at the start, then it exists after folding.
+fold-carrying-theorem :
+    {A : Set ℓ}
+    (n : ℕ)
+    (combine : A → Fin n → A) →
+    (start : A)
+    (P : A → Set ℓ₁) →
+    (∀ (x : A) (i : Fin n) → P x → P (combine x i)) →
+    (P start) →
+    P (fold n combine start)
+fold-carrying-theorem n combine start P P-carries P[start] = fold-ℕ-carrying-theorem n (λ x i i<n → combine x (fromℕ< i<n)) start P (λ x i i<n → P-carries x (fromℕ< i<n)) P[start]
+
+-- If a property at each index is imposed and preserved by combining, then it exists on all indices after folding.
+fold-all-theorem :
+    {A : Set ℓ}
+    (n : ℕ)
+    (combine : A → Fin n → A) →
+    (start : A)
+    (P : A → Fin n → Set ℓ₁) →
+    (∀ (x : A) (i : Fin n) → P (combine x i) i) →
+    (∀ (x : A) (i j : Fin n) → P x j → P (combine x i) j) →
+    ∀ (k : Fin n) → P (fold n combine start) k
+fold-all-theorem n combine start P combine-imposes-P combine-preserves-P k =
+    change-type (cong (λ q → P (fold n combine start) q) (fromℕ<-toℕ k (toℕ<n k)))
+        (fold-ℕ-all-theorem n (λ x i i<n → combine x (fromℕ< i<n)) start (λ x i i<n → P x (fromℕ< i<n)) (λ x i i<n → combine-imposes-P x (fromℕ< _)) (λ x i i<n j j<n → combine-preserves-P x (fromℕ< _) (fromℕ< _)) (toℕ k) (toℕ<n k))

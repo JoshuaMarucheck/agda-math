@@ -4,12 +4,14 @@ open import Relation.Binary.PropositionalEquality.Properties using (module ≡-R
 open import Relation.Binary using (tri<; tri≈; tri>)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_; _∸_; <-cmp; _<?_; s≤s; z≤n; s≤s⁻¹; zero; suc; pred)
-open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-trans; ≤-reflexive; +-comm; +-suc; _≟_; m∸n+n≡m)
+open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-<-trans; ≤-trans; <-trans; ≤-reflexive; +-comm; +-suc; _≟_; m∸n+n≡m)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 
 open import Plasmaduck.Util.TypeChange using (change-type)
+open import Plasmaduck.Util.Case using (case_of_)
+open import Plasmaduck.Data.Product using (Σ≡)
 
 
 module Plasmaduck.Data.Nat where
@@ -17,7 +19,7 @@ module Plasmaduck.Data.Nat where
 
 variable
     m n o : ℕ
-    ℓ : Level
+    ℓ ℓ₁ : Level
 
 n≤n : n ≤ n
 n≤n {n = zero} = z≤n
@@ -119,3 +121,101 @@ module _
 
         ≤-induction : ∀ {m n : ℕ} → m ≤ n → P m → P n
         ≤-induction {m = m} {n} m≤n P[m] = change-type (cong P (m∸n+n≡m m≤n)) (+-induction m (n ∸ m) P[m])
+
+
+≤-proofs-equal : {pf₁ pf₂ : m ≤ n} → pf₁ ≡ pf₂
+≤-proofs-equal {pf₁ = z≤n} {z≤n} = ≡-refl
+≤-proofs-equal {pf₁ = s≤s pf₁} {s≤s pf₂} = cong s≤s ≤-proofs-equal
+
+
+---------------
+--- Folding ---
+---------------
+-- A bit like induction, but up to a finite bound
+
+module _ where
+    private
+        foldl' :
+            {A : Set ℓ} →
+            (n : ℕ) →
+            (combine : A → (i : ℕ) → i < n → A) →
+            A → (i : ℕ) → i < n → A
+        foldl' n combine start zero i<n = combine start zero i<n
+        foldl' n combine start i@(suc i') i<n = foldl' n combine (combine start i i<n) i' (≤-trans n≤sn i<n)
+
+        foldl'-carrying-lemma :
+            {A : Set ℓ}
+            (n : ℕ)
+            (combine : A → (i : ℕ) → i < n → A) →
+            (start : A)
+            (i : ℕ)
+            (i<n : i < n)
+            (P : A → Set ℓ₁) →
+            (∀ (x : A) (i : ℕ) (i<n : i < n) → P x → P (combine x i i<n)) →
+            (P start) →
+            P (foldl' n combine start i i<n)
+        foldl'-carrying-lemma n combine start zero i<n P P-carries P[start] = P-carries start zero i<n P[start]
+        foldl'-carrying-lemma n combine start i@(suc i') i<n P P-carries P[start] = foldl'-carrying-lemma n combine (combine start i i<n) i' (≤-trans n≤sn i<n) P P-carries (P-carries start (suc i') i<n P[start])
+
+        foldl'-all-lemma :
+            {A : Set ℓ}
+            (n : ℕ)
+            (combine : A → (i : ℕ) → i < n → A) →
+            (start : A)
+            (P : A → (i : ℕ) → i < n → Set ℓ₁) →
+            (∀ (x : A) (i : ℕ) (i<n : i < n) → P (combine x i i<n) i i<n) →
+            (∀ (x : A) (i : ℕ) (i<n : i < n) (j : ℕ) (j<n : j < n) → P x j j<n → P (combine x i i<n) j j<n) →
+            (i : ℕ) → (i<n : i < n) →
+            ∀ (j : ℕ) (j≤i : j ≤ i) → P (foldl' n combine start i i<n) j (≤-<-trans j≤i i<n)
+        foldl'-all-lemma zero combine start P combine-imposes-P combine-preserves-P zero () j j≤i
+        foldl'-all-lemma zero combine start P combine-imposes-P combine-preserves-P i@(suc i') () j j≤i
+        foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P zero (s≤s i<n) zero z≤n = change-type (cong (λ q → P (combine start zero q) zero (s≤s z≤n)) ≤-proofs-equal) (combine-imposes-P start zero (s≤s z≤n))
+        foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P zero (s≤s i<n) j@(suc j') ()
+        foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P i@(suc i') i<n@(s≤s i'<n') j j≤i with ≤→<≡ j≤i
+        ... | inj₂ j≡i =
+                change-type (cong (λ q → P (foldl' n combine (combine start i i<n) i' q) j (≤-<-trans j≤i i<n)) ≤-proofs-equal)
+                    (foldl'-carrying-lemma n combine (combine start i i<n) i' (≤-trans n≤sn i<n)
+                        (λ x → P x j (≤-<-trans j≤i i<n))
+                        (λ x i₁ i<n₁ → combine-preserves-P x i₁ i<n₁ j (≤-<-trans j≤i i<n))
+                        (change-type (cong (λ (p , q) → P (combine start i i<n) p q) (Σ≡ (≡-sym j≡i) ≤-proofs-equal))
+                            (combine-imposes-P start i i<n)
+                        )
+                    )
+        ... | inj₁ (s≤s j'<i') =
+                change-type (cong (λ q → P (foldl' (suc n') combine (combine start (suc i') (s≤s i'<n')) i' (≤-trans n≤sn i<n)) j q) ≤-proofs-equal)
+                    (foldl'-all-lemma n combine (combine start i i<n) P combine-imposes-P combine-preserves-P i' (≤-trans n≤sn i<n) j j'<i')
+
+    fold :
+        {A : Set ℓ}
+        (n : ℕ)
+        (combine : A → (i : ℕ) → i < n → A) →
+        A → A
+    fold zero combine start = start
+    fold n@(suc n') combine start = foldl' n combine start n' n<sn
+
+    -- If a property is preserved by combining and exists at the start, then it exists after folding.
+    fold-carrying-theorem :
+        {A : Set ℓ}
+        (n : ℕ)
+        (combine : A → (i : ℕ) → i < n → A) →
+        (start : A)
+        (P : A → Set ℓ₁) →
+        (∀ (x : A) (i : ℕ) (i<n : i < n) → P x → P (combine x i i<n)) →
+        (P start) →
+        P (fold n combine start)
+    fold-carrying-theorem zero combine start P P-carries P[start] = P[start]
+    fold-carrying-theorem n@(suc n') combine start P P-carries P[start] = foldl'-carrying-lemma n combine start n' n<sn P P-carries P[start]
+
+    -- If a property at each index is imposed and preserved by combining, then it exists on all indices after folding.
+    fold-all-theorem :
+        {A : Set ℓ}
+        (n : ℕ)
+        (combine : A → (i : ℕ) → i < n → A) →
+        (start : A)
+        (P : A → (i : ℕ) → i < n → Set ℓ₁) →
+        (∀ (x : A) (i : ℕ) (i<n : i < n) → P (combine x i i<n) i i<n) →
+        (∀ (x : A) (i : ℕ) (i<n : i < n) (j : ℕ) (j<n : j < n) → P x j j<n → P (combine x i i<n) j j<n) →
+        ∀ (i : ℕ) (i<n : i < n) → P (fold n combine start) i i<n
+    fold-all-theorem n@(suc n') combine start P combine-imposes-P combine-preserves-P i (s≤s i'<n') =
+        change-type (cong (λ q → P (foldl' (suc n') combine start n' n<sn) i q) ≤-proofs-equal)
+            (foldl'-all-lemma n combine start P combine-imposes-P combine-preserves-P n' n<sn i i'<n')

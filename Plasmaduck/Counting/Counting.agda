@@ -17,7 +17,7 @@ open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; com
 open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; toℕ-↑ˡ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; property-subset-setoid)
-open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity)
+open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ×-discrete-distributivity; invert-is-left-inverse; invert-is-right-inverse)
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
 open import Plasmaduck.Property.Defs using (DecidableProperty; any-type; all-type)
@@ -26,6 +26,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance)
 open import Plasmaduck.Function.Surjectionish using (Surjectionish; _∘-surjectionish_)
+open import Plasmaduck.Data.Fin using () renaming (fold to fold-fin; fold-carrying-theorem to fold-fin-carrying-theorem; fold-all-theorem to fold-fin-all-theorem)
 
 
 
@@ -536,3 +537,48 @@ fin-nat-bijection n = record {
 
         to-surj : Surjective _≡_ _~_ to
         to-surj (z , z<n) = fromℕ< {m = z} z<n , λ { ≡-refl → toℕ-fromℕ< {m = z} {n = n} z<n }
+
+
+module Folding {S-setoid : Setoid c ℓ} {n : ℕ} (n-S-bij : HasSize S-setoid n) where
+    private
+        S = S-setoid .Setoid.Carrier
+
+        combine-transform : {A : Set a} → (A → S → A) → (A → Fin n → A)
+        combine-transform combine x i = combine x (n-S-bij .Bijection.to i)
+
+    fold :
+        {A : Set a}
+        (combine : A → S → A) →
+        A → A
+    fold combine start = fold-fin n (combine-transform combine) start
+
+    -- If a property is preserved by combining and exists at the start, then it exists after folding.
+    fold-carrying-theorem :
+        {A : Set a}
+        (combine : A → S → A) →
+        (start : A)
+        (P : A → Set ℓ₁) →
+        (∀ (x : A) (i : S) → P x → P (combine x i)) →
+        (P start) →
+        P (fold combine start)
+    fold-carrying-theorem combine start P P-carries P[start] = fold-fin-carrying-theorem n (combine-transform combine) start P (λ x i → P-carries x (n-S-bij .Bijection.to i)) P[start] -- fold-ℕ-carrying-theorem n (λ x i i<n → combine x (fromℕ< i<n)) start P (λ x i i<n → P-carries x (fromℕ< i<n)) P[start]
+
+    -- If a congruent property at each S is imposed and preserved by combining, then it exists on all S after folding.
+    fold-all-theorem :
+        {A : Set a}
+        (combine : A → S → A) →
+        (start : A)
+        (P : A → S → Set ℓ₁) →
+        (∀ (x : A) → CongruentProperty S-setoid (P x)) →
+        (∀ (x : A) (i : S) → P (combine x i) i) →
+        (∀ (x : A) (i j : S) → P x j → P (combine x i) j) →
+        ∀ (k : S) → P (fold combine start) k
+    fold-all-theorem combine start P P-cong-over-state combine-imposes-P combine-preserves-P k =
+        P-cong-over-state (fold combine start) (invert-is-right-inverse n-S-bij)
+            (fold-fin-all-theorem n (combine-transform combine) start
+                (λ x i → P x (n-S-bij .Bijection.to i))
+                (λ x i → combine-imposes-P x (n-S-bij .Bijection.to i))
+                (λ x i j → combine-preserves-P x (n-S-bij .Bijection.to i) (n-S-bij .Bijection.to j))
+                (invert-bijection n-S-bij .Bijection.to k)
+            )
+open Folding public
