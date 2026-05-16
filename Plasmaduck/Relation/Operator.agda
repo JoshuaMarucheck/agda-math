@@ -506,3 +506,50 @@ reflexive-transitive-closure-is-extensive _#_ = reflexive-closure-is-extensive (
     where
         open IsEquivalence #-eq renaming (refl to #-refl; sym to #-sym; trans to #-trans)
         open IsEquivalence ~-eq renaming (refl to ~-refl; sym to ~-sym; trans to ~-trans)
+
+
+-------------------------------------
+--- Some Transferrable Properties ---
+-------------------------------------
+
+{-
+    Note that above, we prove that CongruentRel, Reflexive, Symmetric, Transitive are transferrable properties.
+-}
+IsEquivalence-transferrable : TransferrableProperty ℓ₂ ℓ₃ IsEquivalence
+IsEquivalence-transferrable {_#_ = _#_} {_$_} ($-extends-# , #-extends-$) #-eq = record {
+    refl = λ {x} → $-extends-# (refl #-eq);
+    sym = λ {x} {y} x$y → $-extends-# (sym #-eq (#-extends-$ x$y));
+    trans = λ {i} {j} {k} i$j j$k → $-extends-# (trans #-eq (#-extends-$ i$j) (#-extends-$ j$k))
+    }
+
+Decidable-transferrable : TransferrableProperty ℓ₂ ℓ₃ Decidable
+Decidable-transferrable {_#_ = _#_} {_$_} ($-extends-# , #-extends-$) #-dec x y with #-dec x y
+... | yes x#y = yes ($-extends-# x#y)
+... | no ¬x#y = no (¬x#y ∘ #-extends-$)
+
+Irreflexive-transferrable : TransferrableProperty ℓ₂ ℓ₃ (Irreflexive _≈_)
+Irreflexive-transferrable {_#_ = _#_} {_$_} ($-extends-# , #-extends-$) #-irrefl = λ z z₁ → #-irrefl z (#-extends-$ z₁)
+
+Respectsʳ-transferrable : TransferrableProperty ℓ₂ ℓ₃ (_Respectsʳ _≈_)
+Respectsʳ-transferrable {_#_ = _#_} {_$_} ($-extends-# , #-extends-$) #-respʳ = λ z z₁ → $-extends-# (#-respʳ z (#-extends-$ z₁))
+
+Respectsˡ-transferrable : TransferrableProperty ℓ₂ ℓ₃ (_Respectsˡ _≈_)
+Respectsˡ-transferrable {_#_ = _#_} {_$_} ($-extends-# , #-extends-$) #-respˡ = λ z z₁ → $-extends-# (#-respˡ z (#-extends-$ z₁))
+
+Respects₂-transferrable : TransferrableProperty ℓ₂ ℓ₃ (_Respects₂ _≈_)
+Respects₂-transferrable {_#_ = _#_} {_$_} $-same-rel-# #-resp₂ = Respectsʳ-transferrable $-same-rel-# (#-resp₂ .proj₁) , Respectsˡ-transferrable $-same-rel-# (#-resp₂ .proj₂)
+
+IsStrictPartialOrder-transferrable : TransferrableProperty ℓ₂ ℓ₃ (IsStrictPartialOrder _≈_)
+IsStrictPartialOrder-transferrable {_#_ = _#_} {_$_} $-same-rel-# #-strict-partial = record {
+    isEquivalence = #-strict-partial .IsStrictPartialOrder.isEquivalence;
+    irrefl = Irreflexive-transferrable $-same-rel-# (IsStrictPartialOrder.irrefl #-strict-partial);
+    trans = transitivity-transferrable $-same-rel-# (IsStrictPartialOrder.trans #-strict-partial);
+    <-resp-≈ = Respects₂-transferrable $-same-rel-# (IsStrictPartialOrder.<-resp-≈ #-strict-partial)
+    }
+
+IsDecStrictPartialOrder-transferrable : TransferrableProperty ℓ₂ ℓ₃ (IsDecStrictPartialOrder _≈_)
+IsDecStrictPartialOrder-transferrable {_#_ = _#_} {_$_} $-same-rel-# #-dec-strict-partial = record {
+    isStrictPartialOrder = IsStrictPartialOrder-transferrable $-same-rel-# (#-dec-strict-partial .IsDecStrictPartialOrder.isStrictPartialOrder);
+    _≟_ = IsDecStrictPartialOrder._≟_ #-dec-strict-partial;
+    _<?_ = Decidable-transferrable $-same-rel-# (IsDecStrictPartialOrder._<?_ #-dec-strict-partial)
+    }
