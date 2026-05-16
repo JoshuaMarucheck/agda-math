@@ -13,7 +13,7 @@ open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsSt
 
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respects-≡)
-open import Plasmaduck.Relation.Order using (Comparable; show-total-order)
+open import Plasmaduck.Relation.Order using (show-total-order; Total)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.Data.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
@@ -75,7 +75,7 @@ module FiveHorsesPuzzle (ℓ₃ : Level) (horses : ℕ) (race-size : ℕ) (goal-
         (_<_ : Rel Horse ℓ₂) →
         (<-irrefl : Irreflexive _≡_ _<_) →
         (<-trans : Transitive _<_) →
-        (<-cmp : Comparable _≡_ _<_) →
+        (<-cmp : Total _≡_ _<_) →
         IsStrictTotalOrder _≡_ _<_
     make-horse-order {ℓ₂} _<_ <-irrefl <-trans <-cmp = show-total-order {S = Horse} _≡_ ≡-isEquivalence _<_ <-irrefl <-trans <-cmp (all-respects-≡ _<_)
 

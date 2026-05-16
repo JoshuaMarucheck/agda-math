@@ -2,7 +2,7 @@ open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary using (Rel; Decidable; Irreflexive; Reflexive; Transitive; Asymmetric; IsEquivalence; IsStrictTotalOrder; IsStrictPartialOrder; tri<; tri≈; tri>; _Respects₂_)
 open import Function using (flip)
 open import Plasmaduck.Util.Case using (case_of_)
-open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃)
+open import Plasmaduck.Relation.OrderHelpers using (_Extends_; WeakTri; cmp₁; cmp₂; cmp₃)
 
 
 
@@ -15,20 +15,25 @@ variable
     a b c ℓ₁ ℓ₂ : Level
 
 
-Comparable : Rel S ℓ₂ → Set (s ⊔ ℓ ⊔ ℓ₂)
-Comparable _<_ = (x y : S) → WeakTri (x < y) (x ≈ y) (x > y)
+Total : Rel S ℓ₂ → Set (s ⊔ ℓ ⊔ ℓ₂)
+Total _<_ = (x y : S) → WeakTri (x < y) (x ≈ y) (x > y)
     where _>_ = flip _<_
 
 ComparableAt : Rel S ℓ₂ → (x y : S) → Set (ℓ ⊔ ℓ₂)
 ComparableAt _<_ x y = WeakTri (x < y) (x ≈ y) (x > y)
     where _>_ = flip _<_
 
+if-extends-then-same-comparable-at : {_#_ : Rel S ℓ₂} {_<_ : Rel S ℓ₁} → _#_ Extends _<_ → {x y : S} → ComparableAt _<_ x y → ComparableAt _#_ x y
+if-extends-then-same-comparable-at #-extends-< (cmp₁ x<y) = cmp₁ (#-extends-< x<y)
+if-extends-then-same-comparable-at #-extends-< (cmp₂ x≈y) = cmp₂ x≈y
+if-extends-then-same-comparable-at #-extends-< (cmp₃ x>y) = cmp₃ (#-extends-< x>y)
+
 show-total-order :
     (≈-isEquivalence : IsEquivalence _≈_) →
     (_<_ : Rel S ℓ₂) →
     (<-irrefl : Irreflexive _≈_ _<_) →
     (<-trans : Transitive _<_) →
-    (<-cmp : Comparable _<_) →
+    (<-cmp : Total _<_) →
     (<-resp-≈ : _<_ Respects₂ _≈_) →
     IsStrictTotalOrder _≈_ _<_
 show-total-order ≈-isEquivalence _<_ <-irrefl <-trans <-cmp <-resp-≈ = record {

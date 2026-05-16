@@ -7,18 +7,19 @@ open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Function using (_∘_; _on_; flip; id; Injective; Surjective; Bijection; Congruent)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _+_; _∸_; z≤n; s≤s) renaming (suc to suc-ℕ; zero to zero-ℕ; _≤_ to _≤ℕ_; _<_ to _<ℕ_; _≥_ to _≥ℕ_; _>_ to _>ℕ_)
+open import Data.Nat using (ℕ; _+_; _∸_; _*_; z≤n; s≤s) renaming (suc to suc-ℕ; zero to zero-ℕ; _≤_ to _≤ℕ_; _<_ to _<ℕ_; _≥_ to _≥ℕ_; _>_ to _>ℕ_)
 open import Data.Fin using () renaming (suc to suc-fin; zero to zero-fin)
 open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsStrictTotalOrder; Reflexive; Irreflexive; Transitive; Trans; Rel; IsEquivalence; _Respects₂_; _Respectsˡ_; _Respectsʳ_; Decidable; IsStrictPartialOrder; Trichotomous; Tri; tri<; tri≈; tri>; Asymmetric; IsDecStrictPartialOrder)
 open import Relation.Binary.Bundles using (Setoid)
 
 open import Plasmaduck.Util.Case using (case_of_)
+open import Plasmaduck.Relation.OperatorDefs using (SameRel)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respects-≡)
-open import Plasmaduck.Relation.Order using (ComparableAt; show-total-order)
-open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
-open import Plasmaduck.Counting.Counting using (HasSize; IsFinite; AtMostSize; any; all; subset-of-finite-is-upper-bounded; one-equal-item; fin-setoid; ⊎-size-theorem; _∘-at-most-size_)
+open import Plasmaduck.Relation.Order using (ComparableAt; show-total-order; if-extends-then-same-comparable-at)
+open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_; extends-trans)
+open import Plasmaduck.Counting.Counting using (HasSize; IsFinite; AtMostSize; SubsetHasSize; any; all; subset-of-finite-is-upper-bounded; one-equal-item; fin-setoid; ⊎-size-theorem; ×-size-theorem; _∘-at-most-size_; fold; fold-all-theorem; fold-carrying-theorem)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; respects→cong-rel; rel-property) renaming (≈-cong to ≈-cong')
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; from-discrete-cong; ⊎-setoid; rel₁; rel₂)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; from-discrete-cong; ⊎-setoid; rel₁; rel₂; ×-setoid)
 open import Plasmaduck.Counting.Strengthening using (subset-of-finite-is-finite; strengthen-core; at-most-size-subset-decr; n∸1-unequal-items)
 open import Plasmaduck.Function.Bijection using (invert-bijection; id-bijection; ⊎-bijection; _∘-bijection_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
@@ -27,6 +28,7 @@ open import Plasmaduck.Property.Restriction using (restrict-property; restrict-p
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
 open import Plasmaduck.Function.Surjectionish using (surjection→surjectionish)
 open import Plasmaduck.Relation.RelationVector using (module RelationTree)
+open import Plasmaduck.Relation.Operator using (MinimalExtension; lift-rel; lift-rel-same-rel; IsDecStrictPartialOrder-transferrable)
 
 
 
@@ -149,83 +151,191 @@ module Helpers {a ℓ ℓ₂ : Level} {A : Set a} {_≈_ : Rel A ℓ} {_<_ : Rel
             ... | yes (cmp₂ x≈y) = yes (tri≈ (irrefl x≈y) x≈y (irrefl (sym x≈y)))
             ... | yes (cmp₃ x>y) = yes (tri> (asym x>y) (λ x≈y → irrefl (sym x≈y) x>y) x>y)
 
-module _ {a ℓ ℓ₂ : Level} {A : Set a} {_≈_ : Rel A ℓ} {_<_ : Rel A ℓ₂} (isDecStrictPartialOrder : IsDecStrictPartialOrder _≈_ _<_) where
-    open Helpers isDecStrictPartialOrder
-    module RelExtension {x y : A} (x#y : x # y) where
-        -- _<'_ extends _<_ with the additional comparison x < y.
-        -- _<'_ is a minimal such relation.
+module _ {a ℓ : Level} (A-setoid : Setoid a ℓ) where
+    private
+        A : Set a
+        A = A-setoid .Setoid.Carrier
+
+        _≈_ : Rel A ℓ
+        _≈_ = A-setoid .Setoid._≈_
+
+        open IsEquivalence (A-setoid .Setoid.isEquivalence) using (refl; sym; trans; reflexive)
+
+    module _ {ℓ₂ : Level} {_<_ : Rel A ℓ₂} (isDecStrictPartialOrder : IsDecStrictPartialOrder _≈_ _<_) where
+        open Helpers isDecStrictPartialOrder hiding (A-setoid; refl; sym; trans)
+        module StrictRelExtension {x y : A} (y≰x : ¬ y ≤ x) where
+            -- _<'_ extends _<_ with the additional comparison x < y.
+            -- _<'_ is a minimal such relation.
+
+            _<'_ : Rel A (ℓ ⊔ ℓ₂)
+            a <' b = (a ≤ x × y ≤ b) ⊎ a < b
+
+            extend-has-properties : IsDecStrictPartialOrder _≈_ _<'_
+            extend-has-properties = record {
+                isStrictPartialOrder = record {
+                    isEquivalence = isDecStrictPartialOrder .IsDecStrictPartialOrder.isStrictPartialOrder .IsStrictPartialOrder.isEquivalence;
+                    irrefl = <'-irrefl;
+                    trans = <'-trans;
+                    <-resp-≈ = <'-resp-≈
+                    };
+                _≟_ = _≈?_;
+                _<?_ = _<'?_
+                }
+                where
+                    x≉y : ¬ x ≈ y
+                    x≉y = y≰x ∘ ≤-reflexive ∘ sym
+
+                    _<'?_ : Decidable _<'_
+                    _<'?_ a b with a <? b
+                    ...       | (yes a<b) = yes (inj₂ a<b)
+                    ...       | (no ¬a<b) with a ≤? x | y ≤? b
+                    ...                   | (yes a≤x)    | (yes y≤b) = yes (inj₁ (a≤x , y≤b))
+                    ...                   | (no ¬a≤x)    | _ = no λ { (inj₁ (a≤x , y≤b)) → ¬a≤x a≤x; (inj₂ a<b) → ¬a<b a<b}
+                    ...                   | _            | (no ¬y≤b)  = no λ { (inj₁ (a≤x , y≤b)) → ¬y≤b y≤b; (inj₂ a<b) → ¬a<b a<b}
+
+                    <'-irrefl : Irreflexive _≈_ _<'_
+                    <'-irrefl {a} {b} a≈b (inj₁ (a≤x , y≤b)) = y≰x (≤-trans (≤-respʳ-≈ (sym a≈b) y≤b) a≤x)
+                    <'-irrefl a≈b (inj₂ a<b) = irrefl a≈b a<b
+
+                    <'-trans : Transitive _<'_
+                    <'-trans {a} {b} {c} (inj₁ (a≤x , y≤b)) (inj₁ (b≤x , y≤c)) = ⊥-elim (y≰x (≤-trans y≤b b≤x))
+                    <'-trans {a} {b} {c} (inj₂ a<b) (inj₁ (b≤x , y≤c)) = inj₁ (<-≤-trans-≤ a<b b≤x , y≤c)
+                    <'-trans {a} {b} {c} (inj₁ (a≤x , y≤b)) (inj₂ b<c) = inj₁ (a≤x , ≤-<-trans-≤ y≤b b<c)
+                    <'-trans {a} {b} {c} (inj₂ a<b) (inj₂ b<c) = inj₂ (<-trans a<b b<c)
+
+                    <'-respˡ-≈ : _<'_ Respectsˡ _≈_
+                    <'-respˡ-≈ {a} {b} {c} b≈c (inj₁ (b≤x , y≤a)) = inj₁ (≤-respˡ-≈ b≈c b≤x , y≤a)
+                    <'-respˡ-≈ {a} {b} {c} b≈c (inj₂ b<a) = inj₂ (<-resp-≈ .proj₂ b≈c b<a)
+
+                    <'-respʳ-≈ : _<'_ Respectsʳ _≈_
+                    <'-respʳ-≈ {a} {b} {c} b≈c (inj₁ (a≤x , y≤b)) = inj₁ (a≤x , ≤-respʳ-≈ b≈c y≤b)
+                    <'-respʳ-≈ {a} {b} {c} b≈c (inj₂ a<b) = inj₂ (<-resp-≈ .proj₁ b≈c a<b)
+
+                    <'-resp-≈ : _<'_ Respects₂ _≈_
+                    <'-resp-≈ = <'-respʳ-≈ , <'-respˡ-≈
+
+            extend-imposes-x<y : x <' y
+            extend-imposes-x<y = inj₁ (inj₁ refl , inj₁ refl)
+
+            extend-extends : _<'_ Extends _<_
+            extend-extends = inj₂
+            {-
+                It's not necessarily a strict extension. It's strict if x and y are uncomparable under _<_, since we know x <' y.
+                (In fact, it is strict if and only if ¬ x < y.)
+            -}
+
+            extend-is-minimal : {ℓ₃ : Level} → MinimalExtension A-setoid ℓ₃ (λ _$_ → IsDecStrictPartialOrder _≈_ _$_ × x $ y) _<'_ _<_
+            extend-is-minimal _<''_ <''-extends-< (<''-isDecStrictPartialOrder , x<''y) {a} {b} (inj₁ (a≤x , y≤b)) =
+                <-≤-trans''-< (≤-<-trans''-< (≤''-extends-≤ a≤x) x<''y)  (≤''-extends-≤ y≤b)
+                where
+                    open Helpers <''-isDecStrictPartialOrder renaming (_≤_ to _≤''_; ≤-<-trans to ≤-<-trans''-<; <-≤-trans to <-≤-trans''-<)
+                    ≤''-extends-≤ : ∀ {x y} → x ≤ y → x ≤'' y
+                    ≤''-extends-≤ {x} {y} (inj₁ x≈y) = inj₁ x≈y
+                    ≤''-extends-≤ {x} {y} (inj₂ x<y) = inj₂ (<''-extends-< x<y)
+            extend-is-minimal _<''_ <''-extends-< (<''-isDecStrictPartialOrder , x<''y) {a} {b} (inj₂ a<b) = <''-extends-< a<b
+
+        module NonstrictRelExtension (x y : A) where
+            -- _<'_ extends _<_ by making x and y comparable if they are not under _<_. (It adds the additional comparison x <' y.)
+            -- _<'_ is a minimal such relation.
+
+            open StrictRelExtension {x} {y} using () renaming (
+                extend-has-properties to strict-extend-has-properties;
+                extend-is-minimal to strict-extend-is-minimal
+                )
+
+            _<'_ : Rel A (ℓ ⊔ ℓ₂)
+            a <' b with y ≤? x
+            ... | no _ = (a ≤ x × y ≤ b) ⊎ a < b
+            ... | yes _ = Lift ℓ (a < b)
+
+            x<y→no-mod : x < y → SameRel A _<_ _<'_
+            x<y→no-mod x<y with y ≤? x
+            ... | no _ = inj₂ , λ { (inj₁ (a≤x , y≤b)) → <-≤-trans (≤-<-trans a≤x x<y) y≤b; (inj₂ a<b) → a<b}
+            ... | yes y≤x = ⊥-elim (irrefl refl (≤-<-trans y≤x x<y))
+
+            extend-has-properties : IsDecStrictPartialOrder _≈_ _<'_
+            extend-has-properties with y ≤? x
+            ... | no ¬y≤x = strict-extend-has-properties ¬y≤x
+            ... | yes _ = IsDecStrictPartialOrder-transferrable A-setoid (lift-rel-same-rel A-setoid ℓ _<_) isDecStrictPartialOrder
+
+            extend-imposes-x-cmp-y : ComparableAt _≈_ _<'_ x y
+            extend-imposes-x-cmp-y with y ≤? x
+            ... | no ¬y≤x = cmp₁ (inj₁ (inj₁ refl , inj₁ refl))
+            ... | yes (inj₁ y≈x) = cmp₂ (sym y≈x)
+            ... | yes (inj₂ y<x) = cmp₃ (lift y<x)
+
+            extend-extends : _<'_ Extends _<_
+            extend-extends with y ≤? x
+            ... | no _  = inj₂
+            ... | yes _ = lift
+
+            extend-is-minimal : {ℓ₃ : Level} → MinimalExtension A-setoid ℓ₃ (λ _$_ → IsDecStrictPartialOrder _≈_ _$_ × x $ y) _<'_ _<_
+            extend-is-minimal _<''_ <''-extends-< (<''-isDecStrictPartialOrder , x<''y) {a} {b} with y ≤? x
+            ... | no ¬y≤x = strict-extend-is-minimal ¬y≤x _<''_ <''-extends-< (<''-isDecStrictPartialOrder , x<''y)
+            ... | yes _ = <''-extends-< ∘ Lift.lower
+
+    private
+        rel-domain : (ℓ₂ : Level) → Set (a ⊔ ℓ ⊔ lsuc ℓ₂)
+        rel-domain ℓ₂ = Σ (Rel A ℓ₂) (IsDecStrictPartialOrder _≈_)
+
+        lift-rel-domain : {ℓ₂ : Level} (ℓ₃ : Level) → rel-domain ℓ₂ → rel-domain (ℓ₂ ⊔ ℓ₃)
+        lift-rel-domain ℓ₃ (_<_ , <-isDecStrictPartialOrder) = lift-rel A-setoid ℓ₃ _<_ , IsDecStrictPartialOrder-transferrable A-setoid (lift-rel-same-rel A-setoid ℓ₃ _<_) <-isDecStrictPartialOrder
+
+    module MassRelExtension
+        {ℓ₄ : Level}
+        {P : A → Set ℓ₄}
+        {n : ℕ}
+        (P-size-n : SubsetHasSize A-setoid P n)
+        {ℓ₂ : Level}
+        {_<_ : Rel A ℓ₂}
+        (<-isDecStrictPartialOrder : IsDecStrictPartialOrder _≈_ _<_)
+        where
+        open NonstrictRelExtension using () renaming (_<'_ to extend-rel; extend-imposes-x-cmp-y to old-extend-imposes-x-cmp-y; extend-has-properties to old-extend-has-properties; extend-extends to old-extend-extends)
+        private
+            start : rel-domain ℓ₂
+            start = (_<_ , <-isDecStrictPartialOrder)
+
+            elements : Setoid _ _
+            elements = property-subset-setoid A-setoid P
+
+            elements-pair : Setoid _ _
+            elements-pair = ×-setoid elements elements
+
+            ElementPair : Set _
+            ElementPair = elements-pair .Setoid.Carrier
+
+            n²-elements : HasSize (×-setoid elements elements) (n * n)
+            n²-elements = ×-size-theorem P-size-n P-size-n
+
+            State = Σ (Rel A (ℓ ⊔ ℓ₂)) (IsDecStrictPartialOrder _≈_)
+
+            combine : State → (×-setoid elements elements .Setoid.Carrier) → State
+            combine (_#_ , #-dec-strict-partial) ((x , P[x]) , (y , P[y])) = extend-rel #-dec-strict-partial x y , old-extend-has-properties #-dec-strict-partial x y
+
+        extended-rel' : rel-domain (ℓ ⊔ ℓ₂)
+        extended-rel' = fold n²-elements {A = State} combine (lift-rel-domain ℓ start)
 
         _<'_ : Rel A (ℓ ⊔ ℓ₂)
-        a <' b = (a ≤ x × y ≤ b) ⊎ a < b
+        _<'_ = extended-rel' .proj₁
 
-        extend-has-properties : IsDecStrictPartialOrder _≈_ _<'_
-        extend-has-properties = record {
-            isStrictPartialOrder = record {
-                isEquivalence = isDecStrictPartialOrder .IsDecStrictPartialOrder.isStrictPartialOrder .IsStrictPartialOrder.isEquivalence;
-                irrefl = <'-irrefl;
-                trans = <'-trans;
-                <-resp-≈ = <'-resp-≈
-                };
-            _≟_ = _≈?_;
-            _<?_ = _<'?_
-            }
-            where
-                x≉y : ¬ x ≈ y
-                x≉y = x#y ∘ cmp₂
+        extend-dec-strict-partial : IsDecStrictPartialOrder _≈_ _<'_
+        extend-dec-strict-partial = extended-rel' .proj₂
 
-                y≰x : ¬ y ≤ x
-                y≰x (inj₁ y≈x) = x#y (cmp₂ (sym y≈x))
-                y≰x (inj₂ y<x) = x#y (cmp₃ y<x)
-
-                _<'?_ : Decidable _<'_
-                _<'?_ a b with a <? b
-                ...       | (yes a<b) = yes (inj₂ a<b)
-                ...       | (no ¬a<b) with a ≤? x | y ≤? b
-                ...                   | (yes a≤x)    | (yes y≤b) = yes (inj₁ (a≤x , y≤b))
-                ...                   | (no ¬a≤x)    | _ = no λ { (inj₁ (a≤x , y≤b)) → ¬a≤x a≤x; (inj₂ a<b) → ¬a<b a<b}
-                ...                   | _            | (no ¬y≤b)  = no λ { (inj₁ (a≤x , y≤b)) → ¬y≤b y≤b; (inj₂ a<b) → ¬a<b a<b}
-
-                <'-irrefl : Irreflexive _≈_ _<'_
-                <'-irrefl {a} {b} a≈b (inj₁ (a≤x , y≤b)) = y≰x (≤-trans (≤-respʳ-≈ (sym a≈b) y≤b) a≤x)
-                <'-irrefl a≈b (inj₂ a<b) = irrefl a≈b a<b
-
-                <'-trans : Transitive _<'_
-                <'-trans {a} {b} {c} (inj₁ (a≤x , y≤b)) (inj₁ (b≤x , y≤c)) = ⊥-elim (y≰x (≤-trans y≤b b≤x))
-                <'-trans {a} {b} {c} (inj₂ a<b) (inj₁ (b≤x , y≤c)) = inj₁ (<-≤-trans-≤ a<b b≤x , y≤c)
-                <'-trans {a} {b} {c} (inj₁ (a≤x , y≤b)) (inj₂ b<c) = inj₁ (a≤x , ≤-<-trans-≤ y≤b b<c)
-                <'-trans {a} {b} {c} (inj₂ a<b) (inj₂ b<c) = inj₂ (<-trans a<b b<c)
-
-                <'-respˡ-≈ : _<'_ Respectsˡ _≈_
-                <'-respˡ-≈ {a} {b} {c} b≈c (inj₁ (b≤x , y≤a)) = inj₁ (≤-respˡ-≈ b≈c b≤x , y≤a)
-                <'-respˡ-≈ {a} {b} {c} b≈c (inj₂ b<a) = inj₂ (<-resp-≈ .proj₂ b≈c b<a)
-
-                <'-respʳ-≈ : _<'_ Respectsʳ _≈_
-                <'-respʳ-≈ {a} {b} {c} b≈c (inj₁ (a≤x , y≤b)) = inj₁ (a≤x , ≤-respʳ-≈ b≈c y≤b)
-                <'-respʳ-≈ {a} {b} {c} b≈c (inj₂ a<b) = inj₂ (<-resp-≈ .proj₁ b≈c a<b)
-
-                <'-resp-≈ : _<'_ Respects₂ _≈_
-                <'-resp-≈ = <'-respʳ-≈ , <'-respˡ-≈
-
-        extend-imposes-x<y : x <' y
-        extend-imposes-x<y = inj₁ (inj₁ refl , inj₁ refl)
+        extend-imposes-pairwise-cmp : (((x , _) , (y , _)) : ×-setoid elements elements .Setoid.Carrier) → ComparableAt _≈_ _<'_ x y
+        extend-imposes-pairwise-cmp = fold-all-theorem n²-elements combine (lift-rel-domain ℓ start) (λ (_#_ , _) ((x , _) , (y , _)) → ComparableAt _≈_ _#_ x y)
+            (λ {
+                (_#_ , #-dec-strict-partial) (x₁≈y₁ , x₂≈y₂) (cmp₁ x₁#x₂) → cmp₁ (Helpers.<-cong #-dec-strict-partial x₁≈y₁ x₂≈y₂ x₁#x₂);
+                (_#_ , #-dec-strict-partial) (x₁≈y₁ , x₂≈y₂) (cmp₂ x₁≈x₂) → cmp₂ (trans (trans (sym x₁≈y₁) x₁≈x₂) x₂≈y₂);
+                (_#_ , #-dec-strict-partial) (x₁≈y₁ , x₂≈y₂) (cmp₃ x₂#x₁) → cmp₃ (Helpers.<-cong #-dec-strict-partial x₂≈y₂ x₁≈y₁ x₂#x₁)
+            })
+            (λ (_#_ , #-dec-strict-partial) ((x , _) , (y , _)) → old-extend-imposes-x-cmp-y #-dec-strict-partial x y)
+            (λ (_#_ , #-dec-strict-partial) pair₁@((x₁ , P[x₁]) , (x₂ , _)) ((y₁ , _) , (y₂ , _)) y₁-cmp-y₂ → if-extends-then-same-comparable-at _≈_ {_#_ = combine (_#_ , #-dec-strict-partial) pair₁ .proj₁} {_<_ = _#_} (old-extend-extends #-dec-strict-partial x₁ x₂) y₁-cmp-y₂)
 
         extend-extends : _<'_ Extends _<_
-        extend-extends = inj₂
-        {-
-            It's a strict extension, since we know x <' y despite x and y being uncomparable under _<_.
-            We never actually use this fact anywhere. The whole proof would go through if we only said ¬ y ≤ x,
-            though the extension may not be strict in that case. (In fact, it is strict if and only if ¬ x < y.)
-        -}
+        extend-extends = fold-carrying-theorem n²-elements combine (lift-rel-domain ℓ start) (λ (_#_ , _) → _#_ Extends _<_) (λ (_#_ , #-dec-strict-partial) ((x , _) , (y , _)) #-extends-< → extends-trans {j = _#_} (old-extend-extends #-dec-strict-partial x y) #-extends-<) lift
 
-        extend-is-minimal : {ℓ₃ : Level} {_<''_ : Rel A ℓ₃} → (IsDecStrictPartialOrder _≈_ _<''_) → _<''_ Extends _<_ → x <'' y → _<''_ Extends _<'_
-        extend-is-minimal {_<''_ = _<''_} <''-isDecStrictPartialOrder <''-extends-< x<''y {a} {b} (inj₁ (a≤x , y≤b)) =
-            <-≤-trans''-< (≤-<-trans''-< (≤''-extends-≤ a≤x) x<''y)  (≤''-extends-≤ y≤b)
-            where
-                open Helpers <''-isDecStrictPartialOrder renaming (_≤_ to _≤''_; ≤-<-trans to ≤-<-trans''-<; <-≤-trans to <-≤-trans''-<)
-                ≤''-extends-≤ : ∀ {x y} → x ≤ y → x ≤'' y
-                ≤''-extends-≤ {x} {y} (inj₁ x≈y) = inj₁ x≈y
-                ≤''-extends-≤ {x} {y} (inj₂ x<y) = inj₂ (<''-extends-< x<y)
-        extend-is-minimal {_<''_ = _<''_} <''-isDecStrictPartialOrder <''-extends-< x<''y {a} {b} (inj₂ a<b) = <''-extends-< a<b
+        -- extend-is-minimal : {ℓ₃ : Level} → MinimalExtension A-setoid ℓ₃ (λ _$_ → IsDecStrictPartialOrder _≈_ _$_ × ∀ (((x , _) , (y , _)): ElementPair) → ComparableAt _≈_ _$_ x y) _<'_ _<_
+        -- extend-is-minimal _<''_ <''-extends-< (<''-isDecStrictPartialOrder , cmp-on-P) {a} {b} = {!   !}
 
 
 module Trees where

@@ -15,7 +15,7 @@ open import Relation.Binary using (Reflexive; Symmetric; Transitive; IsDecPreord
 
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respects-≡)
-open import Plasmaduck.Relation.Order using (Comparable; ComparableAt; show-total-order)
+open import Plasmaduck.Relation.Order using (ComparableAt; show-total-order)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃; _Extends_)
 open import Plasmaduck.Relation.RelationVector using (RelTree; leaf; branch; branch-type; trans-branch; map-branch; trans-flatten-branch; lift-rel-to-branch; flatten-branches; pop-first; pop-last)
 open import Plasmaduck.Counting.Counting using (AtLeastSize)
@@ -99,6 +99,15 @@ variable
 -- Sometimes, the operators are polymorphic over level. This makes the below definitions exotic sometimes,
 -- since operators usually need to be able to change the level of the set the relation is over.
 
+-- _#'_ extends _#_ minimally
+MinimalExtension :
+    (ℓ₄ : Level) →
+    {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
+    {ℓ₂ ℓ₃ : Level} →
+    (_#'_ : Rel A ℓ₂) → (_#_ : Rel A ℓ₃) →
+    Set _
+MinimalExtension ℓ₄ property _#'_ _#_ = ∀ (_#''_ : Rel A ℓ₄) → _#''_ Extends _#_ → property _#''_ → _#''_ Extends _#'_
+
 -- Proof that the operator finds the minimal relation
 -- (that is, a minimum of things are related (in the partial order of orders on A))
 -- such that the property holds.
@@ -107,7 +116,7 @@ MinimalOperator :
     {lₚ : Level → Level} → (property : {ℓ' : Level} → Rel A ℓ' → Set (lₚ ℓ')) →
     {lₒ : Level → Level} → (operator : {ℓ' : Level} → Rel A ℓ' → Rel A (lₒ ℓ')) →
     Set (a ⊔ lsuc ℓ₂ ⊔ lsuc ℓ₃ ⊔ lₚ ℓ₃ ⊔ lₒ ℓ₂)
-MinimalOperator ℓ₂ ℓ₃ property operator = (_#_ : Rel A ℓ₂) → (_#'_ : Rel A ℓ₃) → _#'_ Extends _#_ → property _#'_ → _#'_ Extends (operator _#_)
+MinimalOperator ℓ₂ ℓ₃ property operator = ∀ (_#_ : Rel A ℓ₂) → MinimalExtension ℓ₃ property (operator _#_) _#_
 
 OperatorPreserves :
     (ℓ₁ : Level)
