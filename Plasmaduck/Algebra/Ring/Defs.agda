@@ -134,13 +134,13 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
 
     unique-inverse : {x₁ x₂ y₁ y₂ : Carrier} → x₁ ≈ x₂ → AreInverses x₁ y₁ → AreInverses x₂ y₂ → y₁ ≈ y₂
-    unique-inverse {x₁} {x₂} {y₁} {y₂} x₁≈x₂ (x₁*y₁=1 , y₁*x₁=1) (x₂*y₂=1 , y₂*x₂=1) = begin 
-        y₁              ≈⟨ sym one-is-*-right-id ⟩ 
-        y₁ * one        ≈⟨ *-cong refl (sym x₂*y₂=1) ⟩ 
-        y₁ * (x₂ * y₂)   ≈⟨ *-assoc ⟩ 
-        (y₁ * x₂) * y₂   ≈⟨ *-cong (*-cong refl (sym x₁≈x₂)) refl ⟩ 
-        (y₁ * x₁) * y₂   ≈⟨ *-cong y₁*x₁=1 refl ⟩ 
-        one * y₂        ≈⟨ one-is-*-left-id ⟩ 
+    unique-inverse {x₁} {x₂} {y₁} {y₂} x₁≈x₂ (x₁*y₁=1 , y₁*x₁=1) (x₂*y₂=1 , y₂*x₂=1) = begin
+        y₁              ≈⟨ sym one-is-*-right-id ⟩
+        y₁ * one        ≈⟨ *-cong refl (sym x₂*y₂=1) ⟩
+        y₁ * (x₂ * y₂)   ≈⟨ *-assoc ⟩
+        (y₁ * x₂) * y₂   ≈⟨ *-cong (*-cong refl (sym x₁≈x₂)) refl ⟩
+        (y₁ * x₁) * y₂   ≈⟨ *-cong y₁*x₁=1 refl ⟩
+        one * y₂        ≈⟨ one-is-*-left-id ⟩
         y₂              ∎
 
     -- The group of units of this ring
@@ -151,14 +151,14 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     S*-rawGroup = record {
         CarrierSetoid = S*;
         op = record {
-            func = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) (y , y⁻¹ , y*y⁻¹=1 , y⁻¹*y=1) → (x * y , y⁻¹ * x⁻¹ , (begin 
-                (x * y) * (y⁻¹ * x⁻¹)   ≈⟨ sym *-assoc ⟩ 
-                x * (y * (y⁻¹ * x⁻¹))   ≈⟨ *-cong refl *-assoc ⟩ 
-                x * ((y * y⁻¹) * x⁻¹)   ≈⟨ *-cong refl (*-cong y*y⁻¹=1 refl) ⟩ 
-                x * (one * x⁻¹)         ≈⟨ *-cong refl one-is-*-left-id ⟩ 
-                x * x⁻¹                 ≈⟨ x*x⁻¹=1 ⟩ 
+            func = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) (y , y⁻¹ , y*y⁻¹=1 , y⁻¹*y=1) → (x * y , y⁻¹ * x⁻¹ , (begin
+                (x * y) * (y⁻¹ * x⁻¹)   ≈⟨ sym *-assoc ⟩
+                x * (y * (y⁻¹ * x⁻¹))   ≈⟨ *-cong refl *-assoc ⟩
+                x * ((y * y⁻¹) * x⁻¹)   ≈⟨ *-cong refl (*-cong y*y⁻¹=1 refl) ⟩
+                x * (one * x⁻¹)         ≈⟨ *-cong refl one-is-*-left-id ⟩
+                x * x⁻¹                 ≈⟨ x*x⁻¹=1 ⟩
                 one                     ∎
-                ) , (begin 
+                ) , (begin
                 (y⁻¹ * x⁻¹) * (x * y)   ≈⟨ sym *-assoc ⟩
                 y⁻¹ * (x⁻¹ * (x * y))   ≈⟨ *-cong refl *-assoc ⟩
                 y⁻¹ * ((x⁻¹ * x) * y)   ≈⟨ *-cong refl (*-cong x⁻¹*x=1 refl) ⟩

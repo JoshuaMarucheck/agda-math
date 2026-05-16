@@ -95,7 +95,7 @@ module Tooling where
         open SetoidNet B-net using (_~-setoid_) renaming (domain to B-domain)
         field
             type-gen : A-Carrier → SetoidNet.domain B-net
-        
+
         type-gen-setoid : A-Carrier → Setoid α β
         type-gen-setoid = proj₁ Function.∘ type-gen
 
@@ -108,7 +108,7 @@ module Tooling where
     -- record SetoidNetFunction (A-net : SetoidNet a b c d) (B-net : SetoidNet α β γ δ) : Set {!   !} where
     --     open SetoidNet A-net using () renaming (domain to A-domain; _~-setoid_ to _~-A-setoid_)
     --     open SetoidNet B-net using () renaming (domain to B-domain; _~-setoid_ to _~-B-setoid_)
-        
+
     --     field
     --         funcs : ((setoid , _) : A-domain) → DependentSetoidFunctionToNet setoid B-net
-    --         consistent' : 
+    --         consistent' :
