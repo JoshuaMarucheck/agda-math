@@ -49,14 +49,12 @@ variable
     The stop condition would then be that there is only one possible end state.
 -}
 
--- Hmm, it appears that continue-condition and stop-condition form a decidable pair, oops...
 module Types
     (State : Set a)
     (Moveset : State → Set c)
     (start-condition : State → Set ℓ₃)
     (continue-condition : State → Set ℓ₄)
     (stop-condition : State → Set ℓ₁)
-    (contradict-continue-stop : ∀ (s : State) → continue-condition s → stop-condition s → ⊥)
     (is-possible-next-state : REL State (Σ State Moveset) ℓ₂)
     (start-exists : Σ State start-condition)
     (continuation-exists : (s₁ : State) → stop-condition s₁ ⊎ (continue-condition s₁ × (∀ (m : Moveset s₁) → Σ State λ s₂ → is-possible-next-state s₂ (s₁ , m))))

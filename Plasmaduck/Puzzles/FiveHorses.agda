@@ -4,13 +4,16 @@ open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Function using (_∘_; flip; Bijection)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; _+_; _≤_; _≥_) renaming (zero to zero-ℕ; suc to suc-ℕ)
 open import Data.Nat.Properties using (+-comm)
-open import Data.Fin using (Fin; zero; suc; _↑ˡ_)
+open import Data.Fin using (Fin; zero; suc; _↑ˡ_) renaming (_<_ to _<-fin_)
 open import Data.Vec using (Vec; lookup; head; drop; []; _∷_; length)
-open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsStrictTotalOrder; Irreflexive; Transitive; Rel; IsEquivalence; _Respects₂_; Decidable; IsStrictPartialOrder; Trichotomous; Tri; tri<; tri≈; tri>; Asymmetric; IsDecStrictPartialOrder)
+open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsStrictTotalOrder; Irreflexive; Transitive; Rel; IsEquivalence; _Respects₂_; Decidable; IsStrictPartialOrder; Trichotomous; Tri; tri<; tri≈; tri>; Asymmetric; IsDecStrictPartialOrder; DecStrictPartialOrder)
 
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (equality→setoid; discrete-setoid)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence; all-respects-≡)
 open import Plasmaduck.Relation.Order using (show-total-order; Total)
@@ -19,6 +22,8 @@ open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.Data.Fin using (fin-≡-dec; _∸-fin_; _↑ˡ-inverted_)
 open import Plasmaduck.Counting.DiscreteCounting using (SubsetHasSize)
 open import Plasmaduck.Relation.Order using (ComparableAt; show-total-order)
+open import Plasmaduck.AdversarialGames.AdversarialGames using (module Types)
+open import Plasmaduck.Relation.DecStrictPartialOrder using (module MassRelExtension)
 
 
 
@@ -27,11 +32,6 @@ module Plasmaduck.Puzzles.FiveHorses where
 variable
     ℓ ℓ₂ : Level
 
-
--- vec-drop : {A : Set ℓ} {n : ℕ} → (m : Fin n) → Vec A n → Vec A (n ∸-fin m)
--- vec-drop {n = zero-ℕ} ()
--- vec-drop {n = suc-ℕ n} zero vec = vec
--- vec-drop {n = suc-ℕ n} (suc m) (x ∷ vec) = vec-drop m vec
 
 module FiveHorsesPuzzle (ℓ₃ : Level) (horses : ℕ) (race-size : ℕ) (goal-pred : ℕ) where
     {-
@@ -106,14 +106,13 @@ module FiveHorsesPuzzle (ℓ₃ : Level) (horses : ℕ) (race-size : ℕ) (goal-
             <-asym x<y y<x = <-irrefl refl (<-trans x<y y<x)
             -- <-asym = {! isDecStrictPartialOrder .IsDecStrictPartialOrder.isStrictPartialOrder  .IsStrictPartialOrder.asym !}
         field
-            comparable : (i j : Fin race-size) → Dec (WeakTri (i <' j) (i ≡' j) (i >' j))
+            comparable : (i j : Fin race-size) → WeakTri (i <' j) (i ≡' j) (i >' j)
 
-        tri-comparable : (i j : Fin race-size) → (Tri (i <' j) (i ≡' j) (i >' j)) ⊎ ¬ WeakTri (i <' j) (i ≡' j) (i >' j)
+        tri-comparable : (i j : Fin race-size) → Tri (i <' j) (i ≡' j) (i >' j)
         tri-comparable i j with comparable i j
-        tri-comparable i j | no i#j = inj₂ i#j
-        tri-comparable i j | yes (cmp₁ i<'j) = inj₁ (tri< i<'j (λ i≡'j → <-irrefl i≡'j i<'j) (<-asym i<'j))
-        tri-comparable i j | yes (cmp₂ i≡'j) = inj₁ (tri≈ (<-irrefl i≡'j) i≡'j (<-irrefl (sym i≡'j)))
-        tri-comparable i j | yes (cmp₃ i>'j) = inj₁ (tri> (<-asym i>'j) (λ i≡'j → <-irrefl (sym i≡'j) i>'j) i>'j)
+        tri-comparable i j | cmp₁ i<'j = tri< i<'j (λ i≡'j → <-irrefl i≡'j i<'j) (<-asym i<'j)
+        tri-comparable i j | cmp₂ i≡'j = tri≈ (<-irrefl i≡'j) i≡'j (<-irrefl (sym i≡'j))
+        tri-comparable i j | cmp₃ i>'j = tri> (<-asym i>'j) (λ i≡'j → <-irrefl (sym i≡'j) i>'j) i>'j
 
 
     record IsHorseOrder {_<_ : Rel Horse ℓ} (isDecStrictPartialOrder : IsDecStrictPartialOrder _≡_ _<_) {n : ℕ} (races : Races n) : Set ℓ where
@@ -143,6 +142,39 @@ module FiveHorsesPuzzle (ℓ₃ : Level) (horses : ℕ) (race-size : ℕ) (goal-
         {races : Races n} →
         IsHorseOrder isDecStrictPartialOrder races →
         Race ⊎ KnownGoal isDecStrictPartialOrder
+
+    empty-order : Rel Horse lzero
+    empty-order x y = ⊥
+
+    empty-order-is-dec-strict-partial-order : IsDecStrictPartialOrder _≡_ empty-order
+    empty-order-is-dec-strict-partial-order = record {
+        isStrictPartialOrder = record {
+            isEquivalence = ≡-isEquivalence;
+            irrefl = λ _ ();
+            trans = λ ();
+            <-resp-≈ = (λ _ ()) , (λ _ ())
+            };
+        _≟_ = horse-≡-dec;
+        _<?_ = λ _ _ → no λ ()
+        }
+
+    module _ (race : Race) where
+        open MassRelExtension (discrete-setoid Horse) (race .proj₂) using (extend-dec-strict-partial; extend-imposes-pairwise-cmp; extend-extends) renaming (_<'_ to extend-rel-with-race) public
+
+    module _ {ℓ : Level} where
+        open import Plasmaduck.Relation.DecStrictPartialOrder.Trees {ℓ₂ = ℓ} {A = Horse} {_≈_ = _≡_} using (GlobalTopN)
+        open import Plasmaduck.Relation.Operator (discrete-setoid Horse) using (lift-rel; lift-rel-same-rel; IsDecStrictPartialOrder-transferrable)
+
+        open Types
+            (Σ (Rel Horse ℓ) λ _<_ → IsDecStrictPartialOrder _≡_ _<_)   -- State
+            (λ _ → Race)                                                -- Moveset
+            (λ (rel , _) → rel ≡ lift-rel ℓ empty-order)                -- start-condition
+            (λ _ → ⊤)                                                   -- continue-condition
+            (λ (rel , is-valid-rel) → GlobalTopN is-valid-rel goal)     -- stop-condition
+            (λ (rel₂ , rel₂-valid) ((rel₁ , _) , race) → rel₂ Extends rel₁ × IsComparableRace rel₂-valid race) -- is-possible-next-state
+            (((lift-rel ℓ empty-order) , IsDecStrictPartialOrder-transferrable {_#_ = empty-order} (lift-rel-same-rel ℓ empty-order) empty-order-is-dec-strict-partial-order) , refl) -- start-exists
+            (λ (rel , is-valid-rel) → inj₂ (tt , λ race → (extend-rel-with-race race is-valid-rel , extend-dec-strict-partial race is-valid-rel) , extend-extends race is-valid-rel , record { comparable = λ i j → extend-imposes-pairwise-cmp race is-valid-rel (race .proj₂ .Bijection.to i , race .proj₂ .Bijection.to j)})) -- continuation-exists
+            using ()
 
     {-
         Essentially, the set of all of these for a given strategy is a model for the adversarially generated puzzle.
