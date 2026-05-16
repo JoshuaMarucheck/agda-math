@@ -4,7 +4,20 @@ from pathlib import Path
 import glob
 
 agda_dir = Path(__file__).parent / "Plasmaduck"
-targets = list(map(lambda p: agda_dir / p, glob.glob("**/*.agda", root_dir=agda_dir)))
+targets = list(map(lambda p: agda_dir / p, glob.glob("*/**/*.agda", root_dir=agda_dir)))
+assert (
+    Path(
+        "/home/joshuascardboardbox/Desktop/Agda/classical/Plasmaduck/Relation/DecStrictPartialOrder/Trees.agda"
+    )
+    in targets
+)
+# Known bugs:
+# deletes public
+# probably doesn't handle multiline imports well (which is especially bad if it deletes public
+# doesn't seek through all subdirectories somehow??? I added a star to the glob,
+#   but I don't think that's the right fix since now it just searches one directory lower,
+#   and it needs to search one down, meaning it won't find top-level files.
+# for some reason it deletes IsEquivalence when it's only ever opened as a module
 
 
 def min_existing(*idx: int) -> int:
