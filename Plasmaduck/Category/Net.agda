@@ -4,6 +4,7 @@ open import Function using (flip)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (indiscrete-setoid)
 open import Plasmaduck.Category.Category using (Category; RawCategory; IsSidedInverse; IsCommutative)
+open import Plasmaduck.Category.Diagram using (setoid-category)
 
 
 
@@ -40,21 +41,10 @@ record Net (a b c : Level) : Set (lsuc a ⊔ lsuc b ⊔ lsuc c) where
 
 make-net : Setoid a b → Net a b lzero
 make-net setoid = record {
-    category = record {
-        rawCategory = record {
-            Object = domain;
-            Morphism' = λ A B → indiscrete-setoid (A ~ B);
-            id = λ x → Setoid.refl setoid {x = x};
-            compose = record { func = flip (Setoid.trans setoid) }
-            };
-        isCategory = record {}
-        };
+    category = setoid-category setoid;
     isNet = record {
         allInverses = record {
             invert = Setoid.sym setoid
             }
         }
     }
-    where
-        domain = setoid .Setoid.Carrier
-        _~_ = setoid. Setoid._≈_

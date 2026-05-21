@@ -370,13 +370,12 @@ infixr 5 _++'_
 
 ++-left-cons :
     {A : Set a} {_~_ : Rel A ℓ}
-    {w x y z : A} →
-    (w~x : w ~ x) →
-    (xy : PairwiseRelationList _~_ x y) →
+    {x y z : A} →
+    (xy : PairwiseRelationListCons _~_ x y) →
     (yz : PairwiseRelationList _~_ y z) →
-    (cons (x , w~x , xy)) ++ yz ≡ cons (x , w~x , xy ++ yz)
-++-left-cons w~x (init _) y*z = ≡-refl
-++-left-cons {w = w} {x} {y} {z} w~x x*y@(cons (v , x~v , v*y)) y*z =
+    (cons xy) ++ yz ≡ cons (++-left-cons-make xy yz)
+++-left-cons (_ ∷' []) y*z = ≡-refl
+++-left-cons {x = w} {y} {z} (x , w~x , x*y@(cons (v , x~v , v*y))) y*z =
     cons (x , w~x , x*y) ++ y*z                                     ≡⟨⟩
     flip-concat (flip-concat (cons (x , w~x , x*y)) (init _)) y*z   ≡⟨ cong (λ q → flip-concat q y*z) (cons-last-flip-concat x*y (init _) w~x) ⟩
     flip-concat (cons-last' (flip-concat x*y (init _)) w~x) y*z     ≡⟨ cons-flip-concat w~x (flip-list x*y) y*z ⟩
@@ -390,7 +389,7 @@ infixr 5 _++'_
     (yz : PairwiseRelationListCons _~_ y z) →
     xy ++ (cons yz) ≡ cons (++-right-cons-make xy yz)
 ++-right-cons (init _) y*z = ≡-refl
-++-right-cons {x = v} {x} {z} (cons (w , v~w , w*x)) (y , x~y , y*z) = ++-left-cons v~w w*x (cons (y , x~y , y*z))
+++-right-cons {x = v} {x} {z} (cons vx) (y , x~y , y*z) = ++-left-cons vx (cons (y , x~y , y*z))
 
 ++-assoc :
     {A : Set a} {_~_ : Rel A ℓ}
@@ -401,10 +400,10 @@ infixr 5 _++'_
     wx ++ (xy ++ yz) ≡ (wx ++ xy) ++ yz
 ++-assoc (init _) xy yz = ≡-refl
 ++-assoc {_~_ = _~_} {w} {x} {y} {z} (cons (v , w~v , vx)) xy yz =
-    cons (v , w~v , vx) ++ (xy ++ yz)   ≡⟨ ++-left-cons w~v vx (xy ++ yz) ⟩
+    cons (v , w~v , vx) ++ (xy ++ yz)   ≡⟨ ++-left-cons (w~v ∷' vx) (xy ++ yz) ⟩
     cons (v , w~v , vx ++ (xy ++ yz))   ≡⟨ cong (λ q → cons (v , w~v , q)) (++-assoc vx xy yz) ⟩
-    cons (v , w~v , (vx ++ xy) ++ yz)   ≡⟨ ≡-sym (++-left-cons w~v (vx ++ xy) yz) ⟩
-    cons (v , w~v , vx ++ xy) ++ yz     ≡⟨ cong (_++ yz) (≡-sym (++-left-cons w~v vx xy)) ⟩
+    cons (v , w~v , (vx ++ xy) ++ yz)   ≡⟨ ≡-sym (++-left-cons (w~v ∷' (vx ++ xy)) yz) ⟩
+    cons (v , w~v , vx ++ xy) ++ yz     ≡⟨ cong (_++ yz) (≡-sym (++-left-cons (w~v ∷' vx) xy)) ⟩
     (cons (v , w~v , vx) ++ xy) ++ yz   ∎
     where open ≡-Reasoning
 
@@ -415,7 +414,19 @@ infixr 5 _++'_
     (xy : PairwiseRelationListCons _~_ x y) →
     (yz : PairwiseRelationListCons _~_ y z) →
     cons (xy ++' yz) ≡ cons xy ++ cons yz
-++-++' {x = w} {y} {z} (x , w~x , x*y) yz = ≡-sym (++-left-cons w~x x*y (cons yz))
+++-++' {x = w} {y} {z} xy yz = ≡-sym (++-left-cons xy (cons yz))
+
+++-right-empty :
+    {A : Set a} {_~_ : Rel A ℓ}
+    {x y : A} →
+    (xy : PairwiseRelationList _~_ x y) →
+    xy ++ [] ≡ xy
+++-right-empty [] = ≡-refl
+++-right-empty (x~z ∷ z*y) =
+    (x~z ∷ z*y) ++ []   ≡⟨ ++-left-cons (x~z ∷' z*y) [] ⟩
+    x~z ∷ (z*y ++ [])   ≡⟨ cong (x~z ∷_) (++-right-empty z*y) ⟩
+    x~z ∷ z*y           ∎
+    where open ≡-Reasoning
 
 branch→cons :
     {A : Set a} {_~_ : Rel A ℓ}
@@ -613,13 +624,34 @@ module Mapping
         map-list (xy ++ yz) ≡ map-list xy ++ map-list yz
     map-list-++ (init _) yz = ≡-refl
     map-list-++ {x = w} (cons (x , w~x , xy)) yz =
-        map-list ((w~x ∷ xy) ++ yz)                 ≡⟨ cong map-list (++-left-cons w~x xy yz) ⟩
+        map-list ((w~x ∷ xy) ++ yz)                 ≡⟨ cong map-list (++-left-cons (w~x ∷' xy) yz) ⟩
         map-list (w~x ∷ (xy ++ yz))                 ≡⟨⟩
         map-rel w~x ∷ (map-list (xy ++ yz))         ≡⟨ cong (map-rel w~x ∷_) (map-list-++ xy yz) ⟩
-        map-rel w~x ∷ (map-list xy ++ map-list yz)  ≡⟨ ≡-sym (++-left-cons (map-rel w~x) (map-list xy) (map-list yz)) ⟩
+        map-rel w~x ∷ (map-list xy ++ map-list yz)  ≡⟨ ≡-sym (++-left-cons (map-rel w~x ∷' map-list xy) (map-list yz)) ⟩
         (map-rel w~x ∷ map-list xy) ++ map-list yz  ≡⟨⟩
         map-list (w~x ∷ xy) ++ map-list yz          ∎
         where open ≡-Reasoning
+
+    map-++-left-cons :
+        {x y z : A} →
+        (xy : PairwiseRelationListCons _~_ x y) →
+        (yz : PairwiseRelationList _~_ y z) →
+        map-cons (++-left-cons-make xy yz) ≡ ++-left-cons-make (map-cons xy) (map-list yz)
+    map-++-left-cons {x = w} (w~x ∷' xy) yz =
+        map-cons (++-left-cons-make (w~x ∷' xy) yz)                     ≡⟨⟩
+        map-cons (w~x ∷' (xy ++ yz))                                    ≡⟨⟩
+        map-rel w~x ∷' (map-list (xy ++ yz))                            ≡⟨ cong (map-rel w~x ∷'_) (map-list-++ xy yz) ⟩
+        map-rel w~x ∷' (map-list xy ++ map-list yz)                     ≡⟨⟩
+        ++-left-cons-make (map-rel w~x ∷' map-list xy) (map-list yz)    ≡⟨⟩
+        ++-left-cons-make (map-cons (w~x ∷' xy)) (map-list yz)          ∎
+        where open ≡-Reasoning
+
+    map-cons-++' :
+        {x y z : A} →
+        (xy : PairwiseRelationListCons _~_ x y) →
+        (yz : PairwiseRelationListCons _~_ y z) →
+        map-cons (xy ++' yz) ≡ map-cons xy ++' map-cons yz
+    map-cons-++' {x = w} xy yz = map-++-left-cons xy (cons yz)
 
     map-cons-on :
         {w z : A} → PairwiseRelationListCons _~_ w z →

@@ -5,7 +5,7 @@ open import Function using (flip; _∋_; Congruent)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; SetoidFunction₂; _←_; discrete-setoid; indiscrete-setoid; from-discrete-cong; into-indiscrete-cong)
-open import Plasmaduck.Function.Properties using (Congruent₂)
+open import Plasmaduck.Function.Properties using (ExplicitlyCongruent; Congruent₂)
 
 
 
@@ -48,7 +48,7 @@ record RawCategory (a b c : Level) : Set (lsuc a ⊔ lsuc b ⊔ lsuc c) where
     infixr 9 _∘_
 
     module _ {x y : Object} where
-        open Setoid (Morphism' x y) using () renaming (refl to ~-refl; sym to ~-sym; trans to ~-trans) public
+        open Setoid (Morphism' x y) using () renaming (refl to ~-refl; sym to ~-sym; trans to ~-trans; reflexive to ~-reflexive) public
 
 
 record IsCategory (rawCategory : RawCategory a b c) : Set (a ⊔ b ⊔ c) where
@@ -186,6 +186,9 @@ record RawFunctor (cat₁ : RawCategory a b c) (cat₂ : RawCategory α β γ) :
     mapₘ-respects : {x y : Object₁} → {f g :  Morphism₁ x y} → f ~₁ g → mapₘ f ~₂ mapₘ g
     mapₘ-respects = mapₘ-func .SetoidFunction.respects
 
+    mapₘ-explicitly-respects : {x y : Object₁} → (f g :  Morphism₁ x y) → f ~₁ g → mapₘ f ~₂ mapₘ g
+    mapₘ-explicitly-respects f g = mapₘ-func .SetoidFunction.respects
+
     extra-raw-functor : ExtraRawFunctor cat₁ cat₂
     extra-raw-functor = record {
         mapₒ = mapₒ;
@@ -267,20 +270,22 @@ module MakeFunctor'
     make-extra-raw-functor : ExtraRawFunctor DomainCategory TargetCategory
     make-extra-raw-functor = record { mapₒ = mapₒ; mapₘ = mapₘ }
 
-    IsCongruent : Set _
-    IsCongruent = {x y : DomainObject} → Congruent (RawCategory._~_ DomainCategory) (RawCategory._~_ TargetCategory) (mapₘ {x} {y})
+    -- Practical use cases have suggested that the type checker is bad at inferring morphisms from context.
+    -- This is perhaps fair, because the objects those morphisms are dependent on are also being inferred.
+    IsExplicitlyCongruent : Set _
+    IsExplicitlyCongruent = {X Y : DomainObject} → ExplicitlyCongruent (RawCategory._~_ DomainCategory) (RawCategory._~_ TargetCategory) (mapₘ {X} {Y})
 
-    make-raw-functor : IsCongruent → RawFunctor DomainCategory TargetCategory
+    make-raw-functor : IsExplicitlyCongruent → RawFunctor DomainCategory TargetCategory
     make-raw-functor map-cong = record {
         mapₒ = mapₒ;
         mapₘ-func = record {
             func = mapₘ;
-            respects = map-cong
+            respects = λ {f} {g} → map-cong f g
             }
         }
 
     IsValidEmbedding : Set _
-    IsValidEmbedding = Σ IsCongruent λ cong → (IsFunctor (make-raw-functor cong))
+    IsValidEmbedding = Σ IsExplicitlyCongruent λ cong → (IsFunctor (make-raw-functor cong))
 
 module MakeFunctor
     (DomainCategory : Category a b c)
@@ -296,201 +301,37 @@ module MakeFunctor
 
 
 
+module Theorems (category : Category a b c) where
+    module First (category : Category a b c) where
+        open Category category
+        open MorphismProperties category
 
--- module CommaCategory
---     {𝔸 : Category a b c} {𝔹 : Category α β γ} {ℂ : Category ℓ₁ ℓ₂ ℓ₃}
---     (S : Functor 𝔸 ℂ) (T : Functor 𝔹 ℂ)
---     where
+        left-inv→mono : {y z : Object} → (g-inv : Morphism z y) (g : Morphism y z) → IsSidedInverse g-inv g → IsMonomorphism g
+        left-inv→mono {y = y} {z} g-inv g g-inv∘g~id {x} f₁ f₂ g∘f₁~g∘f₂ = begin
+            f₁                  ≈⟨ ~-sym id-is-left-id ⟩
+            id y ∘ f₁           ≈⟨ ∘-respects (~-sym g-inv∘g~id) ~-refl ⟩
+            (g-inv ∘ g) ∘ f₁    ≈⟨ assoc g-inv g f₁ ⟩
+            g-inv ∘ (g ∘ f₁)    ≈⟨ ∘-respects ~-refl g∘f₁~g∘f₂ ⟩
+            g-inv ∘ (g ∘ f₂)    ≈⟨ ~-sym (assoc g-inv g f₂) ⟩
+            (g-inv ∘ g) ∘ f₂    ≈⟨ ∘-respects g-inv∘g~id ~-refl ⟩
+            id y ∘ f₂           ≈⟨ id-is-left-id ⟩
+            f₂                  ∎
+            where open import Relation.Binary.Reasoning.Setoid (Morphism' x y)
 
---     _↓'_ : RawCategory _ _ _
---     _↓'_ = record {
---         Object = Obj;
---         Morphism' = λ x y → record {
---             Carrier = Morph x y;
---             _≈_ = ~-Morph;
---             isEquivalence = ~-Morph-eq
---             };
---         id = identity;
---         _∘_ = concat;
---         ∘-respects = concat-respects
---         }
---         where
---             open Category
---             open Functor
+    open Category category
+    open MorphismProperties category
+    -- Hey look a dual theorem
+    right-inv→epi : {x y : Object} → (f : Morphism x y) (f-inv : Morphism y x) → IsSidedInverse f f-inv → IsEpimorphism f
+    right-inv→epi f f-inv = First.left-inv→mono (opposite-category category) f-inv f
 
---             Obj = Σ (𝔸 .Object) λ x → Σ (𝔹 .Object) λ y → (Morphism ℂ (S .mapₒ x) (T .mapₒ y))
+    iso→mono : {x y : Object} → (f : Morphism x y) → IsIsomorphism f → IsMonomorphism f
+    iso→mono f (g , fg~ , gf~) = First.left-inv→mono category g f gf~
 
---             map-obj : Obj → Obj → commutative-square .Object → ℂ .Object
---             map-obj (A , B , h) (A' , B' , h') zero = S .mapₒ A
---             map-obj (A , B , h) (A' , B' , h') (suc zero) = S .mapₒ A'
---             map-obj (A , B , h) (A' , B' , h') (suc (suc zero)) = T .mapₒ B
---             map-obj (A , B , h) (A' , B' , h') (suc (suc (suc zero))) = T .mapₒ B'
+    iso→epi : {x y : Object} → (f : Morphism x y) → IsIsomorphism f → IsEpimorphism f
+    iso→epi f (g , fg~ , gf~) = right-inv→epi f g fg~
 
---             map-morph : ((A , B , h) (A' , B' , h') : Obj) → (Morphism 𝔸 A A') → (Morphism 𝔹 B B') → {x y : commutative-square .Object} → CommutativeSquareBaseMorphism x y → Morphism ℂ (map-obj (A , B , h) (A' , B' , h') x) (map-obj (A , B , h) (A' , B' , h') y)
---             map-morph (A , B , h) (A' , B' , h') f g m₀₁ = mapₘ S f
---             map-morph (A , B , h) (A' , B' , h') f g m₁₃ = h'
---             map-morph (A , B , h) (A' , B' , h') f g m₀₂ = h
---             map-morph (A , B , h) (A' , B' , h') f g m₂₃ = mapₘ T g
-
---             RawMorph : Obj → Obj → Set _
---             RawMorph (A , B , h) (A' , B' , h') = (Morphism 𝔸 A A') × (Morphism 𝔹 B B')
-
---             Morph : Obj → Obj → Set _
---             Morph (A , B , h) (A' , B' , h') = Σ (Morphism 𝔸 A A') λ f → Σ (Morphism 𝔹 B B') λ g → Diagram.IsValidDiagramEmbedding CommutativeSquareBaseMorphism ℂ (map-obj (A , B , h) (A' , B' , h')) (map-morph (A , B , h) (A' , B' , h') f g)
-
---             get-raw-morph : {x y : Obj} → Morph x y → RawMorph x y
---             get-raw-morph (f , g , _) = f , g
-
---             ~-Morph : {x y : Obj} → Rel (Morph x y) _
---             ~-Morph {x} {y} (f₁ , g₁ , _) (f₂ , g₂ , _) = Category._~_ 𝔸 f₁ f₂ × Category._~_ 𝔹 g₁ g₂
-
---             ~-Morph-eq : {x y : Obj} → IsEquivalence (~-Morph {x} {y})
---             ~-Morph-eq {A , B , _} {A' , B' , _} = record {
---                 refl = refl₁ , refl₂;
---                 sym = λ (f₁~f₂ , g₁~g₂) → sym₁ f₁~f₂ , sym₂ g₁~g₂;
---                 trans = λ (f₁~f₂ , g₁~g₂) (f₂~f₃ , g₂~g₃) → trans₁ f₁~f₂ f₂~f₃ , trans₂ g₁~g₂ g₂~g₃
---                 }
---                 where
---                     open IsEquivalence (Category.~-eq 𝔸 A A') renaming (refl to refl₁; sym to sym₁; trans to trans₁)
---                     open IsEquivalence (Category.~-eq 𝔹 B B') renaming (refl to refl₂; sym to sym₂; trans to trans₂)
-
---             module DiagramEmbed {x y : Obj} ((f , g) : RawMorph x y) where
---                 diagram-embedₒ : Fin 4 → Category.Object ℂ
---                 diagram-embedₒ = map-obj x y
-
---                 diagram-embedₘ : {i j : Fin 4} → Category.Morphism commutative-square i j → Category.Morphism ℂ (diagram-embedₒ i) (diagram-embedₒ j)
---                 diagram-embedₘ = Diagram.diagram-embedding CommutativeSquareBaseMorphism ℂ (map-obj x y) (map-morph x y f g)
-
---                 IsCongruent : Set _
---                 IsCongruent = Diagram.IsCongruent CommutativeSquareBaseMorphism ℂ (map-obj x y) (map-morph x y f g)
-
---             module _ {x y : Obj} ((f , g , is-valid) : Morph x y) where
---                 morph→diagram-functor : Functor commutative-square ℂ
---                 morph→diagram-functor = Diagram.make-diagram-functor CommutativeSquareBaseMorphism ℂ (map-obj x y) (map-morph x y f g) is-valid
-
---             identity : (x : Obj) → Morph x x
---             identity obj@(A , B , h) = id 𝔸 A , id 𝔹 B , diagram-commutes , record {
---                 consistent-on-id = {!   !};
---                 consistent-on-∘ = {!   !}
---                 }
---                 where
---                     open DiagramEmbed {x = obj} {y = obj} (id 𝔸 A , id 𝔹 B)
-
---                     diagram-commutes : IsCongruent
---                     diagram-commutes {zero} {zero} {inj₁ (x , y , thing , hi , two)} {inj₁ x₁} tt = {! two  !}
---                     diagram-commutes {zero} {zero} {inj₁ x} {inj₂ y} tt = {!   !}
---                     diagram-commutes {zero} {zero} {inj₂ y} {inj₁ x} tt = {!   !}
---                     diagram-commutes {zero} {zero} {inj₂ y} {inj₂ y₁} tt = {!   !}
---                     diagram-commutes {zero} {suc j} {inj₁ x} {inj₁ x₁} tt = {!   !}
---                     diagram-commutes {suc i} {zero} {inj₁ x} {inj₁ x₁} tt = {!   !}
---                     diagram-commutes {suc i} {suc j} {inj₁ x} {inj₁ x₁} tt = {!   !}
---                     diagram-commutes {suc i} {suc j} {inj₁ x} {inj₂ y} tt = {!   !}
---                     diagram-commutes {suc i} {suc j} {inj₂ y} {inj₁ x} tt = {!   !}
---                     diagram-commutes {suc i} {suc j} {inj₂ y} {inj₂ y₁} tt = {!   !}
---             {-
---             (x y : Fin 4)
---       {x = x₁ : Σ (Fin 4)
---                         (λ x₂ →
---                             Σ (Fin 4)
---                             (λ y₁ →
---                             Σ
---                             (Plasmaduck.Relation.RelationVector.RelationTree.RelTree
---                                 CommutativeSquareBaseMorphism x x₂)
---                             (λ x₃ →
---                                 Σ (CommutativeSquareBaseMorphism x₂ y₁)
---                                 (λ x₄ →
---                                     Plasmaduck.Relation.RelationVector.RelationTree.RelTree
---                                     CommutativeSquareBaseMorphism y₁ y))))
---          ⊎ x ≡ y}
---       {y = y₁
---        : Σ (Fin 4)
---          (λ x₂ →
---             Σ (Fin 4)
---             (λ y₂ →
---                Σ
---                (Plasmaduck.Relation.RelationVector.RelationTree.RelTree
---                 CommutativeSquareBaseMorphism x x₂)
---                (λ x₃ →
---                   Σ (CommutativeSquareBaseMorphism x₂ y₂)
---                   (λ x₄ →
---                      Plasmaduck.Relation.RelationVector.RelationTree.RelTree
---                      CommutativeSquareBaseMorphism y₂ y))))
---          ⊎ x ≡ y} →
---       Data.Unit.⊤ →
---       (RawCategory.Morphism' (rawCategory ℂ)
---        (map-obj (A , B , h) (A , B , h) x)
---        (map-obj (A , B , h) (A , B , h) y)
---        Setoid.≈
---        Diagram.diagram-embedding CommutativeSquareBaseMorphism ℂ
---        (map-obj (A , B , h) (A , B , h))
---        (map-morph (A , B , h) (A , B , h)
---         (RawCategory.id (rawCategory 𝔸) A)
---         (RawCategory.id (rawCategory 𝔹) B))
---        x₁)
---       (Diagram.diagram-embedding CommutativeSquareBaseMorphism ℂ
---        (map-obj (A , B , h) (A , B , h))
---        (map-morph (A , B , h) (A , B , h)
---         (RawCategory.id (rawCategory 𝔸) A)
---         (RawCategory.id (rawCategory 𝔹) B))
---        y₁)
---             -}
-
---             concat : {x y z : Obj} → Morph y z → Morph x y → Morph x z
---             concat (f' , g' , is-valid') (f , g , is-valid) = _∘_ 𝔸 f' f ,  _∘_ 𝔹 g' g , {!   !}
-
---             concat-respects :
---                 {x y z : Obj} {g₁ g₂ : Morph y z} {f₁ f₂ : Morph x y} →
---                 ~-Morph g₁ g₂ → ~-Morph f₁ f₂ → ~-Morph (concat g₁ f₁) (concat g₂ f₂)
---             concat-respects = {!   !}
-
---     _↓_ : Category _ _ _
---     _↓_ = record {
---         rawCategory = _↓'_;
---         isCategory = record {}
---         }
-
-
-
-
-
-
-
-
-
--- -- module Theorems (category : Category a b c) where
--- --     module First (category : Category a b c) where
--- --         open Category category
--- --         open MorphismProperties category
-
--- --         left-inv→mono : {y z : Object} → (g-inv : Morphism z y) (g : Morphism y z) → IsSidedInverse g-inv g → IsMonomorphism g
--- --         left-inv→mono {y = y} {z} g-inv g g-inv∘g~id {x} f₁ f₂ g∘f₁~g∘f₂ = begin
--- --             f₁                  ≈⟨ ~-sym id-is-left-id ⟩
--- --             id y ∘ f₁           ≈⟨ ∘-respects (~-sym g-inv∘g~id) ~-refl ⟩
--- --             (g-inv ∘ g) ∘ f₁    ≈⟨ assoc g-inv g f₁ ⟩
--- --             g-inv ∘ (g ∘ f₁)    ≈⟨ ∘-respects ~-refl g∘f₁~g∘f₂ ⟩
--- --             g-inv ∘ (g ∘ f₂)    ≈⟨ ~-sym (assoc g-inv g f₂) ⟩
--- --             (g-inv ∘ g) ∘ f₂    ≈⟨ ∘-respects g-inv∘g~id ~-refl ⟩
--- --             id y ∘ f₂           ≈⟨ id-is-left-id ⟩
--- --             f₂                  ∎
--- --             where open import Relation.Binary.Reasoning.Setoid (Morphism' x y)
-
--- --     open Category category
--- --     open MorphismProperties category
--- --     -- Hey look a dual theorem
--- --     right-inv→epi : {x y : Object} → (f : Morphism x y) (f-inv : Morphism y x) → IsSidedInverse f f-inv → IsEpimorphism f
--- --     right-inv→epi f f-inv = First.left-inv→mono (opposite-category category) f-inv f
-
--- --     iso→mono : {x y : Object} → (f : Morphism x y) → IsIsomorphism f → IsMonomorphism f
--- --     iso→mono f (g , fg~ , gf~) = First.left-inv→mono category g f gf~
-
--- --     iso→epi : {x y : Object} → (f : Morphism x y) → IsIsomorphism f → IsEpimorphism f
--- --     iso→epi f (g , fg~ , gf~) = right-inv→epi f g fg~
-
--- --     open First category public
-
--- -- open MorphismProperties public
--- -- open CategoryProperties public
--- open MakeFunctor public
+    open First category public
 
 open MorphismProperties public
 open CategoryProperties public
+open MakeFunctor public

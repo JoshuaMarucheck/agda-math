@@ -12,6 +12,13 @@ open Setoid using (Carrier)
 variable
     a b c ℓ₁ ℓ₂ ℓ₃ : Level
 
+module GenericFunction
+    {A : Set a} {B : Set b}
+    (_≈A_ : Rel A ℓ₁) (_≈B_ : Rel B ℓ₂) (f : A → B) where
+
+    ExplicitlyCongruent : Set _
+    ExplicitlyCongruent = ∀ (x₁ x₂ : A) → x₁ ≈A x₂ → (f x₁) ≈B (f x₂)
+open GenericFunction public
 
 module GenericOperator
     {A : Set a} {B : Set b} {C : Set c}
