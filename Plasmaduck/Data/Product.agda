@@ -10,7 +10,11 @@ module Plasmaduck.Data.Product where
 variable
     a b c : Level
     A : Set a
-    B : A → Set b
+    B : Set b
+    B' : A → Set b
 
-Σ≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : Σ A B} → (pf : x₁ ≡ y₁) → x₂ ≡ change-type (cong B (≡-sym pf)) y₂ → x ≡ y
+Σ≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : Σ A B'} → (pf : x₁ ≡ y₁) → x₂ ≡ change-type (cong B' (≡-sym pf)) y₂ → x ≡ y
 Σ≡ ≡-refl ≡-refl = ≡-refl
+
+×≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : A × B} → (pf₁ : x₁ ≡ y₁) (pf₂ : x₂ ≡ y₂) → x ≡ y
+×≡ ≡-refl ≡-refl = ≡-refl

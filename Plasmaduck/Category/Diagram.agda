@@ -11,11 +11,16 @@ open import Data.Nat using (z≤n; s≤s)
 open import Data.Nat.Properties using (<-irrefl; ≤-<-trans)
 open import Data.Fin using (Fin; zero; suc; _<_; toℕ; fromℕ<; _≤_)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _←_; discrete-setoid; indiscrete-setoid; from-discrete-cong; into-indiscrete-cong)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _←_; discrete-setoid; indiscrete-setoid; from-discrete-cong; into-indiscrete-cong; SetoidFunctionEquality; SetoidFunctionEquality-eq; SetoidFunction₂)
 open import Plasmaduck.Relation.RelationVector using (module RelationList; module Flattening; module Mapping; tree→list; branch→cons; cons→branch; trans-flatten-branch; tree→list-branch→cons-same; _++_; _++'_; []; _∷_; _∷'_; foldl; ++-left-cons; ++-left-cons-make; ++-right-empty)
 open import Plasmaduck.Function.Properties using (Congruent₂)
 open import Plasmaduck.Category.Category using (RawCategory; Category; ExtraRawFunctor; Functor; module CategoryProperties; module MakeFunctor; module MakeFunctor')
-import Plasmaduck.Function
+open import Plasmaduck.Util.TypeChange using (change-type; change-type-trans'; change-type-proof-irrelevance; change-type-relation-dependence-irrelevance; change-type-flatten; change-type-elim)
+open import Plasmaduck.Function using (≈-isEquivalence)
+open import Plasmaduck.Data.Product using (×≡)
+open import Plasmaduck.Util.Case using (case_of_)
+open import Plasmaduck.Relation.OperatorDefs using (SameRel)
+open import Plasmaduck.Relation.Operator using (IsEquivalence-transferrable)
 
 
 
@@ -158,132 +163,9 @@ module Diagram
 
 
 
------------------------------------
---- Some examples of Categories ---
------------------------------------
-
-𝟘 : Category lzero lzero lzero
-𝟘 = record {
-    rawCategory = record {
-        Object = ⊥;
-        Morphism' = λ ();
-        id = λ ();
-        compose = λ {}
-        };
-    isCategory = record {
-        assoc = λ {};
-        id-is-left-id = λ {};
-        id-is-right-id = λ {}
-        }
-    }
-
-𝟙 : Category lzero lzero lzero
-𝟙 = record {
-    rawCategory = record {
-        Object = ⊤;
-        Morphism' = λ _ _ → discrete-setoid ⊤;
-        id = λ _ → tt;
-        compose = record {
-            func = λ _ _ → tt;
-            respects = λ _ _ → ≡-refl
-            }
-        };
-    isCategory = record {
-        assoc = λ _ _ _ → ≡-refl;
-        id-is-left-id = ≡-refl;
-        id-is-right-id = ≡-refl
-        }
-    }
-
-𝐒𝐞𝐭 : (ℓ : Level) → Category (lsuc ℓ) ℓ ℓ
-𝐒𝐞𝐭 ℓ = record {
-    rawCategory = record {
-        Object = Set ℓ;
-        Morphism' = λ A B → record {
-            Carrier = A → B;
-            _≈_ = Plasmaduck.Function._≈_;
-            isEquivalence = Plasmaduck.Function.≈-isEquivalence
-            };
-        id = λ A → Function.id;
-        compose = record {
-            func = λ g f → Function._∘_ g f;
-            respects = λ {g₁} {g₂} {f₁} {f₂} g₁≈g₂ f₁≈f₂ x →
-                g₁ (f₁ x)   ≡⟨ cong g₁ (f₁≈f₂ x) ⟩
-                g₁ (f₂ x)   ≡⟨ g₁≈g₂ (f₂ x) ⟩
-                g₂ (f₂ x)   ∎
-            }
-        };
-    isCategory = record {
-        assoc = λ _ _ _ _ → ≡-refl;
-        id-is-left-id = λ _ → ≡-refl;
-        id-is-right-id = λ _ → ≡-refl
-        }
-    }
-    where open ≡-Reasoning
-
--- Also see make-net from Net.agda.
-setoid-category : Setoid a b → Category a b lzero
-setoid-category setoid = record {
-    rawCategory = record {
-        Object = setoid .Setoid.Carrier;
-        Morphism' = λ A B → indiscrete-setoid (A ~ B);
-        id = λ x → Setoid.refl setoid {x = x};
-        compose = record { func = flip (Setoid.trans setoid) }
-        };
-    isCategory = record {}
-    }
-    where open Setoid setoid using () renaming (_≈_ to _~_)
-
-discrete-category : Set a → Category a a lzero
-discrete-category A = setoid-category (discrete-setoid A)
-
-module ObjectPicker (ℂ : Category a b c) where
-    open Category ℂ using (Object; Morphism; id; ~-refl; ~-sym; ~-trans)
-
-    object-picker : Object → Functor 𝟙 ℂ
-    object-picker X = record {
-        rawFunctor = record {
-            mapₒ = λ _ → X;
-            mapₘ-func = record {
-                func = λ _ → id X;
-                respects = λ _ → ~-refl
-                }
-            };
-        isFunctor = record {
-            consistent-on-id = ~-refl;
-            consistent-on-∘ = λ g f → ~-sym (Category.id-is-left-id ℂ)
-            }
-        }
-
-id-functor : (ℂ : Category a b c) → Functor ℂ ℂ
-id-functor ℂ = record {
-    rawFunctor = record {
-        mapₒ = Function.id;
-        mapₘ-func = record {
-            func = Function.id;
-            respects = Function.id
-            }
-        };
-    isFunctor = record {
-        consistent-on-id = Category.~-refl ℂ;
-        consistent-on-∘ = λ g f → Category.~-refl ℂ
-        }
-    }
-
-constant-functor : (ℂ : Category a b c) → ℂ .Category.Object → Functor ℂ ℂ
-constant-functor ℂ X = record {
-    rawFunctor = record {
-        mapₒ = λ _ → X;
-        mapₘ-func = record {
-            func = λ _ → Category.id ℂ X;
-            respects = λ z → Category.~-refl ℂ
-            }
-        };
-    isFunctor = record {
-        consistent-on-id = Category.~-refl ℂ;
-        consistent-on-∘ = λ g f → Category.~-sym ℂ (Category.id-is-left-id ℂ)
-        }
-    }
+-------------------------------------------
+--- Some examples of diagram Categories ---
+-------------------------------------------
 
 -- TODO Maybe I should figure out how to write down universal properties as tiny explicit categories or something
 module CommutativeSquare where

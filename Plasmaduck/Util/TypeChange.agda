@@ -57,6 +57,13 @@ change-type-output-dependence-commute :
     f (change-type (cong B i≡j) x) ≡ change-type (cong₂-dependent B C i≡j {p = x} {q = change-type (cong B i≡j) x} refl) (f x)
 change-type-output-dependence-commute B C f refl x = refl
 
+change-type-relation-dependence-irrelevance :
+    {A : Set a} (B : A → Set b)
+    (rel : {i : A} → Rel (B i) c) →
+    {i j : A} (i≡j : i ≡ j) →
+    (x y : B i) → rel x y → rel {i = j} (change-type (cong B i≡j) x) (change-type (cong B i≡j) y)
+change-type-relation-dependence-irrelevance B rel refl x y x~y = x~y
+
 change-type-injective : (pf : A ≡ B) (_≈₁_ : Rel A ℓ₁) (_≈₂_ : Rel B ℓ₂) → _≈₁_ Extends (λ x y → change-type pf x ≈₂ change-type pf y) → Injective _≈₁_ _≈₂_ (change-type pf)
 change-type-injective refl _ _ 1-extends-2 x≈₂y = 1-extends-2  x≈₂y
 

@@ -6,6 +6,12 @@ open import Relation.Binary using (Rel; IsEquivalence)
 
 module Plasmaduck.Function where
 
+variable
+    α β γ : Level
+    A : Set α
+    B : Set β
+    C : Set γ
+
 _≈_ : {α β : Level} {A : Set α} {B : Set β} → (f g : A → B) → Set (α ⊔ β)
 _≈_ f g = ∀ x → f x ≡ g x
 infix 1 _≈_
@@ -16,6 +22,23 @@ infix 1 _≈_
     sym = λ f≈g x → sym (f≈g x);
     trans = λ f≈g g≈h x → trans (f≈g x) (g≈h x)
     }
+
+{-
+    Suppose you're defining a type. Supposing f and g have all the same outputs, you want to show that the two following types are equal:
+        ∀ x → P (f x)
+        ∀ x → P (g x)
+    You can't just invoke cong, since that requires x to be instantiated.
+
+    P depends only on its input of type B.
+
+    f g : A → B
+    P : B → C
+
+    tbh, this should be the same as saying that P ∘ f and P ∘ g are the same function, no?
+    That is, P ∘ f ≈ P ∘ g
+-}
+-- dependent-equality : (f g : A → B) → f ≈ g → (P : B → Set γ) → (∀ (x : A) → P (f x)) ≡ (∀ (x : A) → P (g x))
+-- dependent-equality f g f≈g P = {!   !}
 
 _⇔_ : {α β : Level} (A : Set α) (B : Set β) → Set (α ⊔ β)
 A ⇔ B = (A → B) × (B → A)
