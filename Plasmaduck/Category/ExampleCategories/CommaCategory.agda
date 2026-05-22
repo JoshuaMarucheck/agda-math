@@ -18,7 +18,7 @@ open import Plasmaduck.Category.Diagram using (module CommutativeSquare; module 
 
 
 
-module Plasmaduck.Category.CommaCategory where
+module Plasmaduck.Category.ExampleCategories.CommaCategory where
 
 variable
     a b c α β γ ℓ₁ ℓ₂ ℓ₃ : Level
