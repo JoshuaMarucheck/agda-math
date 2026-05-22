@@ -12,12 +12,11 @@ assert (
     in targets
 )
 # Known bugs:
-# deletes public
 # probably doesn't handle multiline imports well (which is especially bad if it deletes public
 # doesn't seek through all subdirectories somehow??? I added a star to the glob,
 #   but I don't think that's the right fix since now it just searches one directory lower,
 #   and it needs to search one down, meaning it won't find top-level files.
-# for some reason it deletes IsEquivalence when it's only ever opened as a module
+# deletes modules if they're used for qualified imports (like import Function, and then Function.id appears somewhere (esp open import Function using (flip), and then Function.id is used somewhere))
 
 
 def min_existing(*idx: int) -> int:
@@ -42,7 +41,7 @@ def clean_file(target: Path) -> None:
         lines = f.readlines()
 
     for line in lines:
-        if "open" in line:
+        if line.strip().startswith("open") and not line.strip().endswith(" public"):
             using_imports: list[str] = []
             renaming_imports: list[tuple[str, str]] = []
 
@@ -80,9 +79,17 @@ def clean_file(target: Path) -> None:
 
             using_imports1: list[str] = []
             for name in using_imports:
-                names = list(filter(lambda s: s != "", name.split("_")))
+                names = list(
+                    filter(lambda s: s != "", name.removeprefix("module ").split("_"))
+                )
                 for l in lines:
-                    if "open" not in l and any(n in l for n in names):
+                    if l != line and (
+                        (
+                            name.startswith("module ")
+                            and ("open " + name.removeprefix("module ")) in l
+                        )
+                        or any(n in l for n in names)
+                    ):
                         using_imports1.append(name)
                         break
 
@@ -90,11 +97,15 @@ def clean_file(target: Path) -> None:
             for name1, name2 in renaming_imports:
                 names = list(filter(lambda s: s != "", name2.split("_")))
                 for l in lines:
-                    if "open" not in l and any(n in l for n in names):
+                    if l != line and (
+                        ("open " + name2) in l or any(n in l for n in names)
+                    ):
                         renaming_imports1.append((name1, name2))
                         break
+
             if len(using_imports1) == 0 and len(renaming_imports1) == 0:
-                output_lines.append(line)
+                if "using" not in line and "renaming" not in line:
+                    output_lines.append(line)
 
             else:
                 idx = min_existing(line.find("using"), line.find("renaming"))
