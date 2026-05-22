@@ -21,11 +21,11 @@ open import Plasmaduck.Category.Functor.SimpleFunctors using (id-functor)
 module Plasmaduck.Category.Functor.Properties where
 
 variable
-    a b c α β γ ℓ₁ ℓ₂ ℓ₃ : Level
+    a b c α β γ ℓ₁ ℓ₂ ℓ₃ l₁ l₂ l₃ : Level
 
 
 open Functor using (mapₒ; mapₘ)
-module FunctorEquality (𝔸 𝔹 : Category α β γ) where
+module FunctorEquality (𝔸 : Category a b c) (𝔹 : Category α β γ) where
     open Category 𝔸 using () renaming (Object to Object₁; Morphism to Morphism₁)
     open Category 𝔹 using () renaming (Object to Object₂; Morphism to Morphism₂; Morphism' to Morphism'₂)
 
@@ -60,15 +60,14 @@ module FunctorEquality (𝔸 𝔹 : Category α β γ) where
         Category.Morphism 𝔹 (m X) (m Y)
     change-to-m F m F≈m {X} {Y} f = change-type (standard-proof F≈m) f
 
-    ≈-morph-map-on : (S T : Functor 𝔸 𝔹) (m : mapₒ-type) → Set (α ⊔ β ⊔ γ)
+    ≈-morph-map-on : (S T : Functor 𝔸 𝔹) (m : mapₒ-type) → Set _
     ≈-morph-map-on S T m =
         Σ (Plasmaduck.Function._≈_ (S .mapₒ) m) λ S≈m →
         Σ (Plasmaduck.Function._≈_ (T .mapₒ) m) λ T≈m →
         ∀ {X Y : 𝔸 .Category.Object} (f : Category.Morphism 𝔸 X Y) → Category._~_ 𝔹 (change-to-m S m S≈m (mapₘ S f)) (change-to-m T m T≈m (mapₘ T f))
 
-    strong-≈-morph-map : (S T : Functor 𝔸 𝔹) → Set (α ⊔ β ⊔ γ)
-    strong-≈-morph-map S T =
-        Σ mapₒ-type (≈-morph-map-on S T)
+    strong-≈-morph-map : (S T : Functor 𝔸 𝔹) → Set _
+    strong-≈-morph-map S T = Σ mapₒ-type (≈-morph-map-on S T)
 
     strong-≈-morph-map-transfer : (S T : Functor 𝔸 𝔹) → (m₁ m₂ : mapₒ-type) → Plasmaduck.Function._≈_ m₁ m₂ → ≈-morph-map-on S T m₁ → ≈-morph-map-on S T m₂
     strong-≈-morph-map-transfer S T m₁ m₂ m₁≈m₂ (S≈m₁ , T≈m₁ , ST-same-map) = ≈-trans S≈m₁ m₁≈m₂ , ≈-trans T≈m₁ m₁≈m₂ , λ {X} {Y} f → begin
@@ -100,10 +99,10 @@ module FunctorEquality (𝔸 𝔹 : Category α β γ) where
 
 
     -- And now we define the actual relation we're using
-    ≈-obj-map : Rel (Functor 𝔸 𝔹) α
+    ≈-obj-map : Rel (Functor 𝔸 𝔹) _
     ≈-obj-map S T = Plasmaduck.Function._≈_ (S .mapₒ) (T .mapₒ)
 
-    ≈-morph-map : (S T : Functor 𝔸 𝔹) → ≈-obj-map S T → Set (α ⊔ β ⊔ γ)
+    ≈-morph-map : (S T : Functor 𝔸 𝔹) → ≈-obj-map S T → Set _
     ≈-morph-map S T same-obj-map = ∀ {X Y : 𝔸 .Category.Object} (f : Category.Morphism 𝔸 X Y) → Category._~_ 𝔹 (change-type (
         Category.Morphism 𝔹 (S .mapₒ X) (S .mapₒ Y)   ≡⟨ cong (λ q → Category.Morphism 𝔹 (S .mapₒ X) q) (same-obj-map Y) ⟩
         Category.Morphism 𝔹 (S .mapₒ X) (T .mapₒ Y)   ≡⟨ cong (λ q → Category.Morphism 𝔹 q (T .mapₒ Y)) (same-obj-map X) ⟩
@@ -111,7 +110,7 @@ module FunctorEquality (𝔸 𝔹 : Category α β γ) where
         ) (Functor.mapₘ S f)) (Functor.mapₘ T f)
         where open ≡-Reasoning
 
-    SameFunctor : Rel (Functor 𝔸 𝔹) (α ⊔ β ⊔ γ)
+    SameFunctor : Rel (Functor 𝔸 𝔹) _
     SameFunctor S T = Σ (≈-obj-map S T) λ same-obj-map → ≈-morph-map S T same-obj-map
 
     same-rel-pf : SameRel (Functor 𝔸 𝔹) strong-≈-morph-map SameFunctor
@@ -135,7 +134,7 @@ module FunctorEquality (𝔸 𝔹 : Category α β γ) where
     ≈-Functor-eq : IsEquivalence SameFunctor
     ≈-Functor-eq = IsEquivalence-transferrable (discrete-setoid (Functor 𝔸 𝔹)) same-rel-pf strong-≈-morph-map-eq
 
-    FunctorSetoid : Setoid (α ⊔ β ⊔ γ) (α ⊔ β ⊔ γ)
+    FunctorSetoid : Setoid _ _
     FunctorSetoid = record {
         Carrier = Functor 𝔸 𝔹;
         _≈_ = SameFunctor;
@@ -160,16 +159,16 @@ module FunctorEquality (𝔸 𝔹 : Category α β γ) where
                 open IsEquivalence (Category.Morphism' 𝔹 X Y .Setoid.isEquivalence) using (reflexive) public
 open FunctorEquality
 
-_≈-Functor_ : {𝔸 𝔹 : Category α β γ} → Rel (Functor 𝔸 𝔹) (α ⊔ β ⊔ γ)
+_≈-Functor_ : {𝔸 : Category a b c} {𝔹 : Category α β γ} → Rel (Functor 𝔸 𝔹) _
 _≈-Functor_ {𝔸 = 𝔸} {𝔹} = SameFunctor 𝔸 𝔹
 infix 1 _≈-Functor_
 
-module FunctorComposition {𝔸 𝔹 ℂ : Category α β γ} where
+module FunctorComposition {𝔸 : Category a b c} {𝔹 : Category α β γ} {ℂ : Category ℓ₁ ℓ₂ ℓ₃} where
     open Category 𝔸 using () renaming (Object to Object₁; Morphism to Morphism₁)
     open Category 𝔹 using () renaming (Object to Object₂; Morphism to Morphism₂)
     open Category ℂ using () renaming (Object to Object₃)
 
-    module _ {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {B : Set ℓ₂} where
+    module _ {ℓ₁' ℓ₂' : Level} {A : Set ℓ₁'} {B : Set ℓ₂'} where
         open IsEquivalence (≈-isEquivalence {A = A} {B = B}) using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans) public
 
     _∘-Functor_ : Functor 𝔹 ℂ → Functor 𝔸 𝔹 → Functor 𝔸 ℂ
@@ -227,13 +226,20 @@ module FunctorComposition {𝔸 𝔹 ℂ : Category α β γ} where
         }
 open FunctorComposition
 
-∘-Functor-assoc : {𝔸 𝔹 ℂ 𝔻 : Category α β γ} → (H : Functor ℂ 𝔻) → (G : Functor 𝔹 ℂ) → (F : Functor 𝔸 𝔹) → (H ∘-Functor (G ∘-Functor F)) ≈-Functor ((H ∘-Functor G) ∘-Functor F)
+∘-Functor-assoc :
+    {𝔸 : Category a b c} {𝔹 : Category α β γ} {ℂ : Category ℓ₁ ℓ₂ ℓ₃} {𝔻 : Category l₁ l₂ l₃} →
+    (H : Functor ℂ 𝔻) → (G : Functor 𝔹 ℂ) → (F : Functor 𝔸 𝔹) →
+    (H ∘-Functor (G ∘-Functor F)) ≈-Functor ((H ∘-Functor G) ∘-Functor F)
 ∘-Functor-assoc {𝔸 = 𝔸} {𝔹} {ℂ} {𝔻} H G F = (λ _ → ≡-refl) , (λ {X} {Y} f → Category.~-refl 𝔻)
 
-∘-Functor-left-id : {𝔸 𝔹 : Category α β γ} {F : Functor 𝔸 𝔹} → id-functor 𝔹 ∘-Functor F ≈-Functor F
+∘-Functor-left-id :
+    {𝔸 : Category a b c} {𝔹 : Category α β γ} {F : Functor 𝔸 𝔹} →
+    id-functor 𝔹 ∘-Functor F ≈-Functor F
 ∘-Functor-left-id {𝔸 = 𝔸} {𝔹} {F} = (λ _ → ≡-refl) , (λ {X} {Y} f → Category.~-refl 𝔹)
 
-∘-Functor-right-id : {𝔸 𝔹 : Category α β γ} {F : Functor 𝔸 𝔹} → F ∘-Functor id-functor 𝔸 ≈-Functor F
+∘-Functor-right-id :
+    {𝔸 : Category a b c} {𝔹 : Category α β γ} {F : Functor 𝔸 𝔹} →
+    F ∘-Functor id-functor 𝔸 ≈-Functor F
 ∘-Functor-right-id {𝔸 = 𝔸} {𝔹} {F} = (λ _ → ≡-refl) , (λ {X} {Y} f → Category.~-refl 𝔹)
 
 
