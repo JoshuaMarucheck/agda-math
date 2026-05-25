@@ -32,7 +32,7 @@ module FunctorEquality (𝔸 : Category a b c) (𝔹 : Category α β γ) where
     -- This is a normal and sane thing to do, I assure you
     private
         module _ {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {B : Set ℓ₂} where
-            open IsEquivalence (≈-isEquivalence {A = A} {B = B}) using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans) public
+            open IsEquivalence (≈-isEquivalence {A = A} {B = λ _ → B}) using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans) public
 
     -- If we just jump into defining things, we need to use change-type to show that the functors are acting on the same items,
     -- which makes proving the equality hard at the end.
@@ -169,7 +169,7 @@ module FunctorComposition {𝔸 : Category a b c} {𝔹 : Category α β γ} {�
     open Category ℂ using () renaming (Object to Object₃)
 
     module _ {ℓ₁' ℓ₂' : Level} {A : Set ℓ₁'} {B : Set ℓ₂'} where
-        open IsEquivalence (≈-isEquivalence {A = A} {B = B}) using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans) public
+        open IsEquivalence (≈-isEquivalence {A = A} {B = λ _ → B}) using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans) public
 
     _∘-Functor_ : Functor 𝔹 ℂ → Functor 𝔸 𝔹 → Functor 𝔸 ℂ
     _∘-Functor_ G F = record {

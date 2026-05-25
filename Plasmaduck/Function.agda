@@ -12,11 +12,11 @@ variable
     B : Set β
     C : Set γ
 
-_≈_ : {α β : Level} {A : Set α} {B : Set β} → (f g : A → B) → Set (α ⊔ β)
+_≈_ : {α β : Level} {A : Set α} {B : A → Set β} → (f g : (x : A) → B x) → Set (α ⊔ β)
 _≈_ f g = ∀ x → f x ≡ g x
 infix 1 _≈_
 
-≈-isEquivalence : {α β : Level} {A : Set α} {B : Set β} → IsEquivalence (_≈_ {A = A} {B = B})
+≈-isEquivalence : {α β : Level} {A : Set α} {B : A → Set β} → IsEquivalence (_≈_ {A = A} {B = B})
 ≈-isEquivalence = record {
     refl = λ x → refl;
     sym = λ f≈g x → sym (f≈g x);
