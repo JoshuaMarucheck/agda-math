@@ -160,6 +160,9 @@ module MorphismProperties (category : Category a b c) where
     IsZero : (x : Object) → Set (a ⊔ b ⊔ c)
     IsZero x = IsInitial x × IsFinal x
 
+    Isomorphic : (x y : Object) → Set (b ⊔ c)
+    Isomorphic x y = Σ (Morphism x y) IsIsomorphism
+
 
 
 --------------------------
@@ -238,6 +241,7 @@ record Functor (cat₁ : Category a b c) (cat₂ : Category α β γ) : Set (a �
 ContravariantFunctor : (cat₁ : Category a b c) (cat₂ : Category α β γ) → Set _
 ContravariantFunctor cat₁ cat₂ = Functor (opposite-category cat₁) cat₂
 
+-- Kind of the same functor as F, but on the opposite categories
 opposite-functor :
     {cat₁ : Category a b c} {cat₂ : Category α β γ} →
     (F : Functor cat₁ cat₂) →
