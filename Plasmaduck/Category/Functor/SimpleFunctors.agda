@@ -44,17 +44,17 @@ id-functor ℂ = record {
         }
     }
 
-constant-functor : (ℂ : Category a b c) → ℂ .Category.Object → Functor ℂ ℂ
-constant-functor ℂ X = record {
+constant-functor : (𝔸 : Category a b c) (𝔹 : Category α β γ) → 𝔹 .Category.Object → Functor 𝔸 𝔹
+constant-functor 𝔸 𝔹 X = record {
     rawFunctor = record {
         mapₒ = λ _ → X;
         mapₘ-func = record {
-            func = λ _ → Category.id ℂ X;
-            respects = λ z → Category.~-refl ℂ
+            func = λ _ → Category.id 𝔹 X;
+            respects = λ z → Category.~-refl 𝔹
             }
         };
     isFunctor = record {
-        consistent-on-id = Category.~-refl ℂ;
-        consistent-on-∘ = λ g f → Category.~-sym ℂ (Category.id-is-left-id ℂ)
+        consistent-on-id = Category.~-refl 𝔹;
+        consistent-on-∘ = λ g f → Category.~-sym 𝔹 (Category.id-is-left-id 𝔹)
         }
     }
