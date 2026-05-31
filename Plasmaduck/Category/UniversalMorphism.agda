@@ -266,8 +266,8 @@ module Product (ℓ : Level) where
         rawUniversalMorphism = record {
             A = X × Y;
             u = record {
-                η = η;
-                commutes = commutes-proof
+                rawNaturalTransformation = record { η = η };
+                isNaturalTransformation = record { commutes = commutes-proof }
                 };
             generate-morph = λ A' g b → (g .NaturalTransformation.η false b) , (g .NaturalTransformation.η true b)
             };

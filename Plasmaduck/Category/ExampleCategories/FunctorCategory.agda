@@ -50,8 +50,8 @@ infixr 45 _^_
         mapₒ = λ X → constant-functor 𝔸 𝔹 X;
         mapₘ-func = record {
             func = λ f → record {
-                η = λ X → f;
-                commutes = λ _ → Category.~-trans 𝔹 (Category.id-is-right-id 𝔹) (Category.~-sym 𝔹 (Category.id-is-left-id 𝔹))
+                rawNaturalTransformation = record { η = λ X → f };
+                isNaturalTransformation = record { commutes = λ _ → Category.~-trans 𝔹 (Category.id-is-right-id 𝔹) (Category.~-sym 𝔹 (Category.id-is-left-id 𝔹)) }
                 };
             respects = λ z X → z
             }

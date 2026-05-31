@@ -8,7 +8,7 @@ open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂
 open import Plasmaduck.Category.Category using (RawCategory; Category; Functor; opposite-category; opposite-functor; IsSidedInverse)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Category.Functor.SimpleFunctors using (id-functor)
-open import Plasmaduck.Category.Functor.Properties using (FunctorSetoid; Functor-compose-func; _∘-Functor_)
+open import Plasmaduck.Category.Functor.Properties using (FunctorSetoid; Functor-compose-func)
 open import Plasmaduck.Function.Properties using (ExplicitlyCongruent; Congruent₂)
 
 

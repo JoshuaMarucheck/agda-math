@@ -1,7 +1,7 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 import Function
 
-open import Plasmaduck.Category.Category using (Category; Functor)
+open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor)
 open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (𝟙)
 
 
@@ -29,15 +29,18 @@ module ObjectPicker (ℂ : Category a b c) where
             }
         }
 
+id-raw-functor : (ℂ : RawCategory a b c) → RawFunctor ℂ ℂ
+id-raw-functor ℂ = record {
+    mapₒ = Function.id;
+    mapₘ-func = record {
+        func = Function.id;
+        respects = Function.id
+        }
+    }
+
 id-functor : (ℂ : Category a b c) → Functor ℂ ℂ
 id-functor ℂ = record {
-    rawFunctor = record {
-        mapₒ = Function.id;
-        mapₘ-func = record {
-            func = Function.id;
-            respects = Function.id
-            }
-        };
+    rawFunctor = id-raw-functor (ℂ .Category.rawCategory);
     isFunctor = record {
         consistent-on-id = Category.~-refl ℂ;
         consistent-on-∘ = λ g f → Category.~-refl ℂ
