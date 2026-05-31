@@ -3,11 +3,13 @@ open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl t
 open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 open import Function using (Congruent)
 open import Data.Product using (_×_; _,_)
+open import Data.Bool using (Bool; true; false)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂)
 open import Plasmaduck.Category.Category using (Category; Functor; opposite-category; opposite-functor; IsSidedInverse)
+open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (discrete-category)
 open import Plasmaduck.Category.Functor.SimpleFunctors using (id-functor; constant-functor)
-open import Plasmaduck.Category.Functor.NaturalTransformation using (NaturalTransformation; NaturalTransformationSetoid; _≈-NaturalTransformation_; ≈-NaturalTransformation-eq; id-NaturalTransformation; NaturalTransformation-compose-func; ∘-NaturalTransformation-assoc; ∘-NaturalTransformation-left-id; ∘-NaturalTransformation-right-id)
+open import Plasmaduck.Category.Functor.NaturalTransformation using (NaturalTransformation; NaturalTransformationSetoid) renaming (_≈_ to _≈-NaturalTransformation_; ≈-eq to ≈-NaturalTransformation-eq; id to id-NaturalTransformation; compose-func to NaturalTransformation-compose-func; ∘-assoc to ∘-NaturalTransformation-assoc; ∘-left-id to ∘-NaturalTransformation-left-id; ∘-right-id to ∘-NaturalTransformation-right-id)
 open import Plasmaduck.Category.Functor.Properties using (FunctorSetoid; Functor-compose-func)
 open import Plasmaduck.Function.Properties using (ExplicitlyCongruent; Congruent₂)
 open import Plasmaduck.Util.Case using (case_of_)
@@ -59,3 +61,11 @@ infixr 45 _^_
         consistent-on-∘ = λ g f X → Category.~-refl 𝔹
         }
     }
+
+-------------------------------
+--- Some Example Categories ---
+-------------------------------
+
+product-category : (ℂ : Category a b c) → Category (a ⊔ b ⊔ c) (b ⊔ c) c
+product-category ℂ = FunctorCategory (discrete-category Bool) ℂ
+

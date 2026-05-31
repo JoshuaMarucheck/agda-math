@@ -1,14 +1,21 @@
 open import Level using (Level; _⊔_) renaming (suc to lsuc)
-open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl to ≡-refl)
+open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 open import Function using (Congruent)
-open import Data.Product using (_×_; _,_)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Bool using (Bool; true; false)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _←_)
 open import Plasmaduck.Category.Category using (Category; Functor; opposite-category; opposite-functor; Isomorphic; IsSidedInverse)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Category.Functor.SimpleFunctors using (id-functor)
 open import Plasmaduck.Category.Functor.Properties using (FunctorSetoid; Functor-compose-func)
+open import Plasmaduck.Category.CommutativeSquare using (commutative-square-compose)
+open import Plasmaduck.Category.ExampleCategories.FunctorCategory using (FunctorCategory; _^_; Δ; product-category)
+open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (discrete-category; 𝐒𝐞𝐭)
+open import Plasmaduck.Category.Functor.NaturalTransformation using (NaturalTransformation)
+open import Plasmaduck.Data.Product using (Σ≡)
+open import Plasmaduck.Util.TypeChange using (change-type-elim)
 
 
 
@@ -36,7 +43,7 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} where
         --------> F(B)      B
 
         The universal morphism from X to F is the object A and u, such that:
-        - for every B, F, there is a *unique* h such that the diagram commutes.
+        - for every B, f, there is a *unique* h such that the diagram commutes.
     -}
     record RawUniversalMorphism (X : Object₂) (F : Functor 𝔸 𝔹) : Set (a ⊔ b ⊔ β) where
         field
@@ -104,6 +111,22 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} (F : Functor 𝔸 �
     open Category 𝔹 using () renaming (Object to Object₂; Morphism to Morphism₂; _∘_ to _∘₂_; _~_ to _~₂_)
     open UniversalMorphism using (generate-morph; A; u)
 
+    {-
+        Universal morphism from F to X:
+
+            𝔸               𝔹
+
+        X <--u--- F(A)      A
+        ^          ^        ^
+        |          |        |
+        f         F(h)      h
+        |          |        |
+        --------- F(B)      B
+
+        which just turns all the morphisms around,
+        which is the same as using the opposite categories and the opposite functor.
+    -}
+
     -- Universal morphism from F to X
     OppositeUniversalMorphism : (X : Object₂) → Set _
     OppositeUniversalMorphism X = UniversalMorphism X (opposite-functor F)
@@ -144,11 +167,7 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} (F : Functor 𝔸 �
         ~₂ m₃ .u ∘₂ (g ∘₂ f)
     distributivity-thing {X} {Y} {Z} m₁ m₂ m₃ g f = begin
         mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g) ∘₁ generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f)) ∘₂ (m₁ .u)            ≈⟨ ∘-respects (Functor.consistent-on-∘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) (generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f))) ~-refl ⟩
-        (mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) ∘₂ mapₘ F (generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f))) ∘₂ (m₁ .u) ≈⟨ assoc (mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g))) (mapₘ F (generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f))) (m₁ .u) ⟩
-        mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) ∘₂ (mapₘ F (generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f)) ∘₂ (m₁ .u)) ≈⟨ ∘-respects ~-refl (commutes m₁ (m₂ .A) (m₂ .u ∘₂ f)) ⟩
-        mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) ∘₂ ((m₂ .u) ∘₂ f)                                               ≈⟨ ~-sym (assoc (mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g))) (m₂ .u) f) ⟩
-        (mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) ∘₂ (m₂ .u)) ∘₂ f                                               ≈⟨ ∘-respects (commutes m₂ (m₃ .A) (m₃ .u ∘₂ g)) ~-refl ⟩
-        (m₃ .u ∘₂ g) ∘₂ f                                                                                               ≈⟨ assoc (m₃ .u) g f ⟩
+        (mapₘ F (generate-morph m₂ (m₃ .A) (m₃ .u ∘₂ g)) ∘₂ mapₘ F (generate-morph m₁ (m₂ .A) (m₂ .u ∘₂ f))) ∘₂ (m₁ .u)  ≈⟨ commutative-square-compose 𝔹 (commutes m₁ (m₂ .A) (m₂ .u ∘₂ f)) (commutes m₂ (m₃ .A) (m₃ .u ∘₂ g)) ⟩
         m₃ .u ∘₂ (g ∘₂ f)                                                                                               ∎
         where
             module _ {X Y : Category.Object 𝔹} where
@@ -239,5 +258,59 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} (F : Functor 𝔸 �
 ----------------------------------
 --- Example Universal Morphism ---
 ----------------------------------
+
+module Product (ℓ : Level) where
+
+    all-universal-morphisms : ∀ (X : product-category (𝐒𝐞𝐭 ℓ) .Category.Object) → OppositeUniversalMorphism (Δ (discrete-category Bool) (𝐒𝐞𝐭 ℓ)) X
+    all-universal-morphisms X×Y = record {
+        rawUniversalMorphism = record {
+            A = X × Y;
+            u = record {
+                η = η;
+                commutes = commutes-proof
+                };
+            generate-morph = λ A' g b → (g .NaturalTransformation.η false b) , (g .NaturalTransformation.η true b)
+            };
+        isUniversalMorphism = record {
+            commutes = λ {
+                A' f false b → ≡-refl;
+                A' f true b → ≡-refl
+                };
+            unique = λ A' f h pf b → Σ≡ (≡-sym (pf false b)) (≡-trans (≡-sym (pf true b)) (≡-sym (change-type-elim _)))
+            }
+        }
+        where
+            open Category (𝐒𝐞𝐭 ℓ) using (_∘_; _~_)
+
+            𝐁 = discrete-category Bool
+
+            F' = opposite-functor (Δ 𝐁 (𝐒𝐞𝐭 ℓ))
+            -- open Functor (opposite-functor (Δ 𝐁 (𝐒𝐞𝐭 ℓ))) using (mapₒ; mapₘ)
+            X = mapₒ X×Y false
+            Y = mapₒ X×Y true
+
+            η : (b : Category.Object 𝐁) →
+                Category.Morphism (𝐒𝐞𝐭 ℓ)
+                (mapₒ (mapₒ (opposite-functor (Δ 𝐁 (𝐒𝐞𝐭 ℓ))) (X × Y)) b)
+                (mapₒ X×Y b)
+            η false = proj₁
+            η true = proj₂
+
+            module _ where
+                private
+                    module _ {A B : 𝐒𝐞𝐭 ℓ .Category.Object} where
+                        open import Relation.Binary.Reasoning.Setoid (Category.Morphism' (𝐒𝐞𝐭 ℓ) A B) public
+                open Category (𝐒𝐞𝐭 ℓ) using (∘-respects; ~-refl)
+
+                commutes-proof : {X₁ Y₁ : Bool} (f : Category.Morphism 𝐁 X₁ Y₁) →
+                    η Y₁ ∘ mapₘ (mapₒ (opposite-functor (Δ 𝐁 (𝐒𝐞𝐭 ℓ))) (X × Y)) f ~
+                    mapₘ X×Y f ∘ η X₁
+                commutes-proof {false} {false} ≡-refl = begin η false ∘
+                    mapₘ (mapₒ (opposite-functor (Δ 𝐁 (𝐒𝐞𝐭 ℓ))) (X × Y)) (≡-refl {x = false}) ≈⟨ (λ x → ≡-refl) ⟩
+                    proj₁                                                                     ≈⟨ (λ x → ≡-refl) ⟩
+                    η false                                                                   ≈⟨ (λ x → ≡-refl) ⟩
+                    Function.id ∘ η false                                                     ≈⟨ (λ x → {! ∘-respects {y = {!   !}} (λ y → ≡-refl) ~-refl x !}) ⟩ -- ∘-respects (λ x → ≡-refl {x = {!   !}}) ~-refl
+                    mapₘ X×Y ≡-refl ∘ η false                                                 ∎
+                commutes-proof {true} {true} ≡-refl = {!   !} -- ∘-respects (λ x → ≡-refl {x = {!   !}}) ~-refl
 
 -- TODO: product and sum as universal morphisms.

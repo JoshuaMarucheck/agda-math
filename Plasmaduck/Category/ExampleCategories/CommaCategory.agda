@@ -13,8 +13,9 @@ open import Data.Fin using (Fin; zero; suc; _<_; toℕ; fromℕ<; _≤_)
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; _←_; discrete-setoid; indiscrete-setoid; from-discrete-cong; into-indiscrete-cong)
 open import Plasmaduck.Relation.RelationVector using (module RelationList; module Flattening; module Mapping; tree→list; branch→cons; cons→branch; trans-flatten-branch; tree→list-branch→cons-same; _++_; []; _∷_; _∷'_; foldl)
 open import Plasmaduck.Function.Properties using (Congruent₂)
-open import Plasmaduck.Category.Category using (RawCategory; Category; ExtraRawFunctor; Functor; module CategoryProperties; module MakeFunctor; module MakeFunctor')
+open import Plasmaduck.Category.Category using (RawCategory; Category; ExtraRawFunctor; Functor; module CategoryProperties; module MakeFunctor; module MakeFunctor'; opposite-category)
 open import Plasmaduck.Category.Diagram using (module CommutativeSquare; module Diagram)
+open import Plasmaduck.Category.CommutativeSquare using (commutative-square-compose)
 
 
 
@@ -158,7 +159,6 @@ module CommaCategory
                     module _ {a b : Category.Object ℂ} where
                         open import Relation.Binary.Reasoning.Setoid (Category.Morphism' ℂ a b) public
                         open Setoid (Category.Morphism' ℂ a b) using (refl; sym; trans) public
-                    open Category ℂ using (assoc)
 
                     pf : P
                     pf = begin
@@ -167,11 +167,7 @@ module CommaCategory
                             (Plasmaduck.Category.Diagram.diagram-inj CommutativeSquareBaseMorphism m₀₁)
                             )                                                                                   ≈⟨ refl ⟩
                         m₃ ∘c (Functor.mapₘ S (f' ∘a f))                                                        ≈⟨ Category.∘-respects ℂ refl (Functor.consistent-on-∘ S f' f) ⟩
-                        m₃ ∘c ((Functor.mapₘ S f') ∘c (Functor.mapₘ S f))                                       ≈⟨ sym (assoc m₃ (Functor.mapₘ S f') (Functor.mapₘ S f)) ⟩
-                        (m₃ ∘c (Functor.mapₘ S f')) ∘c (Functor.mapₘ S f)                                       ≈⟨ Category.∘-respects ℂ (cong' (m₀₁ ∷ m₁₃ ∷ []) (m₀₂ ∷ m₂₃ ∷ []) tt) refl ⟩
-                        ((Functor.mapₘ T g') ∘c m₂) ∘c (Functor.mapₘ S f)                                       ≈⟨ assoc (Functor.mapₘ T g') m₂ (Functor.mapₘ S f) ⟩
-                        (Functor.mapₘ T g') ∘c (m₂ ∘c (Functor.mapₘ S f))                                       ≈⟨ Category.∘-respects ℂ refl (cong (m₀₁ ∷ m₁₃ ∷ []) (m₀₂ ∷ m₂₃ ∷ []) tt) ⟩
-                        (Functor.mapₘ T g') ∘c ((Functor.mapₘ T g) ∘c m₁)                                       ≈⟨ sym (assoc (Functor.mapₘ T g') (Functor.mapₘ T g) m₁) ⟩
+                        m₃ ∘c ((Functor.mapₘ S f') ∘c (Functor.mapₘ S f))                                       ≈⟨ commutative-square-compose (opposite-category ℂ) (cong' (m₀₁ ∷ m₁₃ ∷ []) (m₀₂ ∷ m₂₃ ∷ []) tt) (cong (m₀₁ ∷ m₁₃ ∷ []) (m₀₂ ∷ m₂₃ ∷ []) tt) ⟩
                         ((Functor.mapₘ T g') ∘c (Functor.mapₘ T g)) ∘c m₁                                       ≈⟨ Category.∘-respects ℂ (sym (Functor.consistent-on-∘ T g' g)) refl ⟩
                         (Functor.mapₘ T (g' ∘b g)) ∘c m₁                                                        ≈⟨ refl ⟩
                         diagram-embedₘ (

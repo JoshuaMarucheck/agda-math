@@ -5,8 +5,9 @@ open import Relation.Binary using (Setoid)
 open import Function using (flip)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥)
+open import Data.Product using (_×_; _,_)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; indiscrete-setoid)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; indiscrete-setoid; ×-setoid)
 open import Plasmaduck.Category.Category using (Category)
 open import Plasmaduck.Function using (≈-isEquivalence)
 
@@ -91,3 +92,22 @@ setoid-category setoid = record {
 
 discrete-category : Set a → Category a a lzero
 discrete-category A = setoid-category (discrete-setoid A)
+
+_×-category_ : Category a b c → Category α β γ → Category (a ⊔ α) (b ⊔ β) (c ⊔ γ)
+_×-category_ 𝔸 𝔹 = record {
+    rawCategory = record {
+        Object = Category.Object 𝔸 × Category.Object 𝔹;
+        Morphism' = λ (X₁ , Y₁) (X₂ , Y₂) → ×-setoid (Category.Morphism' 𝔸 X₁ X₂) (Category.Morphism' 𝔹 Y₁ Y₂);
+        id = λ (X , Y) → Category.id 𝔸 X , Category.id 𝔹 Y;
+        compose = record {
+            func = λ (f₁ , g₁) (f₂ , g₂) → Category._∘_ 𝔸 f₁ f₂ , Category._∘_ 𝔹 g₁ g₂;
+            respects = λ (f₁ , g₁) (f₂ , g₂) → Category.∘-respects 𝔸 f₁ f₂ , Category.∘-respects 𝔹 g₁ g₂
+            }
+        };
+    isCategory = record {
+        assoc = λ (f₁ , g₁) (f₂ , g₂) (f₃ , g₃) → Category.assoc 𝔸 f₁ f₂ f₃ , Category.assoc 𝔹 g₁ g₂ g₃;
+        id-is-left-id = Category.id-is-left-id 𝔸 , Category.id-is-left-id 𝔹;
+        id-is-right-id = Category.id-is-right-id 𝔸 , Category.id-is-right-id 𝔹
+        }
+    }
+infix 30 _×-category_
