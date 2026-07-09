@@ -1,8 +1,12 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 import Function
+open import Data.Product using (_×_; _,_)
+open import Relation.Binary using (Setoid; IsEquivalence)
 
-open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor)
-open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (𝟙)
+open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor; ContravariantFunctor; opposite-category)
+open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (𝟙; 𝐒𝐞𝐭𝐨𝐢𝐝) 
+
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂)
 
 
 
@@ -38,9 +42,12 @@ id-raw-functor ℂ = record {
         }
     }
 
+id-raw-functor' : (ℂ : Category a b c) → RawFunctor (ℂ .Category.rawCategory) (ℂ .Category.rawCategory)
+id-raw-functor' ℂ = id-raw-functor (ℂ .Category.rawCategory)
+
 id-functor : (ℂ : Category a b c) → Functor ℂ ℂ
 id-functor ℂ = record {
-    rawFunctor = id-raw-functor (ℂ .Category.rawCategory);
+    rawFunctor = id-raw-functor' ℂ;
     isFunctor = record {
         consistent-on-id = Category.~-refl ℂ;
         consistent-on-∘ = λ g f → Category.~-refl ℂ

@@ -33,15 +33,27 @@ change-type-flatten pf₁ pf₂ = change-type-trans' pf₁ pf₂ refl
 change-type-elim : (pf : A ≡ A) {x : A} → change-type pf x ≡ x
 change-type-elim refl = refl
 
-change-type-swap : (pf : A ≡ B) {x : A} {y : B} → x ≡ change-type (sym pf) y → change-type pf x ≡ y
-change-type-swap refl refl = refl
+change-type-swap-to-left : {pf₁ : A ≡ B} (pf₂ : B ≡ A) {x : A} {y : B} → x ≡ change-type pf₂ y → change-type pf₁ x ≡ y
+change-type-swap-to-left {pf₁ = refl} refl refl = refl
 
+change-type-swap-to-right : {pf₂ : B ≡ A} (pf₁ : A ≡ B) {x : A} {y : B} → change-type pf₁ x ≡ y → x ≡ change-type pf₂ y
+change-type-swap-to-right {pf₂ = refl} refl refl = refl
+
+-- Note (cong B i≡j) is the easy proof to construct here, but it could be any proof.
+-- We do need to know i ≡ j though.
 change-type-input-dependence-irrelevance :
     {A : Set a} (B : A → Set b) {C : Set c} → (f : {k : A} → B k → C) →
     {i j : A} → (i≡j : i ≡ j) →
     (x : B i) →
     f (change-type (cong B i≡j) x) ≡ f x
 change-type-input-dependence-irrelevance B f refl x = refl
+
+change-type-input-dependence-irrelevance' :
+    {A : Set a} (B : A → Set b) {C : Set c} → (f : {k : A} → B k → C) →
+    {i j : A} → (i≡j : i ≡ j) → (Bi≡Bj : B i ≡ B j) →
+    (x : B i) →
+    f (change-type Bi≡Bj x) ≡ f x
+change-type-input-dependence-irrelevance' B f refl refl x = refl
 
 cong₂-dependent :
     {A : Set a} (B : A → Set b) {C : Set c} (f : (i : A) → B i → C) →
@@ -63,6 +75,13 @@ change-type-relation-dependence-irrelevance :
     {i j : A} (i≡j : i ≡ j) →
     (x y : B i) → rel x y → rel {i = j} (change-type (cong B i≡j) x) (change-type (cong B i≡j) y)
 change-type-relation-dependence-irrelevance B rel refl x y x~y = x~y
+
+change-type-relation-dependence-irrelevance' :
+    {A : Set a} (B : A → Set b)
+    (rel : {i : A} → Rel (B i) c) →
+    {i j : A} (i≡j : i ≡ j) → (Bi≡Bj : B i ≡ B j) →
+    (x y : B i) → rel x y → rel {i = j} (change-type Bi≡Bj x) (change-type Bi≡Bj y)
+change-type-relation-dependence-irrelevance' B rel refl refl x y x~y = x~y
 
 change-type-injective : (pf : A ≡ B) (_≈₁_ : Rel A ℓ₁) (_≈₂_ : Rel B ℓ₂) → _≈₁_ Extends (λ x y → change-type pf x ≈₂ change-type pf y) → Injective _≈₁_ _≈₂_ (change-type pf)
 change-type-injective refl _ _ 1-extends-2 x≈₂y = 1-extends-2  x≈₂y

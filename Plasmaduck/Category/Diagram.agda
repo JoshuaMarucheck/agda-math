@@ -167,7 +167,6 @@ module Diagram
 --- Some examples of diagram Categories ---
 -------------------------------------------
 
--- TODO Maybe I should figure out how to write down universal properties as tiny explicit categories or something
 module CommutativeSquare where
     open import Function using (_∘_)
 

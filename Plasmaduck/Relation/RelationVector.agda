@@ -504,8 +504,6 @@ module Flattening
         v~w →~← (w~x →~← fold x*z)                  ≈⟨ ~-trans-cong refl (sym (foldl-pop w~x x*z)) ⟩
         v~w →~← fold (x , w~x , cons x*z)           ∎
 
-    -- foldl-pop-last :
-
     foldl-pop-trans :
         {w x y z : A} →
         (w~x : w ~ x)
