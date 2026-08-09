@@ -1,16 +1,19 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 
+open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
+open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Function using (Bijective; Injective; Surjective; Congruent; Bijection; Injection; Surjection; _∘_; id)
-open import Relation.Binary.Bundles using (Setoid)
-open import Relation.Binary using (IsEquivalence; Decidable)
+open import Relation.Binary using (Setoid; Rel; IsEquivalence; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid; _∘'_)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; SetoidFunction; _which-is-cong_; property-subset-setoid; SetoidFunctionalProperty; _∘'_; _←_)
 open import Plasmaduck.Relation.Defs using (CongruentProperty)
 open import Plasmaduck.Property.Defs using (DecidableProperty; _Extends_)
+open import Plasmaduck.Function using (FunctionalProperty)
+
 
 
 module Plasmaduck.Function.InjectionSurjection where
@@ -166,6 +169,31 @@ module _
     {a b ℓ₁ ℓ₂ : Level}
     {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂}
     where
+    private
+        A = A-setoid .Setoid.Carrier
+        B = B-setoid .Setoid.Carrier
+        _≈A_ = A-setoid .Setoid._≈_
+        _≈B_ = B-setoid .Setoid._≈_
+
+    injective-is-functional : FunctionalProperty (Injective _≈A_ _≈B_)
+    injective-is-functional {f} {g} f≈g f-inj {x} {y} gx~gy = f-inj {x = x} {y} (begin
+        f x     ≈⟨ Setoid.reflexive B-setoid (f≈g x) ⟩
+        g x     ≈⟨ gx~gy ⟩
+        g y     ≈⟨ Setoid.reflexive B-setoid (≡-sym (f≈g y)) ⟩
+        f y     ∎)
+        where open import Relation.Binary.Reasoning.Setoid B-setoid
+
+    surjective-is-functional : SetoidFunctionalProperty (Surjective _≈A_ _≈B_ ∘ SetoidFunction.func {S₁ = A-setoid} {B-setoid})
+    surjective-is-functional {f} {g} f≈g f-surj y = i , λ {z} z≈i → begin
+        g ← z   ≈⟨ g .SetoidFunction.respects z≈i ⟩
+        g ← i   ≈⟨ Setoid.reflexive B-setoid (≡-sym (f≈g i)) ⟩
+        f ← i   ≈⟨ j {i} (Setoid.refl A-setoid) ⟩
+        y       ∎
+        where
+            open import Relation.Binary.Reasoning.Setoid B-setoid
+            ij = f-surj y
+            i = ij .proj₁
+            j = ij .proj₂
 
     bijection→injection : Bijection A-setoid B-setoid → Injection A-setoid B-setoid
     bijection→injection bij = record
@@ -203,6 +231,25 @@ module _
     {a b c ℓ₁ ℓ₂ ℓ₃ : Level}
     {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} {C-setoid : Setoid c ℓ₃}
     where
+    private
+        A = A-setoid .Setoid.Carrier
+        B = B-setoid .Setoid.Carrier
+        C = C-setoid .Setoid.Carrier
+        _≈A_ = A-setoid .Setoid._≈_
+        _≈B_ = B-setoid .Setoid._≈_
+        _≈C_ = C-setoid .Setoid._≈_
+
+    infixr 9 _∘-injective_
+    infixr 9 _∘-surjective_
+
+    _∘-injective_ : {g : B → C} → Injective _≈B_ _≈C_ g → {f : A → B} → Injective _≈A_ _≈B_ f → Injective _≈A_ _≈C_ (g ∘ f)
+    _∘-injective_ g-inj f-inj = f-inj ∘ g-inj
+
+    _∘-surjective_ : {g : B → C} → Surjective _≈B_ _≈C_ g → {f : A → B} → Surjective _≈A_ _≈B_ f → Surjective _≈A_ _≈C_ (g ∘ f)
+    _∘-surjective_ g-surj f-surj = λ y →
+        f-surj (g-surj y .proj₁) .proj₁ ,
+        (λ {z} z₁ → g-surj y .proj₂ (f-surj (g-surj y .proj₁) .proj₂ z₁))
+
 
     infixr 9 _∘-injection_
     infixr 9 _∘-surjection_
@@ -211,20 +258,14 @@ module _
     _∘-injection_ g f = record {
         to = g .Injection.to ∘ f .Injection.to;
         cong = g .Injection.cong ∘ f .Injection.cong;
-        injective = f .Injection.injective ∘ g .Injection.injective
+        injective = g .Injection.injective ∘-injective f .Injection.injective
         }
 
     _∘-surjection_ : Surjection B-setoid C-setoid → Surjection A-setoid B-setoid → Surjection A-setoid C-setoid
     _∘-surjection_ g f = record {
         to = g .Surjection.to ∘ f .Surjection.to;
         cong = g .Surjection.cong ∘ f .Surjection.cong;
-        surjective = λ y →
-            f .Surjection.surjective (g .Surjection.surjective y .proj₁) .proj₁
-            ,
-            (λ {z} z₁ →
-               g .Surjection.surjective y .proj₂
-               (f .Surjection.surjective (g .Surjection.surjective y .proj₁)
-                .proj₂ z₁))
+        surjective = g .Surjection.surjective ∘-surjective f .Surjection.surjective
         }
 
 

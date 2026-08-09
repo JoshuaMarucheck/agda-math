@@ -10,9 +10,9 @@ open import Relation.Binary using (Rel; IsEquivalence; Reflexive; Symmetric; Tra
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary using (Dec; yes; no)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; property-subset-setoid; _which-is-cong_; SetoidFunction; SetoidFunctionEquality; SetoidFunctionEquality-eq; SetoidFunctionSetoid)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-rel; rel₁; rel₂; ×-setoid; ×-rel; discrete-setoid; from-discrete-cong; property-subset-setoid; _which-is-cong_; SetoidFunction; SetoidFunctionEquality; SetoidFunctionEquality-eq; SetoidFunctionSetoid; SetoidFunctionalProperty)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
-open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; bijective→both-inv; LeftInverse; RightInverse)
+open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective; bijective→both-inv; LeftInverse; RightInverse; _∘-injective_; _∘-surjective_; injective-is-functional; surjective-is-functional)
 open import Plasmaduck.Relation.Defs using (CongruentRel)
 open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.SetoidExperiment.On using (setoid-on)
@@ -31,11 +31,14 @@ open Bijection using (to; cong; bijective)
 extract-func : {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂} → Bijection A-setoid B-setoid → SetoidFunction A-setoid B-setoid
 extract-func bij = bij .to which-is-cong bij .cong
 
+id-bijective : {A : Set a} {_~_ : Rel A ℓ₁} → Bijective _~_ _~_ id
+id-bijective = id , λ y → (y , id)
+
 id-bijection : (A-setoid : Setoid a ℓ₁) → Bijection A-setoid A-setoid
 id-bijection A-setoid = record {
     to = id;
     cong = id;
-    bijective = id , λ y → (y , id)
+    bijective = id-bijective
     }
 
 discrete-id-bijection : (A : Set a) → Bijection (discrete-setoid A) (discrete-setoid A)
@@ -96,32 +99,48 @@ invert-bijection {s₁ = s₁} {s₂} bij = record {
     where open InverseFunction bij
 
 
-infixr 9 _∘-bijection_
 
-_∘-bijection_ : {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} {s₃ : Setoid e ℓ₃} → Bijection s₂ s₃ → Bijection s₁ s₂ → Bijection s₁ s₃
-_∘-bijection_ {s₁ = s₁} {s₂} {s₃} bij₂ bij₁ = record {
-    to = f;
-    cong = f-cong;
-    bijective = bij₁ .bijective .proj₁ ∘ bij₂ .bijective .proj₁ , surjective
-    }
+module _
+    {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} {s₃ : Setoid e ℓ₃}
     where
-        f = bij₂ .to ∘ bij₁ .to
+    private
+        A = s₁ .Setoid.Carrier
+        B = s₂ .Setoid.Carrier
+        C = s₃ .Setoid.Carrier
+        _≈A_ = s₁ .Setoid._≈_
+        _≈B_ = s₂ .Setoid._≈_
+        _≈C_ = s₃ .Setoid._≈_
 
-        f-cong : Congruent (s₁ ._≈_) (s₃ ._≈_) f
-        f-cong = bij₂ .cong ∘ bij₁ .cong
+    infixr 9 _∘-bijective_
+    infixr 9 _∘-bijection_
 
-        surj₁ = bij₁ .bijective .proj₂
-        surj₂ = bij₂ .bijective .proj₂
+    _∘-bijective_ : {g : B → C} → Bijective _≈B_ _≈C_ g → {f : A → B} → Bijective _≈A_ _≈B_ f → Bijective _≈A_ _≈C_ (g ∘ f)
+    _∘-bijective_ (g-inj , g-surj) (f-inj , f-surj) = _∘-injective_ {A-setoid = s₁} {s₂} {s₃} g-inj f-inj , _∘-surjective_ {A-setoid = s₁} {s₂} {s₃} g-surj f-surj
 
-        surjective : Surjective (s₁ ._≈_) (s₃ ._≈_) f
-        surjective z with surj₂ z
-        ...             | (y , f₂y≈₃z) with surj₁ y
-        ...                               | (x , f₁x≈₂y) = x , λ {w} w≈₁x → begin
-            f w         ≈⟨ f-cong w≈₁x ⟩
-            f x         ≈⟨ bij₂ .cong (f₁x≈₂y (s₁ .Setoid.refl)) ⟩
-            bij₂ .to y  ≈⟨ f₂y≈₃z (s₂ .Setoid.refl) ⟩
-            z           ∎
-            where open import Relation.Binary.Reasoning.Setoid s₃
+    _∘-bijection_ : Bijection s₂ s₃ → Bijection s₁ s₂ → Bijection s₁ s₃
+    _∘-bijection_ bij₂ bij₁ = record {
+        to = f;
+        cong = f-cong;
+        bijective = bij₂ .bijective ∘-bijective bij₁ .bijective
+        }
+        where
+            f = bij₂ .to ∘ bij₁ .to
+
+            f-cong : Congruent (s₁ ._≈_) (s₃ ._≈_) f
+            f-cong = bij₂ .cong ∘ bij₁ .cong
+
+module _
+    {a b ℓ₁ ℓ₂ : Level}
+    {A-setoid : Setoid a ℓ₁} {B-setoid : Setoid b ℓ₂}
+    where
+    private
+        A = A-setoid .Setoid.Carrier
+        B = B-setoid .Setoid.Carrier
+        _≈A_ = A-setoid .Setoid._≈_
+        _≈B_ = B-setoid .Setoid._≈_
+
+    bijective-is-functional : SetoidFunctionalProperty (Bijective _≈A_ _≈B_ ∘ SetoidFunction.func {S₁ = A-setoid} {B-setoid})
+    bijective-is-functional {f} {g} f~g (f-inj , f-surj) = injective-is-functional {A-setoid = A-setoid} {B-setoid} f~g f-inj , surjective-is-functional {f = f} {g} f~g f-surj
 
 bijection-eq : {a ℓ : Level} → IsEquivalence (Bijection {a} {ℓ})
 bijection-eq = record {

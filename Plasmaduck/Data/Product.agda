@@ -12,9 +12,17 @@ variable
     A : Set a
     B : Set b
     B' : A → Set b
+    C₁ : (x : A) → B' x → Set c
+    C₂ : Σ A B' → Set c
 
 Σ≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : Σ A B'} → (pf : x₁ ≡ y₁) → x₂ ≡ change-type (cong B' (≡-sym pf)) y₂ → x ≡ y
 Σ≡ ≡-refl ≡-refl = ≡-refl
 
 ×≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : A × B} → (pf₁ : x₁ ≡ y₁) (pf₂ : x₂ ≡ y₂) → x ≡ y
 ×≡ ≡-refl ≡-refl = ≡-refl
+
+uncurry : (f : (x : A) → (y : B' x) → C₁ x y) → ((x , y) : Σ A B') → C₁ x y
+uncurry f (x , y) = f x y
+
+curry : (f : (p : Σ A B') → C₂ p) → (x : A) → (y : B' x) → C₂ (x , y)
+curry f x y = f (x , y)

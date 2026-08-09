@@ -1,7 +1,7 @@
 open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import Relation.Binary using (Rel; IsEquivalence)
+open import Relation.Binary using (Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
 
 
 module Plasmaduck.Function where
@@ -12,16 +12,32 @@ variable
     B : Set β
     C : Set γ
 
-_≈_ : {α β : Level} {A : Set α} {B : A → Set β} → (f g : (x : A) → B x) → Set (α ⊔ β)
-_≈_ f g = ∀ x → f x ≡ g x
-infix 1 _≈_
+module _ {α β : Level} {A : Set α} {B : A → Set β} where
+    _≈_ : (f g : (x : A) → B x) → Set (α ⊔ β)
+    _≈_ f g = ∀ x → f x ≡ g x
+    infix 1 _≈_
 
-≈-isEquivalence : {α β : Level} {A : Set α} {B : A → Set β} → IsEquivalence (_≈_ {A = A} {B = B})
-≈-isEquivalence = record {
-    refl = λ x → refl;
-    sym = λ f≈g x → sym (f≈g x);
-    trans = λ f≈g g≈h x → trans (f≈g x) (g≈h x)
-    }
+    ≈-refl : Reflexive _≈_
+    ≈-refl = λ _ → refl
+
+    ≈-sym : Symmetric _≈_
+    ≈-sym = λ f≈g x → sym (f≈g x)
+
+    ≈-trans : Transitive _≈_
+    ≈-trans = λ f≈g g≈h x → trans (f≈g x) (g≈h x)
+
+    ≈-isEquivalence : IsEquivalence _≈_
+    ≈-isEquivalence = record {
+        refl = ≈-refl;
+        sym = ≈-sym;
+        trans = ≈-trans
+        }
+
+    -- A property that only depends on IO behavior of the function
+    FunctionalProperty : (P : ((x : A) → B x) → Set γ) → Set (α ⊔ β ⊔ γ)
+    FunctionalProperty P = ∀ {f g : (x : A) → B x} → f ≈ g → P f → P g
+
+
 
 {-
     Suppose you're defining a type. Supposing f and g have all the same outputs, you want to show that the two following types are equal:

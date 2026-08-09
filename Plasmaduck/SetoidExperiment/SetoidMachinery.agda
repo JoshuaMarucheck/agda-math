@@ -1,4 +1,5 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
+open import Relation.Binary.PropositionalEquality using (_≡_) renaming (subst to ≡-subst; cong to ≡-cong; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -7,7 +8,7 @@ open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Function using (Congruent; _∘_; _on_; Bijection)
 
-open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence)
+open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence; FunctionalProperty)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
 open import Plasmaduck.Function.Properties using (Congruent₂; Idempotent)
 
@@ -136,6 +137,12 @@ property-subset-setoid A P = record {
         open IsEquivalence
 
 
+congruence-is-functional : {A : Set a} {_≈A_ : Rel A b} {B : Set c} {_≈B_ : Rel B d} → FunctionalProperty (Congruent _≈A_ _≈B_)
+congruence-is-functional {_≈A_ = _≈A_} {_≈B_ = _≈B_} {f = f} {g} f~g f-cong {x} {y} x~y = ≡-subst (_≈B g y) (f~g x) (≡-subst (f x ≈B_) (f~g y) (f-cong x~y))
+
+-- A property that only depends on IO behavior of the function
+SetoidFunctionalProperty : {A-setoid : Setoid c ℓ} {B-setoid : Setoid d ℓ₂} (P : SetoidFunction A-setoid B-setoid → Set e) → Set (c ⊔ ℓ ⊔ d ⊔ ℓ₂ ⊔ e)
+SetoidFunctionalProperty {A-setoid = A-setoid} {B-setoid = B-setoid} P = ∀ {f g : SetoidFunction A-setoid B-setoid} → Plasmaduck.Function._≈_ (f .SetoidFunction.func) (g .SetoidFunction.func) → P f → P g
 
 data ⊎-rel (setoid : Setoid c ℓ) (setoid₂ : Setoid d ℓ₂) : Rel (setoid .Carrier ⊎ setoid₂ .Carrier) (c ⊔ ℓ ⊔ d ⊔ ℓ₂) where
     rel₁ : {x y : setoid .Carrier} → setoid ._≈_ x y → ⊎-rel setoid setoid₂ (inj₁ x) (inj₁ y)

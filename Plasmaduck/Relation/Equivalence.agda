@@ -23,6 +23,8 @@ open import Plasmaduck.Util.TypeChange using (cong₂-dependent) public
 variable
     ℓ α β : Level
     A : Set ℓ
+    B : Set α
+    C : Set β
 
 
 record Equivalence (A : Set α) (ℓ : Level) : Set (α ⊔ lsuc ℓ) where
@@ -51,3 +53,11 @@ all-respects-≡ _#_ = record {
     fst = all-respectsʳ-≡ _#_;
     snd = all-respectsˡ-≡ _#_
     }
+
+-- Normally, Agda will know that two irrelevant arguments are propositionally equal.
+-- However, if their type is dependent on a previous argument, then Agda may struggle.
+irrelevant-cong : {c : Level} (s : A → Set c) (f : (x : A) → .(s x) → B) → ∀ {w x} .{y z} → w ≡ x → f w y ≡ f x z
+irrelevant-cong s f refl = refl
+
+irrelevant-cong₂ : {c d : Level} (s₁ : A → Set c) (s₂ : A → Set d) (f : (x : A) → .(s₁ x) → .(s₂ x) → B) → ∀ {u v} .{w x y z} → u ≡ v → f u w y ≡ f v x z
+irrelevant-cong₂ s₁ s₂ f refl = refl

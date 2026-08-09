@@ -21,6 +21,9 @@ variable
     m n o : ℕ
     ℓ ℓ₁ : Level
 
+≤-recompute : Recomputable _≤_
+≤-recompute {x} {y} = recompute (x ≤? y)
+
 n≤n : n ≤ n
 n≤n {n = zero} = z≤n
 n≤n {n = suc n'} = s≤s n≤n
