@@ -50,12 +50,17 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     open import Relation.Binary.Reasoning.Setoid CarrierSetoid
     open IsEquivalence (CarrierSetoid .Setoid.isEquivalence)
 
+    assoc-middle : ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ w ∙ (x ∙ y) ∙ z
+    assoc-middle {w} {x} {y} {z} = begin
+        (w ∙ x) ∙ (y ∙ z)   ≈⟨ sym assoc ⟩
+        w ∙ (x ∙ (y ∙ z))   ≈⟨ ∙-cong refl assoc ⟩
+        w ∙ (x ∙ y) ∙ z     ∎
+
     inv-is-right-inv : ∀ {x : Carrier} → x ∙ inv x ≈ id
     inv-is-right-inv {x} = begin
         x ∙ inv x                           ≈⟨ sym id-is-left-id ⟩
         id ∙ (x ∙ inv x)                    ≈⟨ ∙-cong (sym inv-is-left-inv) refl ⟩
-        (inv (inv x) ∙ inv x) ∙ (x ∙ inv x) ≈⟨ sym assoc ⟩
-        inv (inv x) ∙ (inv x ∙ (x ∙ inv x)) ≈⟨ ∙-cong refl assoc ⟩
+        (inv (inv x) ∙ inv x) ∙ (x ∙ inv x) ≈⟨ assoc-middle ⟩
         inv (inv x) ∙ ((inv x ∙ x) ∙ inv x) ≈⟨ ∙-cong refl (∙-cong inv-is-left-inv refl) ⟩
         inv (inv x) ∙ (id ∙ inv x)          ≈⟨ ∙-cong refl id-is-left-id ⟩
         inv (inv x) ∙ inv x                 ≈⟨ inv-is-left-inv ⟩
@@ -68,6 +73,37 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
         (x ∙ inv x) ∙ x ≈⟨ ∙-cong inv-is-right-inv refl ⟩
         id ∙ x          ≈⟨ id-is-left-id ⟩
         x               ∎
+
+    inv-is-involution : ∀ {x : Carrier} → inv (inv x) ≈ x
+    inv-is-involution {x} = begin
+        inv (inv x)                 ≈⟨ sym id-is-right-id ⟩
+        inv (inv x) ∙ id            ≈⟨ ∙-cong refl (sym inv-is-left-inv) ⟩
+        inv (inv x) ∙ (inv x ∙ x)   ≈⟨ assoc ⟩
+        (inv (inv x) ∙ inv x) ∙ x   ≈⟨ ∙-cong inv-is-left-inv refl ⟩
+        id ∙ x                      ≈⟨ id-is-left-id ⟩
+        x                           ∎
+
+    inv-flip-distributes : ∀ {x y} → inv (x ∙ y) ≈ inv y ∙ inv x
+    inv-flip-distributes {x} {y} = begin
+        inv (x ∙ y)                                 ≈⟨ sym id-is-right-id ⟩
+        inv (x ∙ y) ∙ id                            ≈⟨ ∙-cong refl (sym inv-is-right-inv) ⟩
+        inv (x ∙ y) ∙ (x ∙ inv x)                   ≈⟨ ∙-cong refl (∙-cong refl (sym id-is-left-id)) ⟩
+        inv (x ∙ y) ∙ (x ∙ id ∙ inv x)              ≈⟨ ∙-cong refl (∙-cong refl (∙-cong (sym inv-is-right-inv) refl)) ⟩
+        inv (x ∙ y) ∙ (x ∙ (y ∙ inv y) ∙ inv x)     ≈⟨ ∙-cong refl (sym assoc-middle) ⟩
+        inv (x ∙ y) ∙ ((x ∙ y) ∙ (inv y ∙ inv x))   ≈⟨ assoc ⟩
+        (inv (x ∙ y) ∙ (x ∙ y)) ∙ (inv y ∙ inv x)   ≈⟨ ∙-cong inv-is-left-inv refl ⟩
+        id ∙ (inv y ∙ inv x)                        ≈⟨ id-is-left-id ⟩
+        inv y ∙ inv x                               ∎
+
+    inv-id-is-id : inv id ≈ id
+    inv-id-is-id = begin
+        inv id                  ≈⟨ sym id-is-right-id ⟩
+        inv id ∙ id             ≈⟨ ∙-cong refl (sym inv-is-involution) ⟩
+        inv id ∙ inv (inv id)   ≈⟨ sym inv-flip-distributes ⟩
+        inv (inv id ∙ id)       ≈⟨ inv-cong id-is-right-id ⟩
+        inv (inv id)            ≈⟨ inv-is-involution ⟩
+        id ∎
+
 
 record Group (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     field
@@ -138,6 +174,16 @@ record IsAbelianGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
         isGroup : IsGroup rawGroup
         abelian : IsAbelian rawGroup
     open IsGroup isGroup public
+
+    open RawGroup rawGroup
+    open import Relation.Binary.Reasoning.Setoid CarrierSetoid
+    open IsEquivalence (CarrierSetoid .Setoid.isEquivalence)
+
+    inv-distributes : ∀ {x y} → inv (x ∙ y) ≈ inv x ∙ inv y
+    inv-distributes {x} {y} = begin
+        inv (x ∙ y)     ≈⟨ inv-flip-distributes ⟩
+        inv y ∙ inv x   ≈⟨ abelian ⟩
+        inv x ∙ inv y   ∎
 
 record AbelianGroup (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     field

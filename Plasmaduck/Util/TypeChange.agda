@@ -17,6 +17,12 @@ variable
 change-type : (A ≡ B) → (x : A) → B
 change-type refl x = x
 
+-- ≡-recompute : (x y : A) → .(x ≡ y) → x ≡ y
+-- ≡-recompute x y x=y = {!   !}
+
+-- change-type' : .(A ≡ B) → (x : A) → B
+-- change-type' A=B = {!   !}
+
 change-type-proof-irrelevance : (pf₁ pf₂ : A ≡ B) {x : A} → change-type pf₁ x ≡ change-type pf₂ x
 change-type-proof-irrelevance refl refl = refl
 
@@ -49,6 +55,12 @@ cong₂-dependent :
     {p : B i} {q : B j} → change-type (cong B i≡j) p ≡ q →
     f i p ≡ f j q
 cong₂-dependent B C refl refl = refl
+
+change-type-dependence-commute :
+    {A : Set a} (B : (i : A) → Set c) → (f : (i : A) → B i) →
+    {i j : A} → (i≡j : i ≡ j) →
+    change-type (cong B i≡j) (f i) ≡ f j
+change-type-dependence-commute B f refl = refl
 
 change-type-output-dependence-commute :
     {A : Set a} (B : A → Set b) (C : (i : A) → B i → Set c) → (f : {i : A} → (q : B i) → C i q) →

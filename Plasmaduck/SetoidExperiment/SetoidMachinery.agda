@@ -208,5 +208,16 @@ maybe-setoid setoid = record {
         }
     }
 
+discrete-function-setoid : (A : Set a) (B : Set b) → Setoid (a ⊔ b) (a ⊔ b)
+discrete-function-setoid A B = record {
+    Carrier = A → B;
+    _≈_ = λ f g → ∀ x → f x ≡ g x;
+    isEquivalence = record {
+        refl = λ {x} x₁ → ≡-refl;
+        sym = λ f~g x → ≡-sym (f~g x);
+        trans = λ f~g g~h x → ≡-trans (f~g x) (g~h x)
+        }
+    }
+
 IdempotentFunc : {A-setoid : Setoid a ℓ₁} → (f-func : SetoidFunction A-setoid A-setoid) → Set (a ⊔ ℓ₁)
 IdempotentFunc {A-setoid = A-setoid} (f which-is-cong _) = Idempotent A-setoid f

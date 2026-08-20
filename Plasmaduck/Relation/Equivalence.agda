@@ -21,7 +21,7 @@ module Plasmaduck.Relation.Equivalence where
 open import Plasmaduck.Util.TypeChange using (cong₂-dependent) public
 
 variable
-    ℓ α β : Level
+    ℓ α β a b : Level
     A : Set ℓ
     B : Set α
     C : Set β

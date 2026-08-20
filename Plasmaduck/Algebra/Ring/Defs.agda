@@ -1,12 +1,15 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary using (Setoid; Rel; IsEquivalence)
+open import Relation.Binary using (Setoid; Rel; IsEquivalence; Reflexive; Transitive)
 open import Relation.Nullary using (¬_)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ) renaming (zero to zero-ℕ; suc to suc-ℕ; _+_ to _+ℕ_)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _←_; property-subset-setoid)
 open import Plasmaduck.Algebra.Group.Defs using (RawGroup; IsGroup; IsAbelianGroup; Group)
-open import Plasmaduck.Function.Properties using (Associative; Commutative; Identity; Distributive; LeftAbsorber; RightAbsorber; Absorber; Congruent₂)
+open import Plasmaduck.Function.Properties using (Associative; Commutative; LeftIdentity; Identity; LeftDistributive; Distributive; LeftAbsorber; RightAbsorber; Absorber; Congruent₂)
+open import Plasmaduck.Relation.Defs using (CongruentRel)
+open import Plasmaduck.Util.Case using (case_of_)
 
 
 
@@ -27,7 +30,6 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         +-inverse : SetoidFunction S S
         zero : Carrier
         *-op : SetoidFunction₂ S S S
-        *-inverse : SetoidFunction S S
         one : Carrier
 
     _≈_ : Rel Carrier ℓ
@@ -74,13 +76,16 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     ^-cong {n = suc-ℕ n} x≈y = *-cong (x≈y) (^-cong {n = n} x≈y)
 
     --- Some properties elements can have ---
-    AreDirectInverses : (x y : Carrier) → Set ℓ
-    AreDirectInverses x y = x * y ≈ one
+    AreSidedInverses : (x y : Carrier) → Set ℓ
+    AreSidedInverses x y = x * y ≈ one
 
     AreInverses : (x y : Carrier) → Set ℓ
-    AreInverses x y = AreDirectInverses x y × AreDirectInverses y x
+    AreInverses x y = AreSidedInverses x y × AreSidedInverses y x
 
     module _ (x : Carrier) where
+        IsZero : Set ℓ
+        IsZero = x ≈ zero
+
         IsNonzero : Set ℓ
         IsNonzero = ¬ (x ≈ zero)
 
@@ -104,6 +109,20 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         IsUnit : Set (c ⊔ ℓ)
         IsUnit = Σ Carrier λ y → AreInverses x y
 
+    -- Note this is \|
+    _∣_ : Rel Carrier (c ⊔ ℓ)
+    x ∣ y = Σ Carrier λ m → x * m ≈ y
+
+    ∣-cong : CongruentRel S _∣_
+    ∣-cong {x₁} {x₂} {y₁} {y₂} x₁≈x₂ y₁≈y₂ (m , x₁*m≈y₁) = m , (begin
+        x₂ * m  ≈⟨ *-cong (sym x₁≈x₂) refl ⟩
+        x₁ * m  ≈⟨ x₁*m≈y₁ ⟩
+        y₁      ≈⟨ y₁≈y₂ ⟩
+        y₂      ∎)
+        where
+            open import Relation.Binary.Reasoning.Setoid S
+            open IsEquivalence (S .Setoid.isEquivalence)
+
 
 record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     open RawRing rawRing
@@ -126,7 +145,11 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         id-is-left-id to zero-is-+-left-id;
         id-is-right-id to zero-is-+-right-id;
         inv-is-left-inv to neg-is-+-left-inv;
-        inv-is-right-inv to neg-is-+-right-inv) public
+        inv-is-right-inv to neg-is-+-right-inv;
+        inv-is-involution to neg-is-involution;
+        inv-distributes to neg-distributes;
+        inv-id-is-id to neg-zero-is-zero
+        ) public
     -- Note neg-is-+-right-inv proves x ∸ x ≈ zero
 
     open import Relation.Binary.Reasoning.Setoid S
@@ -146,6 +169,9 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     -- The group of units of this ring
     S* : Setoid (c ⊔ ℓ) ℓ
     S* = property-subset-setoid S IsUnit
+
+    Carrier* : Set (c ⊔ ℓ)
+    Carrier* = S* .Setoid.Carrier
 
     S*-rawGroup : RawGroup (c ⊔ ℓ) ℓ
     S*-rawGroup = record {
@@ -199,7 +225,7 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         x ^ suc-ℕ m * x ^ n     ∎
 
 
-    inverse→left-cancellative : {x y : Carrier} → AreDirectInverses x y → ∀ {v w} → y * v ≈ y * w → v ≈ w
+    inverse→left-cancellative : {x y : Carrier} → AreSidedInverses x y → ∀ {v w} → y * v ≈ y * w → v ≈ w
     inverse→left-cancellative {x} {y} x*y=1 {v} {w} y*v=y*w = begin
         v               ≈⟨ sym one-is-*-left-id ⟩
         one * v         ≈⟨ *-cong (sym x*y=1) refl ⟩
@@ -237,6 +263,17 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     zero-is-*-absorber : Absorber S _*_ zero
     zero-is-*-absorber = zero-is-*-left-absorber , zero-is-*-right-absorber
 
+    zero-is-*-strong-absorber : ∀ {x y} → IsZero x ⊎ IsZero y → IsZero (x * y)
+    zero-is-*-strong-absorber {x} {y} (inj₁ x≈0) = begin
+        x * y       ≈⟨ *-cong x≈0 refl ⟩
+        zero * y    ≈⟨ zero-is-*-left-absorber ⟩
+        zero        ∎
+    zero-is-*-strong-absorber {x} {y} (inj₂ y≈0) = begin
+        x * y       ≈⟨ *-cong refl y≈0 ⟩
+        x * zero    ≈⟨ zero-is-*-right-absorber ⟩
+        zero        ∎
+
+
     neg-one-*-is-neg : ∀ {x} → (- one) * x ≈ - x
     neg-one-*-is-neg {x} = begin
         (- one) * x                     ≈⟨ sym zero-is-+-right-id ⟩
@@ -249,6 +286,158 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         zero ∸ x                        ≈⟨ zero-is-+-left-id ⟩
         - x                             ∎
 
+
+
+    any-nonzero-implies-one-not-zero : ∀ {x} → IsNonzero x → IsNonzero one
+    any-nonzero-implies-one-not-zero {x} x≄0 1≈0 = x≄0 (begin
+        x           ≈⟨ sym one-is-*-left-id ⟩
+        one * x     ≈⟨ *-cong 1≈0 refl ⟩
+        zero * x    ≈⟨ zero-is-*-left-absorber ⟩
+        zero        ∎)
+
+
+    -- Divisibility. Technically, right-divisibility
+    ∣-trans : Transitive _∣_
+    ∣-trans {i} {j} {k} (m , i*m≈j) (n , j*n≈k) = m * n , (begin
+        i * (m * n)     ≈⟨ *-assoc ⟩
+        (i * m) * n     ≈⟨ *-cong i*m≈j refl ⟩
+        j * n           ≈⟨ j*n≈k ⟩
+        k               ∎)
+
+    ∣-refl : Reflexive _∣_
+    ∣-refl = one , one-is-*-right-id
+
+    ∣-all-divide-zero : ∀ {x} → x ∣ zero
+    ∣-all-divide-zero = zero , zero-is-*-right-absorber
+
+    ∣-one-divides-all : ∀ {x} → one ∣ x
+    ∣-one-divides-all {x} = x , one-is-*-left-id
+
+    ∣-unit-divides-all : ∀ {x} → IsUnit x → ∀ {y} → x ∣ y
+    ∣-unit-divides-all {x} (x⁻¹ , x*x⁻¹≈1 , _) {y} = x⁻¹ * y , (begin
+        x * (x⁻¹ * y)   ≈⟨ *-assoc ⟩
+        (x * x⁻¹) * y   ≈⟨ *-cong x*x⁻¹≈1 refl ⟩
+        one * y         ≈⟨ one-is-*-left-id ⟩
+        y               ∎)
+
+record Ring (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
+    field
+        rawRing : RawRing c ℓ
+        isRing : IsRing rawRing
+
+    open RawRing rawRing public
+    open IsRing isRing public
+
+
+---------------------
+--- Commutativity ---
+---------------------
+
 IsCommutative : (rawRing : RawRing c ℓ) → Set (c ⊔ ℓ)
 IsCommutative rawRing = Commutative S _*_
     where open RawRing rawRing
+
+-- Reduced the proofs needed by using commutativity of *
+record IsCommutativeRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
+    open RawRing rawRing
+    field
+        +-isAbelianGroup : IsAbelianGroup +-raw-group
+        one-is-*-left-id : LeftIdentity S _*_ one
+        *-assoc : Associative S _*_
+        *-+-left-distributive : LeftDistributive S _*_ _+_
+        *-comm : IsCommutative rawRing
+
+    open import Relation.Binary.Reasoning.Setoid S
+    open IsEquivalence (S .Setoid.isEquivalence)
+
+    isRing : IsRing rawRing
+    isRing = record {
+        +-isAbelianGroup = +-isAbelianGroup;
+        one-is-*-id = one-is-*-left-id , (λ {x} → begin
+            x * one     ≈⟨ *-comm ⟩
+            one * x     ≈⟨ one-is-*-left-id ⟩
+            x           ∎);
+        *-assoc = *-assoc;
+        *-+-distributive = *-+-left-distributive , λ {x} {y} {z} → begin
+            (x + y) * z     ≈⟨ *-comm ⟩
+            z * (x + y)     ≈⟨ *-+-left-distributive ⟩
+            z * x + z * y   ≈⟨ +-cong *-comm *-comm ⟩
+            x * z + y * z   ∎
+        }
+    open IsRing isRing public hiding (one-is-*-left-id; *-+-left-distributive)
+
+record CommutativeRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
+    field
+        rawRing : RawRing c ℓ
+        isCommutativeRing : IsCommutativeRing rawRing
+
+    open RawRing rawRing public
+    open IsCommutativeRing isCommutativeRing public
+
+    ring : Ring c ℓ
+    ring = record {
+        rawRing = rawRing;
+        isRing = isRing
+        }
+
+commuting-ring-is-commutative : (ring : Ring c ℓ) → IsCommutative (ring .Ring.rawRing) → IsCommutativeRing (ring .Ring.rawRing)
+commuting-ring-is-commutative ring *-comm = record {
+    +-isAbelianGroup = +-isAbelianGroup;
+    one-is-*-left-id = one-is-*-left-id;
+    *-assoc = *-assoc;
+    *-+-left-distributive = *-+-left-distributive;
+    *-comm = *-comm
+    }
+    where open Ring ring
+
+--------------
+--- Fields ---
+--------------
+
+record IsField (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
+    open RawRing rawRing
+
+    private
+        -- This will end up being equal to S*, as long as there is at least one nonzero element
+        NonzeroS = property-subset-setoid S IsNonzero
+        NonzeroCarrier = Σ Carrier IsNonzero
+
+    field
+        isRing : IsRing rawRing
+        ⁻¹-op' : SetoidFunction NonzeroS S
+
+    open IsRing isRing
+
+
+    _⁻¹' : NonzeroCarrier → Carrier
+    _⁻¹' = ⁻¹-op' ←_
+
+    ⁻¹'-cong = ⁻¹-op' .SetoidFunction.respects
+
+    field
+        inv-gives-inverse : ∀ {x : NonzeroCarrier} → AreInverses (x .proj₁) (x ⁻¹')
+
+    open import Relation.Binary.Reasoning.Setoid S
+    open IsEquivalence (S .Setoid.isEquivalence)
+
+
+    inverse-is-not-zero : ∀ {x : NonzeroCarrier} → IsNonzero (x ⁻¹')
+    inverse-is-not-zero {x , x≄0} x⁻¹≈0 = any-nonzero-implies-one-not-zero x≄0 (begin
+        one                 ≈⟨ sym (inv-gives-inverse {x , x≄0} .proj₁) ⟩
+        x * (x , x≄0) ⁻¹'    ≈⟨ *-cong refl x⁻¹≈0 ⟩
+        x * zero            ≈⟨ zero-is-*-right-absorber ⟩
+        zero                ∎)
+
+    ⁻¹-op : SetoidFunction NonzeroS NonzeroS
+    ⁻¹-op = record {
+        func = λ x → ⁻¹-op' ← x , inverse-is-not-zero;
+        respects = ⁻¹'-cong
+        }
+
+    _⁻¹ : NonzeroCarrier → NonzeroCarrier
+    _⁻¹ = ⁻¹-op ←_
+
+    ⁻¹-cong = ⁻¹-op .SetoidFunction.respects
+
+    all-unit : ∀ {x : NonzeroCarrier} → IsUnit (x .proj₁)
+    all-unit {x'@(x , x≄0)} = (x' ⁻¹') , inv-gives-inverse

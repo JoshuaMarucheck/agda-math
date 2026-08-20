@@ -21,6 +21,12 @@ variable
 ×≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : A × B} → (pf₁ : x₁ ≡ y₁) (pf₂ : x₂ ≡ y₂) → x ≡ y
 ×≡ ≡-refl ≡-refl = ≡-refl
 
+proj₁≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : Σ A B'} → x ≡ y → x₁ ≡ y₁
+proj₁≡ ≡-refl = ≡-refl
+
+proj₂≡ : {x@(x₁ , x₂) y@(y₁ , y₂) : Σ A B'} → (pf : x ≡ y) → x₂ ≡ change-type (cong B' (≡-sym (proj₁≡ pf))) y₂
+proj₂≡ ≡-refl = ≡-refl
+
 uncurry : (f : (x : A) → (y : B' x) → C₁ x y) → ((x , y) : Σ A B') → C₁ x y
 uncurry f (x , y) = f x y
 
