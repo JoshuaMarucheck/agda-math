@@ -14,6 +14,7 @@ open import Data.Fin.Properties using (toℕ<n)
 open import Data.List using (List; _∷_; []; _++_; length; lookup; drop; take; tabulate; foldl; map; concat; zipWith; reverse; reverseAcc)
 open import Data.List.Properties using (length-drop; length-take; length-tabulate; tabulate-cong; concat-++; foldl-cong; foldl-++; reverse-++; reverse-involutive; length-map)
 open import Data.List.Relation.Unary.All using (All)
+open import Data.List.Relation.Unary.Any using ()
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; SetoidFunction; SetoidFunctionEquality; _←_)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-proof-irrelevance; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; cong₂-dependent)
@@ -29,19 +30,15 @@ variable
     a b c α β γ ℓ : Level
 
 
--- module Predicates {A : Set a} (P : A → Set b) where
---     All : List A → Set b
---     All [] = Lift _ ⊤
---     All (x ∷ l) = P x × All l
-
---     Any : List A → Set b
---     Any [] = Lift _ ⊥
---     Any (x ∷ l) = P x ⊎ Any l
-
---     All-lookup : (l : List A) → All l → (n : Fin (length l)) → P (lookup l n)
---     All-lookup (x ∷ l) all-l zero-fin = all-l .proj₁
---     All-lookup (x ∷ l) all-l (suc-fin n) = All-lookup l (all-l .proj₂) n
--- open Predicates public
+All-++ :
+    {A : Set a}
+    (P : A → Set b)
+    {l l' : List A}
+    (l-all : All P l)
+    (l'-all : All P l') →
+    All P (l ++ l')
+All-++ P {[]} l-all l'-all = l'-all
+All-++ P {x ∷ l} (px All.∷ l-all) l'-all = px All.∷ All-++ P {l} l-all l'-all
 
 module ListSetoid (A-setoid : Setoid c ℓ) where
     open Setoid A-setoid using (_≈_; refl; sym; trans) renaming (

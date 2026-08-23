@@ -9,10 +9,8 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _≤_; _<_; _>_; z≤n; s≤s; s≤s⁻¹; _∸_; _+_; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _≟_ to _≟ℕ_)
+open import Data.Nat using (ℕ; zero; suc; pred; _≟_; _≤_; _≥_; _<_; _>_; z≤n; s≤s; s≤s⁻¹; _∸_; _+_; NonZero; >-nonZero)
 open import Data.Nat.Properties using (module ≤-Reasoning; <-cmp; suc-pred; ≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-trans; ≰⇒≥; <⇒≱; ≮⇒≥; <⇒≤; ≰⇒>; ≤-antisym; <-irrefl; +-mono-≤; +-mono-<; +-mono-≤-<; ∸-mono; +-suc; +-comm; +-assoc; n>0⇒n≢0; n∸n≡0; ≤∧≢⇒<; m≤n+m; m∸n≤m; m≤m+n; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m<n⇒0<n∸m; m+n∸n≡m; m+[n∸m]≡n; +-∸-assoc; ∸-monoʳ-<; m∸[m∸n]≡n; m∸n+n≡m)
-open import Data.Fin using (Fin; _≟_; _≤?_; _<?_; toℕ; fromℕ<; _↑ˡ_; _↑ʳ_) renaming (zero to zero-fin; suc to suc-fin; pred to pred-fin; _<_ to _<-fin_; _≤_ to _≤-fin_; _≥_ to _≥-fin_)
-open import Data.Fin.Properties using (toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n; toℕ-injective; fromℕ<-injective) renaming (≤-isDecTotalOrder to ≤-fin-isDecTotalOrder)
 open import Data.List using (List; foldl; _∷_; []; _∷ʳ_; length; lookup; drop; _++_; reverse; tabulate; map)
 open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; foldl-map; foldl-∷ʳ; foldl-cong; map-++)
 
@@ -21,31 +19,31 @@ open import Plasmaduck.Function.Properties using (module SingleOperator)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Data.Empty using (¬-recompute)
 open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
-open import Plasmaduck.Data.Squash using (Squash; squash)
+open import Plasmaduck.Data.Squash using (Squash; squash; squash-irrelevant)
 open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
 open import Plasmaduck.Data.List using (drop-lookup; foldl-pop)
-open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
+open import Plasmaduck.Data.Product using (Σ≡; ×≡; proj₁≡; proj₂≡; uncurry; curry)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-proof-irrelevance; cong₂-dependent)
 open import Plasmaduck.Relation.Equivalence using (irrelevant-cong; irrelevant-cong₂)
 open import Plasmaduck.Function.Bijection using (_∘-bijective_; id-bijective; bijective-is-functional)
 open import Plasmaduck.Function using (_≈_; ≈-sym)
 
-open import Plasmaduck.Counting.Permutation.Defs using (Permutation; fin-setoid)
+open import Plasmaduck.Counting.Permutation.Defs using (FakeFinPermutation; fakefin-setoid; IsNFuncLower; IsNFuncUpper; IsNFunc; swp≤; swp<)
 
 
 {-
     Some basic properties of swp.
 -}
 module Plasmaduck.Counting.Permutation.Swap where
-open import Plasmaduck.Counting.Permutation.Defs using (swp) public
+open import Plasmaduck.Counting.Permutation.Defs using (swp; swp-fakefin) public
 
 variable
     a b c : Level
     m n : ℕ
 
 
-swp-flip : (i j k : Fin n) → swp i j k ≡ swp j i k
+swp-flip : (i j k : ℕ) → swp i j k ≡ swp j i k
 swp-flip i j k with i ≟ k | j ≟ k
 ... | yes i=k | yes j=k = trans j=k (sym i=k)
 ... | yes i=k | no j≠k = refl
@@ -53,47 +51,60 @@ swp-flip i j k with i ≟ k | j ≟ k
 ... | no i≠k | no j≠k = refl
 
 -- match args
-swp-matchₐ-lemma : (i k : Fin n) → swp i i k ≡ k
+swp-matchₐ-lemma : (i k : ℕ) → swp i i k ≡ k
 swp-matchₐ-lemma i k with i ≟ i | i ≟ k
 ... | yes i=i | yes i=k = i=k
 ... | yes i=i | no i≠k = refl
 ... | no i≠i | _ = ⊥-elim (i≠i refl)
 
 -- match input with 2nd arg
-swp-match₂-lemma : (i j : Fin n) → swp i j j ≡ i
+swp-match₂-lemma : (i j : ℕ) → swp i j j ≡ i
 swp-match₂-lemma i j with i ≟ j | j ≟ j
 ... | _ | no j≠j = ⊥-elim (j≠j refl)
 ... | yes i=j | yes j=j = sym i=j
 ... | no i≠j | yes j=j = refl
 
 -- match input with 1st arg
-swp-match₁-lemma : (i j : Fin n) → swp i j i ≡ j
+swp-match₁-lemma : (i j : ℕ) → swp i j i ≡ j
 swp-match₁-lemma i j =
     swp i j i   ≡⟨ swp-flip i j i ⟩
     swp j i i   ≡⟨ swp-match₂-lemma j i ⟩
     j           ∎
     where open ≡-Reasoning
 
-swp-no-match⇒id : (i j k : Fin n) → (i≠k : i ≢ k) (j≠k : j ≢ k) → swp i j k ≡ k
+swp-no-match⇒id : (i j k : ℕ) → (i≠k : i ≢ k) (j≠k : j ≢ k) → swp i j k ≡ k
 swp-no-match⇒id i j k i≠k j≠k with i ≟ k | j ≟ k
 ... | yes i=k | _ = ⊥-elim (i≠k i=k)
 ... | _ | yes j=k = ⊥-elim (j≠k j=k)
 ... | no _ | no _ = refl
 
-swp-involution : (i j k : Fin n) → swp i j (swp i j k) ≡ k
+swp-involution : (i j k : ℕ) → swp i j (swp i j k) ≡ k
 swp-involution i j k with i ≟ k | j ≟ k
 ... | yes i=k | _ = trans (swp-match₂-lemma i j) i=k
 ... | no i≠k | yes j=k = trans (swp-match₁-lemma i j) j=k
 ... | no i≠k | no j≠k = swp-no-match⇒id i j k i≠k j≠k
 
-low-swp-is-low : (i j k l : Fin n) → i ≤-fin l → j ≤-fin l → k ≤-fin l → swp i j k ≤-fin l
-low-swp-is-low i j k l i≤l j≤l k≤l with i ≟ k | j ≟ k
-... | yes _ | _ = j≤l
-... | no _ | yes _ = i≤l
-... | no _ | no _ = k≤l
+low-swp-is-low : (i j k l : ℕ) → i ≤ l → j ≤ l → k ≤ l → swp i j k ≤ l
+low-swp-is-low i j k l = swp≤
+
+high-swp-is-high : {i j k : ℕ} → i < n → j < n → k ≥ n → swp i j k ≡ k
+high-swp-is-high {i = i} {j} {k} i<n j<n k≥n with (i ≟ k) | (j ≟ k)
+... | (yes refl) | _ = ⊥-elim (<-irrefl refl (≤-<-trans k≥n i<n))
+... | (no _) | (yes refl) = ⊥-elim (<-irrefl refl (≤-<-trans k≥n j<n))
+... | (no _) | (no _) = refl
+
+swp-nfunc-lower : {n i j : ℕ} → i < n → j < n → IsNFuncLower n (swp i j)
+swp-nfunc-lower i<n j<n {k} k<n = swp< i<n j<n k<n
+
+swp-nfunc-upper : {n i j : ℕ} → i < n → j < n → IsNFuncUpper n (swp i j)
+swp-nfunc-upper i<n j<n {k} k≥n = high-swp-is-high i<n j<n k≥n
+
+swp-nfunc : {n i j : ℕ} → i < n → j < n → IsNFunc n (swp i j)
+swp-nfunc i<n j<n = swp-nfunc-lower i<n j<n , swp-nfunc-upper i<n j<n
+
 
 swp-contract-three :
-    {i j k : Fin n} →
+    {i j k : ℕ} →
     i ≢ k → j ≢ k →
     ∀ l → (swp i j ∘ swp j k ∘ swp i j) l ≡ swp i k l
 swp-contract-three {i = i} {j} {k} i≠k j≠k l with i ≟ l | j ≟ l | k ≟ l
@@ -133,7 +144,7 @@ swp-contract-three {i = i} {j} {k} i≠k j≠k l with i ≟ l | j ≟ l | k ≟ 
     where open ≡-Reasoning
 
 swp-contract-three' :
-    {i j k : Fin n} →
+    {i j k : ℕ} →
     i ≢ k → j ≢ k →
     ∀ l → (swp j i ∘ swp k j ∘ swp j i) l ≡ swp k i l
 swp-contract-three' {i = i} {j} {k} i≠k j≠k l =
@@ -145,7 +156,7 @@ swp-contract-three' {i = i} {j} {k} i≠k j≠k l =
     swp k i l                           ∎
     where open ≡-Reasoning
 
-swp-is-bijective : (i j : Fin n) → Bijective _≡_ _≡_ (swp i j)
+swp-is-bijective : (i j : ℕ) → Bijective _≡_ _≡_ (swp i j)
 swp-is-bijective i j = inj , surj
     where
         open ≡-Reasoning
@@ -174,9 +185,23 @@ swp-is-bijective i j = inj , surj
             k           ∎ }
         ... | no i≠k | no j≠k = k , λ { {z} refl → swp-no-match⇒id i j k i≠k j≠k }
 
-swap : Fin n → Fin n → Permutation n
+swp-fakefin-is-bijective : (i j : FakeFin n) → Bijective _≡_ _≡_ (swp-fakefin i j)
+swp-fakefin-is-bijective {n = n} i@(i' , squash i'<n) j@(j' , squash j'<n) = inj , surj
+    where
+        open ≡-Reasoning
+
+        inj : Injective _≡_ _≡_ (swp-fakefin i j)
+        inj {k , k<n} {l , l<n} k'=l' = Σ≡ ((swp-is-bijective i' j' .proj₁) (proj₁≡ k'=l')) (squash-irrelevant _ _)
+
+        surj : Surjective _≡_ _≡_ (swp-fakefin i j)
+        surj k@(k' , squash k'<n) with i' ≟ k' | j' ≟ k'
+        ... | yes refl | j≟k = j , λ { {z , _} refl → Σ≡ (swp-match₂-lemma i' z) (squash-irrelevant _ _) }
+        ... | no i≠k | yes refl = i , λ { {z , _} refl → Σ≡ (swp-match₁-lemma z j') (squash-irrelevant _ _) }
+        ... | no i≠k | no j≠k = k , λ { {z , _} refl → Σ≡ (swp-no-match⇒id i' j' k' i≠k j≠k) (squash-irrelevant _ _) }
+
+swap : FakeFin n → FakeFin n → FakeFinPermutation n
 swap {n} i j = record {
-    to = swp i j;
-    cong = from-discrete-cong (fin-setoid n) (swp i j);
-    bijective = swp-is-bijective i j
+    to = swp-fakefin i j;
+    cong = from-discrete-cong (fakefin-setoid n) (swp-fakefin i j);
+    bijective = swp-fakefin-is-bijective i j
     }
