@@ -21,7 +21,7 @@ module GenericFunction
 
     EssentiallyIdentical : (g : A → B) → Set _
     EssentiallyIdentical g = ∀ {x₁ x₂ : A} → x₁ ≈A x₂ → (f x₁) ≈B (g x₂)
-    
+
 open GenericFunction public
 
 module GenericOperator

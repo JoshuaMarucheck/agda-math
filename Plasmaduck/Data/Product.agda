@@ -46,7 +46,7 @@ curry f x y = f (x , y)
 {-
     Note it is not enough that all B' x are recomputable.
     If we have some irrelevant pair (x , y), where y : B' x,
-    then we have no (irrelevant) evidence of B' (A-recompute x), despite having (irrelevant) evidence of B' x. 
+    then we have no (irrelevant) evidence of B' (A-recompute x), despite having (irrelevant) evidence of B' x.
 
     Since x is irrelevant, the only relevant thing of type A we have is A-recompute x.
     So for example, we could say:

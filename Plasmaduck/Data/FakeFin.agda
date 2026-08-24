@@ -9,7 +9,7 @@ open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ) renaming (zero to zeroℕ; suc to sucℕ; _≤_ to _≤ℕ_; _<_ to _<ℕ_; _≥_ to _≥ℕ_; _>_ to _>ℕ_; _≟_ to _≟ℕ_; _≤?_ to _≤ℕ?_; _<?_ to _<ℕ?_)
 open import Data.Nat.Properties using (≤-<-trans; <-≤-trans) renaming (≤-reflexive to ≤ℕ-reflexive; ≤-refl to ≤ℕ-refl; ≤-trans to ≤ℕ-trans; ≤-total to ≤ℕ-total; ≤-antisym to ≤ℕ-antisym)
-open import Data.Fin using (Fin; toℕ; fromℕ<) renaming (zero to zero-fin; suc to suc-fin; _<_ to _<-fin_; _≤_ to _≤-fin_; _≟_ to _≟-fin_; _≤?_ to _≤-fin?_; _<?_ to _<-fin?_) -- _≟_; _≤?_; _<?_
+open import Data.Fin using (Fin; toℕ; fromℕ<) renaming (zero to zero-fin; suc to suc-fin; _<_ to _<-fin_; _≤_ to _≤-fin_; _≟_ to _≟-fin_; _≤?_ to _≤-fin?_; _<?_ to _<-fin?_)
 open import Data.Fin.Properties using (toℕ<n; fromℕ<-toℕ; toℕ-fromℕ<)
 
 open import Plasmaduck.Data.Product using (Σ≡; ×≡)

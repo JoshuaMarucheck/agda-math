@@ -98,8 +98,8 @@ module FindMaxLower (f : ℕ → A) where
     find-max-lower-is-max : {i j : ℕ} → .(i≤j : i ≤ j) → f (find-max-lower j) ≥A f i
     find-max-lower-is-max {zero} {zero} i≤j = ≤A-refl
     find-max-lower-is-max {i} {j@(suc j')} i≤j with i ≟ j | f j ≤A? f (find-max-lower j')
-    ... | yes refl | yes f[j]≤f[prev] = f[j]≤f[prev] 
-    ... | yes refl | no f[j]≰f[prev] = ≤A-refl 
+    ... | yes refl | yes f[j]≤f[prev] = f[j]≤f[prev]
+    ... | yes refl | no f[j]≰f[prev] = ≤A-refl
     ... | no i≠j | yes f[j]≤f[prev] = find-max-lower-is-max {i} {j'} (case ≤→<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) })
     ... | no i≠j | no f[j]≰f[prev] = begin
         f i         ≤⟨ find-max-lower-is-max {i} {j'} (case ≤→<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) }) ⟩
@@ -108,7 +108,7 @@ module FindMaxLower (f : ℕ → A) where
         where
             open ≤A-Reasoning
             f[prev] = f (find-max-lower j')
-            
+
 open FindMaxLower
 
 
@@ -117,7 +117,7 @@ module SwapDecomposition where
     pair-at : (f : ℕ → A) → (o : ℕ) → (l : SwapList) → ℕ × ℕ
     pair-at f o l = o , find-max-lower (f ∘ swap-with-list l) o
 
-    pair-at-is-bounded : (f : ℕ → A) → (o : ℕ) → (o<m : o < m) → (l : SwapList) → 
+    pair-at-is-bounded : (f : ℕ → A) → (o : ℕ) → (o<m : o < m) → (l : SwapList) →
         IsLowPair< m (pair-at f o l)
     pair-at-is-bounded f o o<m l = o<m , ≤-<-trans (find-max-lower-yields-low (f ∘ swap-with-list l) o) o<m
 
@@ -165,10 +165,10 @@ module SwapDecomposition where
     partial-decomposition-range :
         (f : ℕ → A) → (o : ℕ) → (l : SwapList) →
         (i : ℕ) →
-        SwapList 
+        SwapList
     partial-decomposition-range-helper :
-        (f : ℕ → A) → (o : ℕ) → 
-        (i' : ℕ) → 
+        (f : ℕ → A) → (o : ℕ) →
+        (i' : ℕ) →
         (l' : SwapList) →
         SwapList
 
@@ -188,7 +188,7 @@ module SwapDecomposition where
         (i' : ℕ) → .(i≤o : suc i' ≤ o) →
         (l' : SwapList) → (l'-valid : IsValidSwapList m l') →
         IsValidSwapList m (partial-decomposition-range-helper f o i' l')
-    
+
     partial-decomposition-range-is-valid f o o<m l l-valid zero i≤o = l-valid
     partial-decomposition-range-is-valid f o o<m l l-valid i@(suc i') i≤o = partial-decomposition-range-helper-is-valid f o o<m i' i≤o (partial-decomposition-range f o l i') (partial-decomposition-range-is-valid f o o<m l l-valid i' (≤-trans n≤sn i≤o))
 
@@ -201,11 +201,11 @@ module SwapDecomposition where
         (i : ℕ) →
         length (partial-decomposition-range f o l i) ≡ length l + i
     partial-decomposition-range-length f o l zero = sym (+-comm (length l) zero)
-    partial-decomposition-range-length f o l i@(suc i') = 
+    partial-decomposition-range-length f o l i@(suc i') =
         suc (length l')        ≡⟨ cong suc l'-length ⟩
         suc (length l + i')    ≡⟨ sym (+-suc (length l) i') ⟩
         length l + suc i'      ∎
-        where 
+        where
             open ≡-Reasoning
             l' = partial-decomposition-range f o l i'
             l'-length = partial-decomposition-range-length f o l i'
@@ -225,7 +225,7 @@ module SwapDecomposition where
         where
             open ≡-Reasoning
             l' = partial-decomposition-range f o l i'
-            
+
             i'≤o' : i' ≤ o'
             i'≤o' = s≤s⁻¹ i≤o
 
@@ -250,7 +250,7 @@ module SwapDecomposition where
     partial-decomposition-is-range f o l = partial-decomposition-skip-to-lemma f o l 0 z≤n
 
 -- --     partial-decomposition-low-stays-low :
--- --         (f : ℕ → A) → (o : ℕ) → 
+-- --         (f : ℕ → A) → (o : ℕ) →
 -- --         ∀ (i : ℕ) → .(i≤o : i ≤ o) →
 -- --         toℕ (swap-with-list (partial-decomposition f o o<m []) (fromℕ< {i} (≤-<-trans i≤o o<m))) ≤ o
 -- --     partial-decomposition-low-stays-low {m = m} f o o<m i i≤o = begin
@@ -263,7 +263,7 @@ module SwapDecomposition where
 -- --             i<m = ≤-<-trans (≤-recompute i≤o) (≤-recompute o<m)
 
     +-range-split :
-        (f : ℕ → A) → (o : ℕ) → (l : SwapList) → 
+        (f : ℕ → A) → (o : ℕ) → (l : SwapList) →
         (i j : ℕ) → .(i+j≤o : i + j ≤ o) →
         partial-decomposition-range f o l (i + j) ≡
         partial-decomposition-range f (o ∸ j) (partial-decomposition-range f o l j) i
@@ -282,17 +282,17 @@ module SwapDecomposition where
             s[o∸[i+j]]=s[o∸j∸i] = cong suc (trans (cong (o ∸_) (+-comm i j)) (sym (m∸n∸o≡m∸[n+o] o j i)))
 
             l-front = partial-decomposition-range f o l j
-          
+
             l' = partial-decomposition-range f o l (i' + j)
             xy = pair-at f (suc (o ∸ (i + j))) l'
-            x = suc (o ∸ (i + j)) 
+            x = suc (o ∸ (i + j))
             y = find-max-lower (f ∘ swap-with-list l') (suc (o ∸ (i + j)))
-          
+
             l'' = partial-decomposition-range f (o ∸ j) l-front i'
             xy' = pair-at f (suc (o ∸ j ∸ i)) l''
             x' = suc (o ∸ j ∸ i)
             y' = find-max-lower (f ∘ swap-with-list l'') (suc (o ∸ j ∸ i))
-          
+
             l'=l'' : l' ≡ l''
             l'=l'' = +-range-split f o l i' j (≤-trans n≤sn i+j≤o)
 
@@ -386,7 +386,7 @@ module SwapDecomposition where
     -- anything above o is acted upon by identity
     -- this one does recomputation. Use as proof tool only!
     partial-decomposition-range-low-stays-low :
-        (f : ℕ → A) → (o : ℕ) → 
+        (f : ℕ → A) → (o : ℕ) →
         ∀ (i j : ℕ) → (i≤o : i ≤ o) → .(j≤o : j ≤ o) →
         swap-with-list (partial-decomposition-range f o [] j) i ≤ o
     partial-decomposition-range-low-stays-low f o i zero i≤o j≤o = i≤o
@@ -420,21 +420,21 @@ module SwapDecomposition where
     partial-decomposition-monotonic-theorem :
         (f : ℕ → A) → (o : ℕ) → (l : SwapList) →
         ∀ (i j : ℕ) → .(i≤j : i ≤ j) → (j≤o : j ≤ o) →
-        f (swap-with-list (partial-decomposition f o l) i) ≤A 
+        f (swap-with-list (partial-decomposition f o l) i) ≤A
         f (swap-with-list (partial-decomposition f o l) j)
     partial-decomposition-monotonic-theorem f o l zero zero i≤j j≤o = ≤A-refl
     partial-decomposition-monotonic-theorem f o@(suc o') l i j@(suc j') i≤j j≤o = begin
         f (swap-with-list (partial-decomposition f o l) i)                                                                  ≡⟨ cong (λ q → f (swap-with-list q i)) (partial-decomposition-is-range f o l) ⟩
-        f (swap-with-list (partial-decomposition-range f o l o) i)                                                          ≡⟨ cong (λ q → f (swap-with-list (partial-decomposition-range f o l q) i)) (sym (m+[n∸m]≡n j≤o)) ⟩ 
+        f (swap-with-list (partial-decomposition-range f o l o) i)                                                          ≡⟨ cong (λ q → f (swap-with-list (partial-decomposition-range f o l q) i)) (sym (m+[n∸m]≡n j≤o)) ⟩
         f (swap-with-list (partial-decomposition-range f o l (j + (o ∸ j))) i)                                              ≡⟨ cong (λ q → f (swap-with-list q i)) (+-range-split f o l j (o ∸ j) (≤-reflexive (m+[n∸m]≡n j≤o))) ⟩
-        f (swap-with-list (partial-decomposition-range f (o ∸ (o ∸ j)) (partial-decomposition-range f o l (o ∸ j)) j) i)    ≡⟨ cong (λ q → f (swap-with-list (partial-decomposition-range f q (partial-decomposition-range f o l (o ∸ j)) j) i)) {o ∸ (o ∸ j)} {j} (m∸[m∸n]≡n j≤o) ⟩ 
+        f (swap-with-list (partial-decomposition-range f (o ∸ (o ∸ j)) (partial-decomposition-range f o l (o ∸ j)) j) i)    ≡⟨ cong (λ q → f (swap-with-list (partial-decomposition-range f q (partial-decomposition-range f o l (o ∸ j)) j) i)) {o ∸ (o ∸ j)} {j} (m∸[m∸n]≡n j≤o) ⟩
         f (swap-with-list (partial-decomposition-range f j (partial-decomposition-range f o l (o ∸ j)) j) i)                ≡⟨ cong (λ q → f (q i)) (partial-decomposition-range-split-lemma f j (partial-decomposition-range f o l (o ∸ j)) j) ⟩
         f ((swap-with-list l' ∘ swap-with-list (partial-decomposition-range (f ∘ swap-with-list (partial-decomposition-range f o l (o ∸ j))) j [] j)) i)    ≤⟨ find-max-lower-is-max (f ∘ swap-with-list l') {swap-with-list (partial-decomposition-range (f ∘ swap-with-list (partial-decomposition-range f o l (o ∸ j))) j [] j) i} {j} (partial-decomposition-range-low-stays-low (f ∘ swap-with-list (partial-decomposition-range f o l (o ∸ j))) j i j i≤j n≤n) ⟩
         f (swap-with-list l' y)                                                     ≡⟨ cong (f ∘ swap-with-list l') (sym (swp-match₁-lemma j y)) ⟩
         f (swap-with-list l' (swp j y j))                                           ≡⟨ cong (λ q → f (q j)) (sym (swap-pop-initial id l' j y)) ⟩
         f (swap-with-list (pair-at f j l' ∷ l') j)                                  ≡⟨ cong (λ q → f (swap-with-list (pair-at f q l' ∷ l') j)) {j} {suc (o ∸ suc (o ∸ j))} (sym thing≡j) ⟩
         f (swap-with-list (pair-at f (suc (o ∸ suc (o ∸ j))) l' ∷ l') j)            ≡⟨⟩
-        f (swap-with-list (partial-decomposition-range f o l (suc (o' ∸ j'))) j)    ≡⟨ cong (λ q → f  (swap-with-list (partial-decomposition-range f o l q) j)) (∸-suc o' j' (s≤s⁻¹ j≤o)) ⟩ 
+        f (swap-with-list (partial-decomposition-range f o l (suc (o' ∸ j'))) j)    ≡⟨ cong (λ q → f  (swap-with-list (partial-decomposition-range f o l q) j)) (∸-suc o' j' (s≤s⁻¹ j≤o)) ⟩
         f (swap-with-list (partial-decomposition-range f o l (o ∸ j')) j)           ≡⟨ sym (cong f (partial-decomposition-swap-drop-lemma f o l j' j n≤n (≤-trans n≤sn j≤o))) ⟩
         f (swap-with-list (partial-decomposition f o l) j)                          ∎
         where

@@ -50,5 +50,5 @@
 --         Carrier to A;
 
 --         )
-        
---     flip-permutation-assoc-comm : 
+
+--     flip-permutation-assoc-comm :

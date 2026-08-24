@@ -69,7 +69,7 @@ IsValidSwapList-reverseAcc :
 IsValidSwapList-reverseAcc {n} {l} {[]} l-valid All.[] = l-valid
 IsValidSwapList-reverseAcc {n} {l} {x ∷ l'} l-valid (px All.∷ l'-valid) = IsValidSwapList-reverseAcc (px All.∷ l-valid) l'-valid
 
-IsValidSwapList-reverse : 
+IsValidSwapList-reverse :
     {n : ℕ} → {l : SwapList} →
     IsValidSwapList n l →
     IsValidSwapList n (reverse l)

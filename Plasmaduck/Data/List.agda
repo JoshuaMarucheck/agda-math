@@ -60,7 +60,7 @@ module ListSetoid (A-setoid : Setoid c ℓ) where
     ≈ZipList-sym {[]} {[]} l₁≈l₂ = All.[]
     ≈ZipList-sym {[]} {x ∷ l₂} l₁≈l₂ = All.[]
     ≈ZipList-sym {x ∷ l₁} {[]} l₁≈l₂ = All.[]
-    ≈ZipList-sym {x ∷ l₁} {y ∷ l₂} (All._∷_ x~y l₁≈l₂) = All._∷_ (sym x~y) (≈ZipList-sym l₁≈l₂) 
+    ≈ZipList-sym {x ∷ l₁} {y ∷ l₂} (All._∷_ x~y l₁≈l₂) = All._∷_ (sym x~y) (≈ZipList-sym l₁≈l₂)
 
 
     ≈List-refl : Reflexive _≈List_
@@ -116,7 +116,7 @@ module FoldlOnSetoid (A-setoid : Setoid a α) (B-setoid : Setoid b β) where
     map-substitute :
         (f g : A → B) →
         EssentiallyIdentical _≈A_ _≈B_ f g →
-        (l l' : List A) → 
+        (l l' : List A) →
         (ListSetoid._≈List_ A-setoid l l') →
         map f l ≈List map g l
     map-substitute f g f~g [] [] (≡-refl , All.[]) = ≡-refl , All.[]
@@ -289,9 +289,9 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
         where open import Relation.Binary.Reasoning.Setoid B-setoid
 
 module _
-    (A-setoid : Setoid a α) 
-    (B-setoid : Setoid b β) 
-    (C-setoid : Setoid c γ) 
+    (A-setoid : Setoid a α)
+    (B-setoid : Setoid b β)
+    (C-setoid : Setoid c γ)
     where
     open Setoid A-setoid using () renaming (
         Carrier to A;
@@ -308,8 +308,8 @@ module _
         _≈_ to _≈C_;
         refl to ≈C-refl
         )
-    
-    foldl-map-cong : 
+
+    foldl-map-cong :
         {_*_ : A → B → A} →
         Congruent₂ _≈A_ _≈B_ _≈A_ _*_ →
         (start : A) →
@@ -320,9 +320,9 @@ module _
         foldl _*_ start (map g l)
     foldl-map-cong {_*_} *-cong start f g f≈g [] = ≈A-refl
     foldl-map-cong {_*_} *-cong start f g f≈g (x ∷ l) = begin
-        foldl _*_ start (map f (x ∷ l))     ≈⟨ ≈A-refl ⟩ 
-        foldl _*_ (start * f x) (map f l)   ≈⟨ FoldlOnSetoid.foldl-substitute A-setoid B-setoid {_*_} {_*_} *-cong {start * f x} {start * g x} (*-cong ≈A-refl (f≈g ≈C-refl)) (map f l) (map g l) (FoldlOnSetoid.map-substitute C-setoid B-setoid f g f≈g l l (ListSetoid.≈List-refl C-setoid)) ⟩ 
-        foldl _*_ (start * g x) (map g l)   ≈⟨ ≈A-refl ⟩ 
+        foldl _*_ start (map f (x ∷ l))     ≈⟨ ≈A-refl ⟩
+        foldl _*_ (start * f x) (map f l)   ≈⟨ FoldlOnSetoid.foldl-substitute A-setoid B-setoid {_*_} {_*_} *-cong {start * f x} {start * g x} (*-cong ≈A-refl (f≈g ≈C-refl)) (map f l) (map g l) (FoldlOnSetoid.map-substitute C-setoid B-setoid f g f≈g l l (ListSetoid.≈List-refl C-setoid)) ⟩
+        foldl _*_ (start * g x) (map g l)   ≈⟨ ≈A-refl ⟩
         foldl _*_ start (map g (x ∷ l))     ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 

@@ -561,7 +561,7 @@ module Folding {S-setoid : Setoid c ℓ} {n : ℕ} (n-S-bij : HasSize S-setoid n
         (∀ (x : A) (i : S) → P x → P (combine x i)) →
         (P start) →
         P (fold combine start)
-    fold-carrying-theorem combine start P P-carries P[start] = fold-fin-carrying-theorem n (combine-transform combine) start P (λ x i → P-carries x (n-S-bij .Bijection.to i)) P[start] -- fold-ℕ-carrying-theorem n (λ x i i<n → combine x (fromℕ< i<n)) start P (λ x i i<n → P-carries x (fromℕ< i<n)) P[start]
+    fold-carrying-theorem combine start P P-carries P[start] = fold-fin-carrying-theorem n (combine-transform combine) start P (λ x i → P-carries x (n-S-bij .Bijection.to i)) P[start]
 
     -- If a congruent property at each S is imposed and preserved by combining, then it exists on all S after folding.
     fold-all-theorem :

@@ -48,9 +48,9 @@ decompose-permutation : ℕ → (ℕ → ℕ) → FlipList
 decompose-permutation zero f = []
 decompose-permutation n@(suc n') f = concat (map (uncurry flip-swap-list) (SwapPermutation.decompose-inverse n f))
 
-is-permutation-decomposition : 
+is-permutation-decomposition :
     (n : ℕ) →
-    (f : ℕ → ℕ) → 
+    (f : ℕ → ℕ) →
     IsNFunc n f →
     Injective _≡_ _≡_ f →
     f ≗ flip-swap-using-list (decompose-permutation n f)
@@ -107,8 +107,8 @@ is-permutation-decomposition n@(suc n') f f-nfunc f-inj k =
 --     open Setoid A-setoid using (_≈_) renaming (
 --         Carrier to A
 --         )
-        
---     flip-permutation-assoc-comm : 
+
+--     flip-permutation-assoc-comm :
 --         {_*_ : A → A → A} →
 --         Congruent₂ _≈_ _≈_ _≈_ _*_ →
 --         Associative A-setoid _*_ →

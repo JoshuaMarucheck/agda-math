@@ -285,9 +285,9 @@ private
 
             f-inv-without-i : Fin n → Σ (Fin n) λ x → x ≢ i
             f-inv-without-i x = f-inv x , λ f-inv[x]=i → f-inv[fi]≠i (
-                f-inv (f i)         ≡⟨ cong (f-inv ∘ f) (≡-sym f-inv[x]=i) ⟩ 
-                f-inv (f (f-inv x)) ≡⟨ cong f-inv (f[f-inv[x]]=x x) ⟩ 
-                f-inv x             ≡⟨ f-inv[x]=i ⟩ 
+                f-inv (f i)         ≡⟨ cong (f-inv ∘ f) (≡-sym f-inv[x]=i) ⟩
+                f-inv (f (f-inv x)) ≡⟨ cong f-inv (f[f-inv[x]]=x x) ⟩
+                f-inv x             ≡⟨ f-inv[x]=i ⟩
                 i                   ∎)
                 where open ≡-Reasoning
 
@@ -312,9 +312,9 @@ private
                 delete-bij-inv (delete-bij .Bijection.to (f-inv-without-i l)) .proj₁    ≡⟨ delete-bij-inv-is-left-inv (f-inv-without-i l) ⟩
                 f-inv l                                                                 ∎
                 where open ≡-Reasoning
-            
+
             k=l : k ≡ l
-            k=l = 
+            k=l =
                 k               ≡⟨ ≡-sym (f[f-inv[x]]=x k) ⟩
                 f (f-inv k)     ≡⟨ cong f f-inv[k]=f-inv[l] ⟩
                 f (f-inv l)     ≡⟨ f[f-inv[x]]=x l ⟩
@@ -327,11 +327,11 @@ surj⇒inj-fin {n} f f-surj {i} {j} fi=fj with i ≟-fin j
 ... | no i≠j with f-surj (f i) .proj₁ ≟-fin i
 ...     | no f-inv[fi]≠i = ⊥-elim (surj⇒inj-fin-helper f f-surj {i} {j} fi=fj i≠j f-inv[fi]≠i)
 ...     | yes f-inv[fi]=i = ⊥-elim (surj⇒inj-fin-helper f f-surj {j} {i} (≡-sym fi=fj) (≢-sym i≠j) λ f-inv[fj]=j → i≠j (
-    i               ≡⟨ ≡-sym f-inv[fi]=i ⟩ 
-    f-inv (f i)     ≡⟨ cong f-inv (fi=fj) ⟩ 
-    f-inv (f j)     ≡⟨ f-inv[fj]=j ⟩ 
+    i               ≡⟨ ≡-sym f-inv[fi]=i ⟩
+    f-inv (f i)     ≡⟨ cong f-inv (fi=fj) ⟩
+    f-inv (f j)     ≡⟨ f-inv[fj]=j ⟩
     j               ∎))
-    where 
+    where
         open ≡-Reasoning
 
         f-inv : Fin n → Fin n

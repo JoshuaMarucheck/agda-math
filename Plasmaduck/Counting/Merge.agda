@@ -231,7 +231,7 @@ module _
         merge _∙_ id n generate
     merge-permute-theorem ∙-assoc ∙-comm id ∙-id n generate p = {!   !}
         where
-            lemma : 
+            lemma :
                 (l : FlipList n) →
                 merge _∙_ id n (permute-then-generate n generate (flip-swap-using-list l)) ≈
                 merge _∙_ id n generate
