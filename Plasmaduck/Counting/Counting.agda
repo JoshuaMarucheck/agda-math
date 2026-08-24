@@ -26,7 +26,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance)
 open import Plasmaduck.Function.Surjectionish using (Surjectionish; _∘-surjectionish_)
-open import Plasmaduck.Data.Fin using () renaming (fold to fold-fin; fold-carrying-theorem to fold-fin-carrying-theorem; fold-all-theorem to fold-fin-all-theorem)
+open import Plasmaduck.Fold.Fin.Foldl using () renaming (fold to fold-fin; fold-carrying-theorem to fold-fin-carrying-theorem; fold-all-theorem to fold-fin-all-theorem)
 
 
 

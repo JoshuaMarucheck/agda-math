@@ -9,7 +9,8 @@ open import Data.Nat using (ℕ; _<_; _>_; _≤_; _≥_; _<?_; _≤?_; s≤s; <-
 open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; m≤n⇒m≤n+o; ∸-+-assoc; +-∸-assoc; ≰⇒>; ∸-monoˡ-≤; ≤-irrelevant) renaming (+-identity to +ℕ-identity; +-comm to +ℕ-comm)
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
 
-open import Plasmaduck.Data.Nat using (≤-recompute) renaming (max to maxℕ; max≥fst to maxℕ≥fst; max≥snd to maxℕ≥snd; fold to foldℕ; fold-carrying-theorem to foldℕ-carrying-theorem)
+open import Plasmaduck.Data.Nat using (≤-recompute) renaming (max to maxℕ; max≥fst to maxℕ≥fst; max≥snd to maxℕ≥snd)
+open import Plasmaduck.Fold.BoundedNat.Foldl using () renaming (fold to foldℕ; fold-carrying-theorem to foldℕ-carrying-theorem)
 open import Plasmaduck.Algebra.Ring.Defs using (Ring; RawRing; IsRing; IsCommutativeRing; CommutativeRing)
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _←_; property-subset-setoid)
 open import Plasmaduck.Algebra.Group.Defs using (RawGroup; IsGroup; IsAbelianGroup; Group)

@@ -20,7 +20,8 @@ open import Plasmaduck.Function.Properties using (module SingleOperator)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify; realize-bijection; falsify-bijection; falsify-realize; realize-falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
-open import Plasmaduck.Data.Nat using (≤-recompute; n≤n; n≤sn; n<sn; ≤→<≡; ∸-suc; m∸n∸o≡m∸[n+o]; fold; fold-consume-last-lemma; fold-pop-first-lemma; module Foldl')
+open import Plasmaduck.Data.Nat using (≤-recompute; n≤n; n≤sn; n<sn; ≤→<≡; ∸-suc; m∸n∸o≡m∸[n+o])
+open import Plasmaduck.Fold.BoundedNat.Foldl using (fold; fold-consume-last-lemma; fold-pop-first-lemma; module Foldl')
 open import Plasmaduck.Data.List using (drop-lookup)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; proj₁≡; uncurry; curry)
 open import Plasmaduck.Util.TypeChange using (change-type-input-dependence-irrelevance)
@@ -37,7 +38,7 @@ open import Plasmaduck.Counting.Permutation.Defs using () renaming (Permutation 
 {-
     combining finite sets using commutative associative binary operators.
 -}
-module Plasmaduck.Counting.Merge where
+module Plasmaduck.Fold.BoundedNat.Merge where
 
 variable
     ℓ c α β : Level
