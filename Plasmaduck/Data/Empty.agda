@@ -12,6 +12,9 @@ variable
     α : Level
     A : Set α
 
+⊥-irr-elim : .⊥ → A
+⊥-irr-elim ()
+
 ⊥-recompute : Nullary.Recomputable ⊥
 ⊥-recompute ()
 

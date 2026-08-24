@@ -12,7 +12,7 @@ open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; zero; suc; pred; _≟_; _≤_; _<_; _>_; z≤n; s≤s; s≤s⁻¹; _∸_; _+_; NonZero; >-nonZero)
 open import Data.Nat.Properties using (module ≤-Reasoning; <-cmp; suc-pred; ≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-trans; ≰⇒≥; <⇒≱; ≮⇒≥; <⇒≤; ≰⇒>; ≤-antisym; <-irrefl; +-mono-≤; +-mono-<; +-mono-≤-<; ∸-mono; +-suc; +-comm; +-assoc; n>0⇒n≢0; n∸n≡0; ≤∧≢⇒<; m≤n+m; m∸n≤m; m≤m+n; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m<n⇒0<n∸m; m+n∸n≡m; m+[n∸m]≡n; +-∸-assoc; ∸-monoʳ-<; m∸[m∸n]≡n; m∸n+n≡m)
-open import Data.List using (List; foldl; _∷_; []; _∷ʳ_; length; lookup; drop; _++_; reverse; tabulate; map)
+open import Data.List using (List; foldl; _∷_; []; _∷ʳ_; length; lookup; drop; _++_; reverse; reverseAcc; tabulate; map)
 open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; foldl-map; foldl-∷ʳ; foldl-cong; map-++)
 open import Data.List.Relation.Unary.All using (All; all?)
 
@@ -61,12 +61,25 @@ _IsValidSwapList-++_ :
     IsValidSwapList n (l ++ l')
 _IsValidSwapList-++_ {n = n} = All-++ (IsLowPair< n)
 
+IsValidSwapList-reverseAcc :
+    {n : ℕ} → {l l' : SwapList} →
+    IsValidSwapList n l →
+    IsValidSwapList n l' →
+    IsValidSwapList n (reverseAcc l l')
+IsValidSwapList-reverseAcc {n} {l} {[]} l-valid All.[] = l-valid
+IsValidSwapList-reverseAcc {n} {l} {x ∷ l'} l-valid (px All.∷ l'-valid) = IsValidSwapList-reverseAcc (px All.∷ l-valid) l'-valid
+
+IsValidSwapList-reverse : 
+    {n : ℕ} → {l : SwapList} →
+    IsValidSwapList n l →
+    IsValidSwapList n (reverse l)
+IsValidSwapList-reverse l-valid = IsValidSwapList-reverseAcc All.[] l-valid
+
 
 IsValidSwapList-recompute : {n : ℕ} → {l : SwapList} → Recomputable (IsValidSwapList n l)
 IsValidSwapList-recompute {n} {[]} is-swap-list = All.[]
 IsValidSwapList-recompute {n} {(x , y) ∷ l} is-swap-list = All._∷_ (≤-recompute (all-proj₁ is-swap-list .proj₁) , ≤-recompute (all-proj₁ is-swap-list .proj₂)) (IsValidSwapList-recompute (all-proj₂ is-swap-list))
     where
-        -- fuck you, you can totally pattern match on irrelevant data arguments in irrelevant contexts. Here, watch me:
         all-proj₁ : {A : Set a} {P : Pred A a} → {x : A} → {l : List A} → All P (x ∷ l) → P x
         all-proj₁ (All._∷_ px l-all) = px
 
@@ -74,6 +87,10 @@ IsValidSwapList-recompute {n} {(x , y) ∷ l} is-swap-list = All._∷_ (≤-reco
         all-proj₂ (All._∷_ px l-all) = l-all
         -- you can only do this unpacking for irrelevant args within irrelevant contexts, of course,
         -- but why can't you allow unpacking and just mark the sub arguments as irrelevant?
+
+IsValidSwapList-incr : {m : ℕ} {l : SwapList} → (l-valid : IsValidSwapList m l) → {n : ℕ} (m≤n : m ≤ n) → IsValidSwapList n l
+IsValidSwapList-incr {l = []} All.[] m≤n = All.[]
+IsValidSwapList-incr {l = (x , y) ∷ l} ((x<m , y<m) All.∷ l-valid) m≤n = (<-≤-trans x<m m≤n , <-≤-trans y<m m≤n) All.∷ IsValidSwapList-incr l-valid m≤n
 
 -- Generally, you should probably cart around a SwapList and an irrelevant IsValidSwapList, rather than using ValidSwapList directly
 ValidSwapList : ℕ → Set

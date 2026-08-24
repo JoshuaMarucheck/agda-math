@@ -1,7 +1,7 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary.PropositionalEquality using (_≡_; inspect; cong; Reveal_·_is_; [_]) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; inspect; cong; Reveal_·_is_; [_]; ≢-sym) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
-open import Function using (_∘_; flip; Bijective; Injective; Surjective; Bijection; Injection; Surjection; Congruent)
+open import Function using (_∘_; id; flip; Bijective; Injective; Surjective; Bijection; Injection; Surjection; Congruent)
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary using (Rel; Decidable; IsEquivalence; tri<; tri≈; tri>)
 open import Relation.Nullary.Negation using (¬_)
@@ -12,11 +12,11 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat using (ℕ; _+_; _*_; _/_; _≤_; _≥_; _<_; z≤n; s≤s; s≤s⁻¹) renaming (zero to zero-ℕ; suc to suc-ℕ)
 open import Data.Nat.Properties using (≤-reflexive; <-trans; ≤-trans; ≤-<-trans; <-cmp; _<?_)
-open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; toℕ; fromℕ<)
+open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_; splitAt; join; combine; toℕ; fromℕ<) renaming (_≟_ to _≟-fin_)
 open import Data.Fin.Properties using (join-splitAt; splitAt-↑ˡ; splitAt-↑ʳ; combine-injective; combine-surjective; toℕ-fromℕ<; fromℕ<-toℕ; fromℕ<-cong; toℕ<n)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; ⊎-setoid; ×-setoid; maybe-setoid; rel₁; rel₂; property-subset-setoid; SetoidFunction; _which-is-cong_; equality→setoid)
-open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ⊎-property-split-bijection; ×-discrete-distributivity; module InverseFunction)
+open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijection_; ⊎-bijection; ×-bijection; ⊎-discrete-distributivity; ⊎-property-split-bijection; ×-discrete-distributivity; discrete-id-bijection; module InverseFunction)
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection)
 open import Plasmaduck.Function.Properties using (Idempotent)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
@@ -24,10 +24,10 @@ open import Plasmaduck.Property.Defs using (DecidableProperty)
 open import Plasmaduck.Data.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
-open import Plasmaduck.Counting.Counting using (fin-setoid; HasSize; fin-⊎-bijection; IsFinite)
+open import Plasmaduck.Counting.Counting using (fin-setoid; HasSize; fin-⊎-bijection; IsFinite; any)
 open import Plasmaduck.Counting.Pigeonhole using (pigeonhole-principle-fin)
 open import Plasmaduck.Counting.Minimum using (module Minimum; module TransformMinimumTypes)
-
+open import Plasmaduck.Counting.DeleteOne using (delete-one-bijection)
 
 {-
     This module is for counting results that rely on the pigeonhole principle, but that aren't the pigeonhole principle.
@@ -37,6 +37,10 @@ module Plasmaduck.Counting.StrongCounting where
 
 variable
     a ℓ ℓ₁ ℓ₂ : Level
+
+private
+    disc-fin : ℕ → Setoid lzero lzero
+    disc-fin = discrete-setoid ∘ Fin
 
 open Setoid using (Carrier)
 
@@ -226,3 +230,115 @@ module _
     --         -}
 
 
+
+inj⇒surj-fin : {n : ℕ} → (f : Fin n → Fin n) → Injective _≡_ _≡_ f → Surjective _≡_ _≡_ f
+inj⇒surj-fin {n@(suc-ℕ n')} f f-inj y with any {A-setoid = disc-fin n} (n , discrete-id-bijection (Fin n)) (λ x → f x ≡ y) (λ { ≡-refl → id }) (λ x → f x ≟-fin y)
+... | yes (i , fi=y) = i , λ { ≡-refl → fi=y }
+... | no ¬fx=y = ⊥-elim (i≠j (f-inj fi=fj))
+    where
+        delete-bij = delete-one-bijection y
+        open InverseFunction delete-bij using () renaming (
+            inv to delete-bij-inv;
+            is-left-inv to delete-bij-inv-is-left-inv
+            )
+
+        f-without-y : Fin n → Σ (Fin n) λ x → x ≢ y
+        f-without-y i = f i , λ fi=y → ¬fx=y (i , fi=y)
+
+        f' : Fin n → Fin n'
+        f' i = delete-bij .Bijection.to (f-without-y i)
+
+        thing = pigeonhole-principle-fin n<sn f'
+
+        i = thing .proj₁
+        j = thing .proj₂ .proj₁
+
+        i≠j : i ≢ j
+        i≠j = thing .proj₂ .proj₂ .proj₁
+
+        f'i=f'j : f' i ≡ f' j
+        f'i=f'j = thing .proj₂ .proj₂ .proj₂
+
+        fi=fj : f i ≡ f j
+        fi=fj =
+            f i                                                                 ≡⟨ ≡-sym (delete-bij-inv-is-left-inv (f-without-y i)) ⟩
+            delete-bij-inv (delete-bij .Bijection.to (f-without-y i)) .proj₁    ≡⟨ cong (λ q → delete-bij-inv q .proj₁) f'i=f'j ⟩
+            delete-bij-inv (delete-bij .Bijection.to (f-without-y j)) .proj₁    ≡⟨ delete-bij-inv-is-left-inv (f-without-y j) ⟩
+            f j                                                                 ∎
+            where open ≡-Reasoning
+
+private
+    surj⇒inj-fin-helper : {n : ℕ} → (f : Fin n → Fin n) → (f-surj : Surjective _≡_ _≡_ f) → {i j : Fin n} → f i ≡ f j → i ≢ j → f-surj (f i) .proj₁ ≢ i → ⊥
+    surj⇒inj-fin-helper {n@(suc-ℕ n')} f f-surj {i} {j} fi=fj i≠j f-inv[fi]≠i = k≠l k=l
+        where
+            delete-bij = delete-one-bijection i
+            open InverseFunction delete-bij using () renaming (
+                inv to delete-bij-inv;
+                is-left-inv to delete-bij-inv-is-left-inv
+                )
+
+            f-inv : Fin n → Fin n
+            f-inv y = f-surj y .proj₁
+
+            f[f-inv[x]]=x : (x : Fin n) → f (f-inv x) ≡ x
+            f[f-inv[x]]=x y = f-surj y .proj₂ ≡-refl
+
+            f-inv-without-i : Fin n → Σ (Fin n) λ x → x ≢ i
+            f-inv-without-i x = f-inv x , λ f-inv[x]=i → f-inv[fi]≠i (
+                f-inv (f i)         ≡⟨ cong (f-inv ∘ f) (≡-sym f-inv[x]=i) ⟩ 
+                f-inv (f (f-inv x)) ≡⟨ cong f-inv (f[f-inv[x]]=x x) ⟩ 
+                f-inv x             ≡⟨ f-inv[x]=i ⟩ 
+                i                   ∎)
+                where open ≡-Reasoning
+
+            f-inv' : Fin n → Fin n'
+            f-inv' y = delete-bij .Bijection.to (f-inv-without-i y)
+
+            thing = pigeonhole-principle-fin n<sn f-inv'
+
+            k = thing .proj₁
+            l = thing .proj₂ .proj₁
+
+            k≠l : k ≢ l
+            k≠l = thing .proj₂ .proj₂ .proj₁
+
+            f-inv'[k]=f-inv'[l] : f-inv' k ≡ f-inv' l
+            f-inv'[k]=f-inv'[l] = thing .proj₂ .proj₂ .proj₂
+
+            f-inv[k]=f-inv[l] : f-inv k ≡ f-inv l
+            f-inv[k]=f-inv[l] =
+                f-inv k                                                                 ≡⟨ ≡-sym (delete-bij-inv-is-left-inv (f-inv-without-i k)) ⟩
+                delete-bij-inv (delete-bij .Bijection.to (f-inv-without-i k)) .proj₁    ≡⟨ cong (λ q → delete-bij-inv q .proj₁) f-inv'[k]=f-inv'[l] ⟩
+                delete-bij-inv (delete-bij .Bijection.to (f-inv-without-i l)) .proj₁    ≡⟨ delete-bij-inv-is-left-inv (f-inv-without-i l) ⟩
+                f-inv l                                                                 ∎
+                where open ≡-Reasoning
+            
+            k=l : k ≡ l
+            k=l = 
+                k               ≡⟨ ≡-sym (f[f-inv[x]]=x k) ⟩
+                f (f-inv k)     ≡⟨ cong f f-inv[k]=f-inv[l] ⟩
+                f (f-inv l)     ≡⟨ f[f-inv[x]]=x l ⟩
+                l               ∎
+                where open ≡-Reasoning
+
+surj⇒inj-fin : {n : ℕ} → (f : Fin n → Fin n) → Surjective _≡_ _≡_ f → Injective _≡_ _≡_ f
+surj⇒inj-fin {n} f f-surj {i} {j} fi=fj with i ≟-fin j
+... | yes i=j = i=j
+... | no i≠j with f-surj (f i) .proj₁ ≟-fin i
+...     | no f-inv[fi]≠i = ⊥-elim (surj⇒inj-fin-helper f f-surj {i} {j} fi=fj i≠j f-inv[fi]≠i)
+...     | yes f-inv[fi]=i = ⊥-elim (surj⇒inj-fin-helper f f-surj {j} {i} (≡-sym fi=fj) (≢-sym i≠j) λ f-inv[fj]=j → i≠j (
+    i               ≡⟨ ≡-sym f-inv[fi]=i ⟩ 
+    f-inv (f i)     ≡⟨ cong f-inv (fi=fj) ⟩ 
+    f-inv (f j)     ≡⟨ f-inv[fj]=j ⟩ 
+    j               ∎))
+    where 
+        open ≡-Reasoning
+
+        f-inv : Fin n → Fin n
+        f-inv y = f-surj y .proj₁
+
+        f[f-inv[x]]=x : (x : Fin n) → f (f-inv x) ≡ x
+        f[f-inv[x]]=x y = f-surj y .proj₂ ≡-refl
+
+inj⇒bij-fin : {n : ℕ} → (f : Fin n → Fin n) → Injective _≡_ _≡_ f → Bijective _≡_ _≡_ f
+inj⇒bij-fin f f-inj = f-inj , inj⇒surj-fin f f-inj
