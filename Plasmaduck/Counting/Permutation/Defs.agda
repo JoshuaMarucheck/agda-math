@@ -182,6 +182,5 @@ swp≤ {i = i} {j} {k} i≤n j≤n k≤n with (i ≟ k) | (j ≟ k)
 swp< : {i j k : ℕ} → i < n → j < n → k < n → swp i j k < n
 swp< {n = suc n} {i} {j} {k} i<n j<n k<n = s≤s (swp≤ {i = i} {j} {k} (s≤s⁻¹ i<n) (s≤s⁻¹ j<n) (s≤s⁻¹ k<n))
 
--- swp-is-nfunc :
 swp-fakefin : FakeFin n → FakeFin n → FakeFin n → FakeFin n
 swp-fakefin (i , squash i<n) (j , squash j<n) (k , squash k<n) = swp i j k , squash (swp< {i = i} {j} {k} i<n j<n k<n)

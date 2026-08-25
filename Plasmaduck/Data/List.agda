@@ -24,6 +24,7 @@ open import Plasmaduck.Relation.Equivalence using (irrelevant-cong)
 open import Plasmaduck.Function.Properties using (Congruent₂; LeftCongruent; RightCongruent; EssentiallyIdentical)
 
 
+
 module Plasmaduck.Data.List where
 
 variable
@@ -40,7 +41,7 @@ All-++ :
 All-++ {l = []} l-all l'-all = l'-all
 All-++ {l = x ∷ l} (px All.∷ l-all) l'-all = px All.∷ All-++ {l = l} l-all l'-all
 
-All-concat : 
+All-concat :
     {A : Set a}
     {P : A → Set b}
     {l : List (List A)}
@@ -78,7 +79,7 @@ unsnoc :
 unsnoc x [] = x
 unsnoc x (y ∷ l) = unsnoc y l
 
-liat : 
+liat :
     {A : Set a}
     (x : A)
     (l : List A) →
@@ -86,19 +87,19 @@ liat :
 liat x [] = []
 liat x (y ∷ l) = x ∷ liat y l
 
-liat∷ʳunsnoc : 
+liat∷ʳunsnoc :
     {A : Set a}
     (x : A)
     (l : List A) →
     liat x l ∷ʳ unsnoc x l ≡ x ∷ l
 liat∷ʳunsnoc x [] = ≡-refl
-liat∷ʳunsnoc x (y ∷ l) = 
+liat∷ʳunsnoc x (y ∷ l) =
     liat x (y ∷ l) ∷ʳ unsnoc x (y ∷ l)  ≡⟨⟩
     x ∷ liat y l ∷ʳ unsnoc y l          ≡⟨ cong (x ∷_) (liat∷ʳunsnoc y l) ⟩
     x ∷ y ∷ l                           ∎
     where open ≡-Reasoning
 
-length-liat : 
+length-liat :
     {A : Set a}
     (x : A)
     (l : List A) →
@@ -125,6 +126,14 @@ All-get-unsnoc :
     P (unsnoc x l)
 All-get-unsnoc {x = x} {[]} (px All.∷ All.[]) = px
 All-get-unsnoc {x = x} {y ∷ l} (px All.∷ All-yl) = All-get-unsnoc All-yl
+
+
+------------------------------------------------
+--- Lists of pairs and permuting index order ---
+------------------------------------------------
+
+
+
 
 
 module ListSetoid (A-setoid : Setoid c ℓ) where

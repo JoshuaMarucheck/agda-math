@@ -249,19 +249,6 @@ module SwapDecomposition where
         partial-decomposition f o l ≡ partial-decomposition-range f o l o
     partial-decomposition-is-range f o l = partial-decomposition-skip-to-lemma f o l 0 z≤n
 
--- --     partial-decomposition-low-stays-low :
--- --         (f : ℕ → A) → (o : ℕ) →
--- --         ∀ (i : ℕ) → .(i≤o : i ≤ o) →
--- --         toℕ (swap-with-list (partial-decomposition f o o<m []) (fromℕ< {i} (≤-<-trans i≤o o<m))) ≤ o
--- --     partial-decomposition-low-stays-low {m = m} f o o<m i i≤o = begin
--- --         toℕ (swap-with-list (partial-decomposition f o o<m []) (fromℕ< {i} i<m))                ≡⟨ cong (λ q → toℕ (swap-with-list q (fromℕ< {i} i<m))) (partial-decomposition-is-range f o o<m []) ⟩
--- --         toℕ (swap-with-list (partial-decomposition-range f o o<m [] o n≤n) (fromℕ< {i} i<m))    ≤⟨ partial-decomposition-range-low-stays-low f o o<m i o i≤o n≤n ⟩
--- --         o                                                                                       ∎
--- --         where
--- --             open ≤-Reasoning
--- --             i<m : i < m
--- --             i<m = ≤-<-trans (≤-recompute i≤o) (≤-recompute o<m)
-
     +-range-split :
         (f : ℕ → A) → (o : ℕ) → (l : SwapList) →
         (i j : ℕ) → .(i+j≤o : i + j ≤ o) →

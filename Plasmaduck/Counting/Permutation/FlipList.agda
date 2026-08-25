@@ -56,15 +56,6 @@ flip-swap i (suc (suc j)) = flip (suc j + i) ∘ flip-swap i (suc j) ∘ flip (s
 decompose-swap-helper : ℕ → ℕ → ℕ → ℕ
 decompose-swap-helper i j = flip-swap i (j ∸ i)
 
--- flip-swap-valid : (n i j : ℕ) → i + j < n → IsNFuncLower n (flip-swap i j)
--- flip-swap-valid n i zero i+j<n {k} k<n = k<n
--- flip-swap-valid n i (suc zero) i+j<n {k} k<n = {!   swp-nfunc-lower   !}
--- flip-swap-valid n i (suc (suc j)) i+j<n {k} k<n = {!   !}
-    -- begin
-    -- suc (flip-swap i j k) ≤⟨ {!   !} ⟩
-    -- suc (flip-swap i j k) ≤⟨ {!   !} ⟩
-    -- n ∎
-    -- where open ≤-Reasoning
 IsDecompositionOfSwap : (i j : ℕ) → (ℕ → ℕ) → Set
 IsDecompositionOfSwap i j f = ∀ k → f k ≡ swp i j k
 
@@ -72,10 +63,6 @@ decompose-swap : (i j : ℕ) → ℕ → ℕ
 decompose-swap i j with ≤-cmp i j
 ... | inj₁ i≤j = flip-swap i (j ∸ i)
 ... | inj₂ i>j = flip-swap j (i ∸ j)
-
--- decompose-swap' : (i j : Fin n) → Fin n → Fin n
--- decompose-swap' {n = zero} ()
--- decompose-swap' {n = suc _} i j = decompose-swap {i = i} {j} (s≤s⁻¹ (toℕ<n i)) (s≤s⁻¹ (toℕ<n j))
 
 decompose-swap-arg-flip : (i j : ℕ) → decompose-swap i j ≡ decompose-swap j i
 decompose-swap-arg-flip i j with ≤-cmp i j | ≤-cmp j i

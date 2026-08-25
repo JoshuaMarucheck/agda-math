@@ -58,7 +58,7 @@ private
         {A : Set ℓ}
         (_∙_ : A → A → A) →
         (generate : ℕ → A) →
-        (start : A) → 
+        (start : A) →
         (i : ℕ) → A
     make-combine _∙_ generate acc i = generate i ∙ acc
 
@@ -70,15 +70,6 @@ merge :
     (i : ℕ) →
     A
 merge _∙_ start generate i = foldl (make-combine _∙_ generate) start i
-
--- merge-consume-last :
---     {A : Set ℓ}
---     (_∙_ : A → A → A)
---     (start : A)
---     (generate : ℕ → A) →
---     (i : ℕ) →
---     merge _∙_ start generate (suc i) ≡ merge _∙_ (generate i ∙ start) generate i
--- merge-consume-last _∙_ start n generate = ≡-refl
 
 merge-pop-first-lemma :
     {A : Set ℓ}
@@ -136,7 +127,7 @@ module _
         merge _∙_ start generate i ≈
         merge _∙_ start' generate i
     merge-substitute-start _∙_ ∙-cong start start' start-sim generate i = merge-substitute _∙_ _∙_ ∙-cong start start' start-sim generate generate (λ _ → refl) i
-    
+
     merge-substitute-generate :
         (_∙_ : A → A → A)
         (∙-cong : Congruent₂ _≈_ _≈_ _≈_ _∙_)
@@ -148,35 +139,6 @@ module _
         merge _∙_ start generate i ≈
         merge _∙_ start generate' i
     merge-substitute-generate _∙_ ∙-cong start = merge-substitute _∙_ _∙_ ∙-cong start start refl
-
-
--- Permutation : ℕ → Set
--- Permutation n = Bijection (discrete-setoid (FakeFin n)) (discrete-setoid (FakeFin n))
-
--- permute-then-generate-substitute :
---     {A : Set α}
---     (n : ℕ) →
---     (generate : (i : ℕ) → .(i < n) → A) →
---     (p₁ : FakeFin n → FakeFin n) →
---     (p₂ : FakeFin n → FakeFin n) →
---     (∀ k → p₁ k ≡ p₂ k) →
---     (i : ℕ) → .(i<n : i < n) →
---     permute-then-generate n generate p₁ i i<n ≡ permute-then-generate n generate p₂ i i<n
--- permute-then-generate-substitute n generate p₁ p₂ p₁≈p₂ i i<n with p₁ (i , squash i<n) | inspect p₁ (i , squash i<n) | p₂ (i , squash i<n) | inspect p₂ (i , squash i<n)
--- ... | j , squash j<n | [ j= ] | k , squash k<n | [ k= ] =
---     generate j j<n                                      ≡⟨ irrelevant-cong (_< n) generate {j} {p₁-thing} {j<n} {p₁-thing<n} (≡-sym (proj₁≡ j=)) ⟩
---     generate (p₁ (i , squash i<n) .proj₁) p₁-thing<n  ≡⟨ irrelevant-cong (_< n) generate {p₁-thing} {p₂-thing} {p₁-thing<n} {p₂-thing<n} (proj₁≡ (p₁≈p₂ (i , squash i<n))) ⟩
---     generate (p₂ (i , squash i<n) .proj₁) p₂-thing<n  ≡⟨ irrelevant-cong (_< n) generate {p₂-thing} {k} {p₂-thing<n} {k<n} (proj₁≡ k=) ⟩
---     generate k k<n  ∎
---     where
---         open ≡-Reasoning
-
---         p₁-thing = p₁ (i , squash i<n) .proj₁
---         p₁-thing<n = ≤-<-trans (≤-reflexive (proj₁≡ j=)) (≤-recompute j<n)
-
---         p₂-thing = p₂ (i , squash i<n) .proj₁
---         p₂-thing<n = ≤-<-trans (≤-reflexive (proj₁≡ k=)) (≤-recompute k<n)
-
 
 module _
     {A-setoid : Setoid c ℓ}
@@ -196,12 +158,12 @@ module _
         merge _∙_ start generate n ≈
         merge _∙_ start generate' n
     merge-local-substitute-generate start generate generate' zero gen= = refl
-    merge-local-substitute-generate start generate generate' n@(suc n') gen= = begin 
-        merge _∙_ start generate (suc n') ≈⟨ refl ⟩ 
-        merge _∙_ (make-combine _∙_ generate start n') generate n'      ≈⟨ merge-local-substitute-generate (make-combine _∙_ generate start n') generate generate' n' (λ i i<n' → gen= i (≤-trans i<n' n≤sn)) ⟩ 
-        merge _∙_ (make-combine _∙_ generate start n') generate' n'     ≈⟨ merge-substitute A-setoid _∙_ _∙_ ∙-cong (make-combine _∙_ generate start n') (make-combine _∙_ generate' start n') (∙-cong (gen= n' n<sn) refl) generate' generate' (λ i → refl) n' ⟩ 
-        merge _∙_ (make-combine _∙_ generate' start n') generate' n'    ≈⟨ refl ⟩ 
-        merge _∙_ start generate' (suc n')                              ∎     
+    merge-local-substitute-generate start generate generate' n@(suc n') gen= = begin
+        merge _∙_ start generate (suc n') ≈⟨ refl ⟩
+        merge _∙_ (make-combine _∙_ generate start n') generate n'      ≈⟨ merge-local-substitute-generate (make-combine _∙_ generate start n') generate generate' n' (λ i i<n' → gen= i (≤-trans i<n' n≤sn)) ⟩
+        merge _∙_ (make-combine _∙_ generate start n') generate' n'     ≈⟨ merge-substitute A-setoid _∙_ _∙_ ∙-cong (make-combine _∙_ generate start n') (make-combine _∙_ generate' start n') (∙-cong (gen= n' n<sn) refl) generate' generate' (λ i → refl) n' ⟩
+        merge _∙_ (make-combine _∙_ generate' start n') generate' n'    ≈⟨ refl ⟩
+        merge _∙_ start generate' (suc n')                              ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-pop-startᵣ :
@@ -213,11 +175,11 @@ module _
         merge _∙_ (startₗ ∙ startᵣ) generate i ≈
         merge _∙_ startₗ generate i ∙ startᵣ
     merge-pop-startᵣ ∙-assoc startₗ startᵣ generate zero = refl
-    merge-pop-startᵣ ∙-assoc startₗ startᵣ generate i@(suc i') = begin 
-        merge _∙_ (startₗ ∙ startᵣ) generate (suc i')               ≈⟨ refl ⟩ 
-        merge _∙_ (generate i' ∙ (startₗ ∙ startᵣ)) generate i'     ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-assoc generate i' ⟩ 
+    merge-pop-startᵣ ∙-assoc startₗ startᵣ generate i@(suc i') = begin
+        merge _∙_ (startₗ ∙ startᵣ) generate (suc i')               ≈⟨ refl ⟩
+        merge _∙_ (generate i' ∙ (startₗ ∙ startᵣ)) generate i'     ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-assoc generate i' ⟩
         merge _∙_ ((generate i' ∙ startₗ) ∙ startᵣ) generate i'     ≈⟨ merge-pop-startᵣ ∙-assoc (generate i' ∙ startₗ) startᵣ generate i' ⟩
-        merge _∙_ (generate i' ∙ startₗ) generate i' ∙ startᵣ       ≈⟨ refl ⟩ 
+        merge _∙_ (generate i' ∙ startₗ) generate i' ∙ startᵣ       ≈⟨ refl ⟩
         merge _∙_ startₗ generate i ∙ startᵣ                        ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
@@ -229,17 +191,17 @@ module _
         (generate : ℕ → A) →
         (i : ℕ) →
         merge _∙_ start generate i ≈
-        merge _∙_ id generate i ∙ start 
+        merge _∙_ id generate i ∙ start
     merge-pop-start ∙-assoc id ∙-id start generate zero = sym (∙-id .proj₁)
-    merge-pop-start ∙-assoc id ∙-id start generate i@(suc i') = begin 
-        merge _∙_ start generate i                          ≈⟨ refl ⟩ 
-        merge _∙_ (generate i' ∙ start) generate i'         ≈⟨ merge-pop-startᵣ ∙-assoc (generate i') start generate i' ⟩ 
-        merge _∙_ (generate i') generate i' ∙ start         ≈⟨ ∙-cong (merge-substitute-start A-setoid _∙_ ∙-cong (generate i') (generate i' ∙ id) (sym (∙-id .proj₂)) generate i') refl ⟩ 
-        merge _∙_ (generate i' ∙ id) generate i' ∙ start    ≈⟨ refl ⟩ 
+    merge-pop-start ∙-assoc id ∙-id start generate i@(suc i') = begin
+        merge _∙_ start generate i                          ≈⟨ refl ⟩
+        merge _∙_ (generate i' ∙ start) generate i'         ≈⟨ merge-pop-startᵣ ∙-assoc (generate i') start generate i' ⟩
+        merge _∙_ (generate i') generate i' ∙ start         ≈⟨ ∙-cong (merge-substitute-start A-setoid _∙_ ∙-cong (generate i') (generate i' ∙ id) (sym (∙-id .proj₂)) generate i') refl ⟩
+        merge _∙_ (generate i' ∙ id) generate i' ∙ start    ≈⟨ refl ⟩
         merge _∙_ id generate i ∙ start                     ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
-    
+
     -- If f distributes over combine, then it distributes through merge
     merge-distribute-theorem :
         (f : A → A) →
@@ -273,7 +235,7 @@ module _
         merge _∙_ id generate n ∙ generate n                                ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid
 
-    merge-flip-lemma-helper : 
+    merge-flip-lemma-helper :
         Associative A-setoid _∙_ →
         Commutative A-setoid _∙_ →
         (start : A) →
@@ -289,24 +251,24 @@ module _
     ... | yes ≡-refl | no _ = ⊥-irr-elim (<-irrefl ≡-refl si<n)
     ... | no _ | yes ≡-refl with i ≟ n'' | suc i ≟ n''
     ...     | no i≠n'' | no si≠n'' = ⊥-elim (i≠n'' ≡-refl)
-    ...     | yes ≡-refl | no si≠n'' = begin 
+    ...     | yes ≡-refl | no si≠n'' = begin
         merge _∙_ (generate n' ∙ (generate n'' ∙ start)) (generate ∘ flip i) n''    ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ (trans ∙-assoc ∙-comm) (generate ∘ flip i) n'' ⟩
-        merge _∙_ (start ∙ (generate n' ∙ generate n'')) (generate ∘ flip i) n''    ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') (generate ∘ flip i) n'' ⟩ 
-        merge _∙_ start (generate ∘ flip i) n'' ∙ (generate n' ∙ generate n'')      ≈⟨ ∙-cong (merge-local-substitute-generate start (generate ∘ flip i) generate n'' λ i i<n'' → reflexive (cong generate (swp-no-match⇒id n'' n' i (≢-sym (<⇒≢ i<n'')) (≢-sym (<⇒≢ (<-≤-trans i<n'' n≤sn)))))) refl ⟩ 
-        merge _∙_ start generate n'' ∙ (generate n' ∙ generate n'')                 ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') generate n'') ⟩ 
-        merge _∙_ (start ∙ (generate n' ∙ generate n'')) generate n''               ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ (trans ∙-assoc (trans ∙-comm (∙-cong refl ∙-comm))) generate n'' ⟩ 
-        merge _∙_ (generate n'' ∙ (generate n' ∙ start)) generate n''               ≈⟨ refl ⟩ 
+        merge _∙_ (start ∙ (generate n' ∙ generate n'')) (generate ∘ flip i) n''    ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') (generate ∘ flip i) n'' ⟩
+        merge _∙_ start (generate ∘ flip i) n'' ∙ (generate n' ∙ generate n'')      ≈⟨ ∙-cong (merge-local-substitute-generate start (generate ∘ flip i) generate n'' λ i i<n'' → reflexive (cong generate (swp-no-match⇒id n'' n' i (≢-sym (<⇒≢ i<n'')) (≢-sym (<⇒≢ (<-≤-trans i<n'' n≤sn)))))) refl ⟩
+        merge _∙_ start generate n'' ∙ (generate n' ∙ generate n'')                 ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') generate n'') ⟩
+        merge _∙_ (start ∙ (generate n' ∙ generate n'')) generate n''               ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ (trans ∙-assoc (trans ∙-comm (∙-cong refl ∙-comm))) generate n'' ⟩
+        merge _∙_ (generate n'' ∙ (generate n' ∙ start)) generate n''               ≈⟨ refl ⟩
         merge _∙_ start generate n                                                  ∎
         where
             open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
             n = suc n'
-    merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'@(suc n'') i si<n | no i≠n' | no si≠n' = begin 
-        merge _∙_ (generate n' ∙ start) (generate ∘ flip i) n'  ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-comm (generate ∘ flip i) n' ⟩ 
-        merge _∙_ (start ∙ generate n') (generate ∘ flip i) n'  ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n') (generate ∘ flip i) n' ⟩ 
-        merge _∙_ start (generate ∘ flip i) n' ∙ generate n'    ≈⟨ ∙-cong (merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'' i (≤∧≢⇒< {suc i} {n'} (s≤s⁻¹ si<n) si≠n')) refl ⟩ 
-        merge _∙_ start generate n' ∙ generate n'               ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n') generate n') ⟩ 
-        merge _∙_ (start ∙ generate n') generate n'             ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-comm generate n' ⟩ 
-        merge _∙_ (generate n' ∙ start) generate n'             ≈⟨ refl ⟩ 
+    merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'@(suc n'') i si<n | no i≠n' | no si≠n' = begin
+        merge _∙_ (generate n' ∙ start) (generate ∘ flip i) n'  ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-comm (generate ∘ flip i) n' ⟩
+        merge _∙_ (start ∙ generate n') (generate ∘ flip i) n'  ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n') (generate ∘ flip i) n' ⟩
+        merge _∙_ start (generate ∘ flip i) n' ∙ generate n'    ≈⟨ ∙-cong (merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'' i (≤∧≢⇒< {suc i} {n'} (s≤s⁻¹ si<n) si≠n')) refl ⟩
+        merge _∙_ start generate n' ∙ generate n'               ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n') generate n') ⟩
+        merge _∙_ (start ∙ generate n') generate n'             ≈⟨ merge-substitute-start A-setoid _∙_ ∙-cong _ _ ∙-comm generate n' ⟩
+        merge _∙_ (generate n' ∙ start) generate n'             ≈⟨ refl ⟩
         merge _∙_ start generate n                              ∎
         where
             open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
@@ -322,7 +284,7 @@ module _
         .(suc i < n) →
         merge _∙_ start (generate ∘ flip i) n ≈
         merge _∙_ start generate n
-    merge-flip-lemma ∙-assoc ∙-comm start generate n@(suc n') i si<n = merge-flip-lemma-helper ∙-assoc ∙-comm start generate n' i si<n 
+    merge-flip-lemma ∙-assoc ∙-comm start generate n@(suc n') i si<n = merge-flip-lemma-helper ∙-assoc ∙-comm start generate n' i si<n
 
     merge-permute-theorem :
         Associative A-setoid _∙_ →
@@ -335,9 +297,9 @@ module _
         IsNFuncPermutation n p →
         merge _∙_ id (generate ∘ p) n ≈
         merge _∙_ id generate n
-    merge-permute-theorem ∙-assoc ∙-comm id ∙-id generate n p p-perm@(p-bij , p-nfunc) = begin 
-        merge _∙_ id (generate ∘ p) n                                                   ≈⟨ merge-substitute-generate A-setoid _∙_ ∙-cong id (generate ∘ p) (generate ∘ flip-swap-using-list (decompose-permutation n p)) (λ i → reflexive (cong generate (is-permutation-decomposition n p p-perm i))) n ⟩ 
-        merge _∙_ id (generate ∘ flip-swap-using-list (decompose-permutation n p)) n    ≈⟨ lemma (decompose-permutation n p) (decompose-permutation-valid n p) ≡-refl ⟩ 
+    merge-permute-theorem ∙-assoc ∙-comm id ∙-id generate n p p-perm@(p-bij , p-nfunc) = begin
+        merge _∙_ id (generate ∘ p) n                                                   ≈⟨ merge-substitute-generate A-setoid _∙_ ∙-cong id (generate ∘ p) (generate ∘ flip-swap-using-list (decompose-permutation n p)) (λ i → reflexive (cong generate (is-permutation-decomposition n p p-perm i))) n ⟩
+        merge _∙_ id (generate ∘ flip-swap-using-list (decompose-permutation n p)) n    ≈⟨ lemma (decompose-permutation n p) (decompose-permutation-valid n p) ≡-refl ⟩
         merge _∙_ id generate n                                                         ∎
         where
             -- problem: flip-swap-using-list (x ∷ l) does flip x *last*. So we can't simply delete x from the list.
@@ -349,56 +311,16 @@ module _
                 merge _∙_ id (generate ∘ (flip-swap-using-list l)) n ≈
                 merge _∙_ id generate n
             lemma [] _ _ = refl
-            lemma (x ∷ l) l-valid {suc len'} length=len = begin 
+            lemma (x ∷ l) l-valid {suc len'} length=len = begin
                 merge _∙_ id (generate ∘ flip-swap-using-list (x ∷ l)) n                            ≈⟨ reflexive (cong (λ q → merge _∙_ id (generate ∘ flip-swap-using-list q) n) (≡-sym (liat∷ʳunsnoc x l))) ⟩
                 merge _∙_ id (generate ∘ flip-swap-using-list (liat x l ∷ʳ unsnoc x l)) n           ≈⟨ merge-substitute-generate A-setoid _∙_ ∙-cong id (generate ∘ flip-swap-using-list (liat x l ∷ʳ unsnoc x l)) (generate ∘ flip-swap-using-list (liat x l) ∘ flip (unsnoc x l)) (λ i → reflexive (cong generate (flip-swap-using-list-pop-last (liat x l) (unsnoc x l) i))) n ⟩
                 merge _∙_ id (generate ∘ flip-swap-using-list (liat x l) ∘ flip (unsnoc x l)) n     ≈⟨ merge-flip-lemma ∙-assoc ∙-comm id (generate ∘ flip-swap-using-list (liat x l)) n (unsnoc x l) (All-get-unsnoc l-valid) ⟩
-                merge _∙_ id (generate ∘ flip-swap-using-list (liat x l)) n                         ≈⟨ lemma (liat x l) (All-liat l-valid) {len'} (≡-trans (length-liat x l) (s≡s⁻¹ length=len)) ⟩ 
+                merge _∙_ id (generate ∘ flip-swap-using-list (liat x l)) n                         ≈⟨ lemma (liat x l) (All-liat l-valid) {len'} (≡-trans (length-liat x l) (s≡s⁻¹ length=len)) ⟩
                 merge _∙_ id generate n                                                             ∎
-                where 
+                where
                     open import Relation.Binary.Reasoning.Setoid A-setoid
 
             open import Relation.Binary.Reasoning.Setoid A-setoid
-        --  begin
-        -- merge _∙_ id n (permute-then-generate n generate f)                                             ≈⟨ {!   !} ⟩
-        -- merge _∙_ id n (permute-then-generate n generate (falsify ∘ realize ∘ f ∘ falsify ∘ realize))   ≈⟨ merge-substitute-generate n (permute-then-generate n generate (falsify ∘ realize ∘ f ∘ falsify ∘ realize)) (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ realize)) {!   !} ⟩
-        -- merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ realize))        ≈⟨ {!   !} ⟩
-        -- merge _∙_ id n generate                                                                         ∎
-        -- where
-        --     open SwapList
-        --     open import Relation.Binary.Reasoning.Setoid A-setoid
-
-
-        --     helper' :
-        --         (l : SwapList n) →
-        --         (x y : Fin n) →
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ swp x y ∘ realize)) ≈
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ realize))
-        --     helper' l x y = {!   !}
-
-        --     helper :
-        --         (l : SwapList n) →
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ realize)) ≈
-        --         merge _∙_ id n generate
-        --     helper [] = begin
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ realize))   ≈⟨ merge-substitute-generate n (permute-then-generate n generate (falsify ∘ realize)) (permute-then-generate n generate Function.id) (λ i i<n → reflexive (permute-then-generate-substitute n generate (falsify ∘ realize) Function.id (λ k → falsify-realize) i i<n)) ⟩
-        --         merge _∙_ id n (permute-then-generate n generate Function.id)           ≈⟨ refl ⟩
-        --         merge _∙_ id n generate                                                 ∎
-        --     helper (xy@(x , y) ∷ l) = begin
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list (xy ∷ l) ∘ realize))     ≈⟨ reflexive (cong (λ q → merge _∙_ id n (permute-then-generate n generate (falsify ∘ q ∘ realize))) (swap-pop-initial Function.id l x y)) ⟩
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ swp x y ∘ realize))  ≈⟨ helper' l x y ⟩
-        --         merge _∙_ id n (permute-then-generate n generate (falsify ∘ swap-with-list l ∘ realize))            ≈⟨ helper l ⟩
-        --         merge _∙_ id n generate                                                                             ∎
-
-        --     f = p .Bijection.to
-
-        --     p' : FinPermutation n
-        --     p' = realize-bijection ∘-bijection p ∘-bijection falsify-bijection
-
-        --     f' = realize ∘ f ∘ falsify
-
-        --     l = decompose-permutation p'
-
 
 {-
     TODO:

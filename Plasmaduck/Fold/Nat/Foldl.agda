@@ -47,7 +47,7 @@ module _ (A-setoid : Setoid c ℓ) where
         (combine combine' : A → ℕ → A) →
         (∀ {x y : A} → x ≈ y → (i : ℕ) → combine x i ≈ combine' y i) →
         (start start' : A) →
-        (start ≈ start') → 
+        (start ≈ start') →
         (i : ℕ) →
         foldl combine start i ≈ foldl combine' start' i
     foldl-substitute combine combine' c≈c' start start' s≈s' zero = s≈s'
@@ -97,11 +97,3 @@ foldl-pop-first-lemma :
     foldl combine start (suc i) ≡ combine (foldl (λ acc j → combine acc (suc j)) start i) zero
 foldl-pop-first-lemma combine start zero = ≡-refl
 foldl-pop-first-lemma combine start (suc i) = foldl-pop-first-lemma combine (combine start (suc i)) i
-
--- Proof tool; slow, since it uses continuations
--- foldr' :
---     {A : Set ℓ} →
---     (combine : A → ℕ → A) →
---     A → ℕ → A
--- foldr' combine start zero = start
--- foldr' combine start i@(suc i') = combine (foldr' combine start i') i

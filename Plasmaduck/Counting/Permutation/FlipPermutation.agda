@@ -105,19 +105,3 @@ is-permutation-decomposition n@(suc n') f f-perm k =
             foldl (∣ _∘'_ ⟩- flip) id (flip-swap-list i j) k                       ≡⟨ cong-app (sym (foldl-map _∘'_ flip id (flip-swap-list i j))) k ⟩
             foldl _∘'_ id (map flip (flip-swap-list i j)) k                        ≡⟨⟩
             (foldl _∘'_ id ∘ map flip ∘ uncurry flip-swap-list) (i , j) k          ∎
-
-
-
--- module FlipSort (A-setoid : Setoid a α) where
---     open Setoid A-setoid using (_≈_) renaming (
---         Carrier to A
---         )
-
---     flip-permutation-assoc-comm :
---         {_*_ : A → A → A} →
---         Congruent₂ _≈_ _≈_ _≈_ _*_ →
---         Associative A-setoid _*_ →
---         Commutative A-setoid _*_ →
---         (generate : Fin n → A) →
---         (p : Permutation n)
-

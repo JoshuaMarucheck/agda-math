@@ -108,12 +108,6 @@ IsSwapDecomposition p l = ∀ k → swap-with-list l k ≡ p k
 SwapDecomposition : (ℕ → ℕ) → Set
 SwapDecomposition p = Σ SwapList (IsSwapDecomposition p)
 
--- swap-with-things : NFunc n → SwapList n → NFunc n
--- swap-with-things = foldl (λ (acc , acc-nfunc) (i , j) → swp i j ∘ acc , λ k k<n → {!   !})
-
--- swap-with-list : SwapList n → ℕ → ℕ
--- swap-with-list l k = swap-with-things id l k
-
 swap-pop-func :
     (start : ℕ → ℕ)
     (l : SwapList) →
