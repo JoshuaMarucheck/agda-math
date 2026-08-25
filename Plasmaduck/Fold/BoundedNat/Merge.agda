@@ -45,7 +45,7 @@ variable
 
 
 {-
-    Fold, as in Data/Nat.agda, but for binary operators.
+    Fold, as in BoundedNat/Foldl.agda, but for binary operators.
         That is, when combine can be split into two functions _∙_ and generate
         such that combine acc i i<n = generate i i<n ∙ acc
     This makes proofs about associativity and commutativity more apparent.

@@ -11,8 +11,8 @@ open import Data.Nat using (ℕ; _+_; _∸_; _≤_; _<_; s≤s⁻¹; s≤s; z≤
 open import Data.Nat.Properties using (≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-irrefl; <⇒≤; +-suc; +-comm; +-∸-assoc; ∸-mono; m≤n⇒m∸n≡0; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m+[n∸m]≡n; +-mono-≤-<; +-mono-<-≤; +-mono-≤; m≤n⇒m⊓n≡m; n∸n≡0; module ≤-Reasoning)
 open import Data.Fin using (Fin; fromℕ<; toℕ) renaming (_≤_ to _≤-fin_; zero to zero-fin; suc to suc-fin)
 open import Data.Fin.Properties using (toℕ<n)
-open import Data.List using (List; _∷_; []; _++_; length; lookup; drop; take; tabulate; foldl; map; concat; zipWith; reverse; reverseAcc)
-open import Data.List.Properties using (length-drop; length-take; length-tabulate; tabulate-cong; concat-++; foldl-cong; foldl-++; reverse-++; reverse-involutive; length-map)
+open import Data.List using (List; _∷_; []; _++_; _∷ʳ_; length; lookup; drop; take; tabulate; foldl; map; concat; zipWith; reverse; reverseAcc)
+open import Data.List.Properties using (length-drop; length-take; length-tabulate; tabulate-cong; concat-++; foldl-cong; foldl-++; reverse-++; reverse-involutive; length-map; ++-assoc; length-++)
 open import Data.List.Relation.Unary.All using (All)
 open import Data.List.Relation.Unary.Any using ()
 
@@ -32,13 +32,100 @@ variable
 
 All-++ :
     {A : Set a}
-    (P : A → Set b)
+    {P : A → Set b}
     {l l' : List A}
     (l-all : All P l)
     (l'-all : All P l') →
     All P (l ++ l')
-All-++ P {[]} l-all l'-all = l'-all
-All-++ P {x ∷ l} (px All.∷ l-all) l'-all = px All.∷ All-++ P {l} l-all l'-all
+All-++ {l = []} l-all l'-all = l'-all
+All-++ {l = x ∷ l} (px All.∷ l-all) l'-all = px All.∷ All-++ {l = l} l-all l'-all
+
+All-concat : 
+    {A : Set a}
+    {P : A → Set b}
+    {l : List (List A)}
+    (l-all : All (λ q → All P q) l) →
+    All P (concat l)
+All-concat {l = []} All.[] = All.[]
+All-concat {l = [] ∷ xss} (All.[] All.∷ xss-all) = All-concat xss-all
+All-concat {l = (x ∷ xs) ∷ xss} ((px All.∷ xs-all) All.∷ xss-all) = px All.∷ All-concat (xs-all All.∷ xss-all)
+
+All-map :
+    {A : Set a}
+    {B : Set b}
+    (f : A → B)
+    (P : A → Set α)
+    (Q : B → Set β) →
+    (∀ x → P x → Q (f x)) →
+    {l : List A} →
+    (All P l) →
+    All Q (map f l)
+All-map f P Q P⇒Q∘f {[]} All.[] = All.[]
+All-map f P Q P⇒Q∘f {x ∷ l} (px All.∷ l-all) = P⇒Q∘f x px All.∷ All-map f P Q P⇒Q∘f l-all
+
+-----------------------
+--- liat and unsnoc ---
+-----------------------
+-- for tail and uncons, but reversed
+-- i've defined my own versions of these because the standard library just takes a list and returns a Maybe,
+-- and i think i can do better than that.
+
+unsnoc :
+    {A : Set a}
+    (x : A)
+    (l : List A) →
+    A
+unsnoc x [] = x
+unsnoc x (y ∷ l) = unsnoc y l
+
+liat : 
+    {A : Set a}
+    (x : A)
+    (l : List A) →
+    List A
+liat x [] = []
+liat x (y ∷ l) = x ∷ liat y l
+
+liat∷ʳunsnoc : 
+    {A : Set a}
+    (x : A)
+    (l : List A) →
+    liat x l ∷ʳ unsnoc x l ≡ x ∷ l
+liat∷ʳunsnoc x [] = ≡-refl
+liat∷ʳunsnoc x (y ∷ l) = 
+    liat x (y ∷ l) ∷ʳ unsnoc x (y ∷ l)  ≡⟨⟩
+    x ∷ liat y l ∷ʳ unsnoc y l          ≡⟨ cong (x ∷_) (liat∷ʳunsnoc y l) ⟩
+    x ∷ y ∷ l                           ∎
+    where open ≡-Reasoning
+
+length-liat : 
+    {A : Set a}
+    (x : A)
+    (l : List A) →
+    length (liat x l) ≡ length l
+length-liat x [] = ≡-refl
+length-liat x (y ∷ l) = cong sucℕ (length-liat y l)
+
+All-liat :
+    {A : Set a}
+    {P : A → Set ℓ}
+    {x : A}
+    {l : List A} →
+    All P (x ∷ l) →
+    All P (liat x l)
+All-liat {x = x} {[]} (px All.∷ All.[]) = All.[]
+All-liat {x = x} {y ∷ l} (px All.∷ All-yl) = px All.∷ All-liat All-yl
+
+All-get-unsnoc :
+    {A : Set a}
+    {P : A → Set ℓ}
+    {x : A}
+    {l : List A} →
+    All P (x ∷ l) →
+    P (unsnoc x l)
+All-get-unsnoc {x = x} {[]} (px All.∷ All.[]) = px
+All-get-unsnoc {x = x} {y ∷ l} (px All.∷ All-yl) = All-get-unsnoc All-yl
+
 
 module ListSetoid (A-setoid : Setoid c ℓ) where
     open Setoid A-setoid using (_≈_; refl; sym; trans) renaming (

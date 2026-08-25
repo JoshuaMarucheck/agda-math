@@ -10,7 +10,7 @@ open import Data.Unit using (⊤; tt)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; zero; suc; pred; _≟_; _≤_; _<_; _>_; z≤n; s≤s; s≤s⁻¹; _∸_; _+_; NonZero; >-nonZero)
-open import Data.Nat.Properties using (module ≤-Reasoning; <-cmp; suc-pred; ≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-trans; ≰⇒≥; <⇒≱; ≮⇒≥; <⇒≤; ≰⇒>; ≤-antisym; <-irrefl; +-mono-≤; +-mono-<; +-mono-≤-<; ∸-mono; +-suc; +-comm; +-assoc; n>0⇒n≢0; n∸n≡0; ≤∧≢⇒<; m≤n+m; m∸n≤m; m≤m+n; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m<n⇒0<n∸m; m+n∸n≡m; m+[n∸m]≡n; +-∸-assoc; ∸-monoʳ-<; m∸[m∸n]≡n; m∸n+n≡m)
+open import Data.Nat.Properties using (module ≤-Reasoning; ≤-isDecTotalOrder; <-cmp; suc-pred; ≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-trans; ≰⇒≥; <⇒≱; ≮⇒≥; <⇒≤; ≰⇒>; ≤-antisym; <-irrefl; +-mono-≤; +-mono-<; +-mono-≤-<; ∸-mono; +-suc; +-comm; +-assoc; n>0⇒n≢0; n∸n≡0; ≤∧≢⇒<; m≤n+m; m∸n≤m; m≤m+n; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m<n⇒0<n∸m; m+n∸n≡m; m+[n∸m]≡n; +-∸-assoc; ∸-monoʳ-<; m∸[m∸n]≡n; m∸n+n≡m)
 open import Data.List using (List; foldl; _∷_; []; _∷ʳ_; length; lookup; drop; _++_; reverse; tabulate; map; concat)
 open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; foldl-map; foldl-∷ʳ; foldl-cong; map-++; concat-map; map-∘; reverse-map; map-cong; reverse-involutive)
 open import Data.List.Relation.Unary.All using (All)
@@ -23,7 +23,7 @@ open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
 open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
-open import Plasmaduck.Data.List using (drop-lookup; foldl-pop; foldl-concat; foldl-reverse'; foldl-reverse; foldl-map-cong)
+open import Plasmaduck.Data.List using (drop-lookup; foldl-pop; foldl-concat; foldl-reverse'; foldl-reverse; foldl-map-cong; All-++; All-concat; All-map)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-proof-irrelevance; cong₂-dependent)
 open import Plasmaduck.Relation.Equivalence using (irrelevant-cong; irrelevant-cong₂)
@@ -32,9 +32,9 @@ open import Plasmaduck.Function.Properties using (Congruent₂; Identity; Associ
 
 open import Plasmaduck.Counting.Permutation.Swap using (swp; swp-involution; swp-is-bijective)
 open import Plasmaduck.Counting.Permutation.SwapPermutation as SwapPermutation using (module Monotonicity)
-open import Plasmaduck.Counting.Permutation.Defs using (IsNFunc)
-open import Plasmaduck.Counting.Permutation.SwapList using (SwapList; IsSwapDecomposition; swap-with-list)
-open import Plasmaduck.Counting.Permutation.FlipList using (FlipList; flip-swap-list; flip-swap-using-list; flip-swap-as-list; flip; decompose-swap; flip-swap-list-is-swap-decomposition)
+open import Plasmaduck.Counting.Permutation.Defs using (IsNFunc; IsNFuncPermutation)
+open import Plasmaduck.Counting.Permutation.SwapList using (SwapList; IsSwapDecomposition; IsLowPair<; swap-with-list)
+open import Plasmaduck.Counting.Permutation.FlipList using (FlipList; IsValidFlipList; flip-swap-list; flip-swap-list-is-valid; flip-swap-using-list; flip-swap-as-list; flip; decompose-swap; flip-swap-list-is-swap-decomposition)
 
 
 
@@ -43,20 +43,25 @@ module Plasmaduck.Counting.Permutation.FlipPermutation where
 variable
     a b c α β γ : Level
 
+open import Plasmaduck.Counting.Permutation.SwapSort ≤-isDecTotalOrder using (module SwapDecomposition)
+open SwapDecomposition using (partial-decomposition; partial-decomposition-valid)
+
 
 decompose-permutation : ℕ → (ℕ → ℕ) → FlipList
-decompose-permutation zero f = []
-decompose-permutation n@(suc n') f = concat (map (uncurry flip-swap-list) (SwapPermutation.decompose-inverse n f))
+decompose-permutation n f = concat (map (uncurry flip-swap-list) (SwapPermutation.decompose-inverse n f))
+
+decompose-permutation-valid : (n : ℕ) → (f : ℕ → ℕ) → IsValidFlipList n (decompose-permutation n f)
+decompose-permutation-valid zero f = All.[]
+decompose-permutation-valid n@(suc n') f = All-concat {l = map (uncurry flip-swap-list) (SwapPermutation.decompose-inverse n f)} (All-map (uncurry flip-swap-list) (IsLowPair< n) (All (λ q → suc q < n)) (λ (x , y) (x<n , y<n) → flip-swap-list-is-valid n x y x<n y<n) {l = partial-decomposition f n' []} (partial-decomposition-valid f n' n<sn [] All.[]))
 
 is-permutation-decomposition :
     (n : ℕ) →
     (f : ℕ → ℕ) →
-    IsNFunc n f →
-    Injective _≡_ _≡_ f →
+    IsNFuncPermutation n f →
     f ≗ flip-swap-using-list (decompose-permutation n f)
-is-permutation-decomposition zero f f-nfunc f-inj k = f-nfunc .proj₂ {k} z≤n
-is-permutation-decomposition n@(suc n') f f-nfunc f-inj k =
-    f k                                                                 ≡⟨ sym (SwapPermutation.is-permutation-decomposition {n} f f-nfunc f-inj k) ⟩
+is-permutation-decomposition zero f f-perm k = f-perm .proj₁ .proj₂ {k} z≤n
+is-permutation-decomposition n@(suc n') f f-perm k =
+    f k                                                                 ≡⟨ sym (SwapPermutation.is-permutation-decomposition {n} f f-perm k) ⟩
     swap-with-list decompose-f k                                        ≡⟨⟩
     foldl (λ acc (i , j) → swp i j ∘ acc) id decompose-f k              ≡⟨ cong-app ((foldl-cong {f = λ acc (i , j) → swp i j ∘ acc} {∣ Function.flip _∘'_ ⟩- uncurry swp} (λ x y → refl) id) decompose-f) k ⟩
     foldl (∣ Function.flip _∘'_ ⟩- uncurry swp) id decompose-f k        ≡⟨ sym (cong-app (foldl-map (Function.flip _∘'_) (uncurry swp) id decompose-f) k) ⟩

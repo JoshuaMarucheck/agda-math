@@ -1,5 +1,5 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; cong; cong-app; refl; sym; trans; inspect; [_]; ≢-sym)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; _≗_; cong; cong-app; refl; sym; trans; inspect; [_]; ≢-sym)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence; IsDecTotalOrder; tri<; tri≈; tri>)
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -12,7 +12,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; zero; suc; pred; _≟_; _≤_; _<_; _>_; z≤n; s≤s; s≤s⁻¹; _∸_; _+_; NonZero; >-nonZero)
 open import Data.Nat.Properties using (module ≤-Reasoning; <-cmp; suc-pred; ≤-reflexive; ≤-refl; ≤-trans; ≤-<-trans; <-≤-trans; <-trans; ≰⇒≥; <⇒≱; ≮⇒≥; <⇒≤; ≰⇒>; ≤-antisym; <-irrefl; +-mono-≤; +-mono-<; +-mono-≤-<; ∸-mono; +-suc; +-comm; +-assoc; n>0⇒n≢0; n∸n≡0; ≤∧≢⇒<; m≤n+m; m∸n≤m; m≤m+n; m+n≤o⇒m≤o; m+n≤o⇒n≤o; m<n⇒0<n∸m; m+n∸n≡m; m+[n∸m]≡n; +-∸-assoc; ∸-monoʳ-<; m∸[m∸n]≡n; m∸n+n≡m)
 open import Data.List using (List; foldl; _∷_; []; _∷ʳ_; length; lookup; drop; _++_; reverse; tabulate; map)
-open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; foldl-map; foldl-∷ʳ; foldl-cong; map-++)
+open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; foldl-map; foldl-∷ʳ; foldl-cong; map-++; foldl-++)
 open import Data.List.Relation.Unary.All using (All)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid; from-discrete-cong; SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _which-is-cong_; _←_; property-subset-setoid; discrete-function-setoid)
@@ -23,7 +23,7 @@ open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
 open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
-open import Plasmaduck.Data.List using (drop-lookup; foldl-pop)
+open import Plasmaduck.Data.List using (drop-lookup; foldl-pop; All-++)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
 open import Plasmaduck.Data.Squash using (irrelevant-inspect)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance; change-type-output-dependence-commute; change-type-proof-irrelevance; cong₂-dependent)
@@ -175,8 +175,9 @@ decompose-swap-valid {n} {i} {j} i<n j<n = IsNFunc-transferrable n (swp i j) (de
 FlipList : Set
 FlipList = List ℕ
 
+-- In particular, if you have IsValidFlipList n l, then l is a list that can be used to flip nats < n.
 IsValidFlipList : ℕ → FlipList → Set
-IsValidFlipList n l = All (_< n) l
+IsValidFlipList n l = All (λ q → suc q < n) l
 
 -- Using flips, swap index i with index i + j
 flip-swap-list-helper : (i j : ℕ) → FlipList
@@ -190,6 +191,18 @@ flip-swap-list-acc = ∣ (λ g f → g ∘ f) ⟩- flip
 
 flip-swap-using-list : FlipList → ℕ → ℕ
 flip-swap-using-list l = foldl flip-swap-list-acc id l
+
+flip-swap-using-list-pop-last :
+    (l : FlipList) → (x : ℕ) →
+    flip-swap-using-list (l ∷ʳ x) ≗
+    flip-swap-using-list l ∘ flip x
+flip-swap-using-list-pop-last l x k =
+    flip-swap-using-list (l ∷ʳ x) k                                         ≡⟨⟩
+    foldl flip-swap-list-acc id (l ∷ʳ x) k                                  ≡⟨⟩
+    foldl flip-swap-list-acc id (l ++ x ∷ []) k                             ≡⟨ cong-app (foldl-++ flip-swap-list-acc id l (x ∷ [])) k ⟩
+    foldl flip-swap-list-acc (foldl flip-swap-list-acc id l) (x ∷ []) k     ≡⟨⟩
+    (foldl flip-swap-list-acc id l ∘ flip x) k                              ∎
+    where open ≡-Reasoning
 
 flip-swap-as-list :
     (i j : ℕ) →
@@ -221,10 +234,10 @@ flip-swap-as-list i j@(suc j'@(suc j'')) k =
             foldl (λ g f → g ∘ f) id (map flip l) ≡
             flip-swap-using-list l
         lemma l =
-            foldl (λ g f → g ∘ f) id (map flip l)      ≡⟨ foldl-map (λ g f → g ∘ f) flip id l ⟩
-            (foldl (∣ (λ g f → g ∘ f) ⟩- flip) id l)   ≡⟨⟩
-            (foldl flip-swap-list-acc id l)                             ≡⟨⟩
-            (flip-swap-using-list l)                                    ∎
+            foldl (λ g f → g ∘ f) id (map flip l)       ≡⟨ foldl-map (λ g f → g ∘ f) flip id l ⟩
+            (foldl (∣ (λ g f → g ∘ f) ⟩- flip) id l)    ≡⟨⟩
+            (foldl flip-swap-list-acc id l)             ≡⟨⟩
+            (flip-swap-using-list l)                    ∎
 
 flip-swap-list-helper-is-swap-decomposition : (i j : ℕ) → .(i≤j : i ≤ j) → IsDecompositionOfSwap i j (flip-swap-using-list (flip-swap-list-helper i (j ∸ i)))
 flip-swap-list-helper-is-swap-decomposition i j i≤j k =
@@ -250,5 +263,17 @@ flip-swap-list-is-swap-decomposition i j k with ≤-cmp i j
     where
         open ≡-Reasoning
 
-flip-swap-list-is-valid : {n i j : ℕ} → (i < n) → (j < n) → IsNFunc n (flip-swap-using-list (flip-swap-list i j))
-flip-swap-list-is-valid {n} {i} {j} i<n j<n = IsNFunc-transferrable n (swp i j) (flip-swap-using-list (flip-swap-list i j)) (λ k → sym (flip-swap-list-is-swap-decomposition i j k)) (swp-nfunc i<n j<n)
+flip-swap-list-helper-is-valid : (n i j : ℕ) → (j + i < n) →
+    IsValidFlipList n (flip-swap-list-helper i j)
+flip-swap-list-helper-is-valid n i zero j+i<n = All.[]
+flip-swap-list-helper-is-valid n i (suc zero) j+i<n = j+i<n All.∷ All.[]
+flip-swap-list-helper-is-valid n i (suc (suc j)) j+i<n = All-++ {l = suc (j + i) ∷ flip-swap-list-helper i (suc j)} {suc (j + i) ∷ []} (j+i<n All.∷ flip-swap-list-helper-is-valid n i (suc j) (≤-trans n≤sn j+i<n)) (j+i<n All.∷ All.[])
+
+flip-swap-list-is-valid : (n i j : ℕ) → (i < n) → (j < n) →
+    IsValidFlipList n (flip-swap-list i j)
+flip-swap-list-is-valid n i j i<n j<n with ≤-cmp i j
+... | inj₁ i≤j = flip-swap-list-helper-is-valid n i (j ∸ i) (≤-<-trans (≤-reflexive (m∸n+n≡m {j} {i} i≤j)) j<n)
+... | inj₂ i>j = flip-swap-list-helper-is-valid n j (i ∸ j) (≤-<-trans (≤-reflexive (m∸n+n≡m {i} {j} (<⇒≤ i>j))) i<n)
+
+flip-swap-using-list-is-valid : {n i j : ℕ} → (i < n) → (j < n) → IsNFunc n (flip-swap-using-list (flip-swap-list i j))
+flip-swap-using-list-is-valid {n} {i} {j} i<n j<n = IsNFunc-transferrable n (swp i j) (flip-swap-using-list (flip-swap-list i j)) (λ k → sym (flip-swap-list-is-swap-decomposition i j k)) (swp-nfunc i<n j<n)

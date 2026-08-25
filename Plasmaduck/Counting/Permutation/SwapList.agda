@@ -59,7 +59,7 @@ _IsValidSwapList-++_ :
     IsValidSwapList n l →
     IsValidSwapList n l' →
     IsValidSwapList n (l ++ l')
-_IsValidSwapList-++_ {n = n} = All-++ (IsLowPair< n)
+_IsValidSwapList-++_ {n = n} = All-++
 
 IsValidSwapList-reverseAcc :
     {n : ℕ} → {l l' : SwapList} →

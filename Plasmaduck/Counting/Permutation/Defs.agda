@@ -60,8 +60,8 @@ IsNFunc n f = IsNFuncLower n f × IsNFuncUpper n f
 NFunc : ℕ → Set
 NFunc n = Σ (ℕ → ℕ) (Squash ∘ IsNFunc n)
 
-IsStrongNFuncPermutation : ℕ → (ℕ → ℕ) → Set
-IsStrongNFuncPermutation n f = IsNFunc n f × Bijective _≡_ _≡_ f
+IsNFuncPermutation : ℕ → (ℕ → ℕ) → Set
+IsNFuncPermutation n f = IsNFunc n f × Bijective _≡_ _≡_ f
 
 IsWeakNFuncPermutation : ℕ → (ℕ → ℕ) → Set
 IsWeakNFuncPermutation n f = IsNFuncUpper n f × Injective _≡_ _≡_ f
@@ -77,7 +77,7 @@ IsWeakNFuncPermutation n f = IsNFuncUpper n f × Injective _≡_ _≡_ f
 WeakNFunc⇒StrongNFunc :
     (n : ℕ) → (f : ℕ → ℕ) →
     IsWeakNFuncPermutation n f →
-    IsStrongNFuncPermutation n f
+    IsNFuncPermutation n f
 WeakNFunc⇒StrongNFunc n f (f-nfunc-upper , f-inj) = (f-nfunc-lower , f-nfunc-upper) , (f-inj , f-surj)
     where
         f-nfunc-lower : IsNFuncLower n f

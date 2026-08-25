@@ -31,8 +31,8 @@ open import Plasmaduck.Function.Bijection using (_∘-bijective_; id-bijective; 
 open import Plasmaduck.Function using (_≈_; ≈-sym)
 
 open import Plasmaduck.Counting.Permutation.Swap using (swp; swp-no-match⇒id; low-swp-is-low; swp-match₁-lemma)
-open import Plasmaduck.Counting.Permutation.SwapList using (SwapList; IsSwapDecomposition; IsValidSwapList-reverse; swap-with-list; swap-pop-initial; swap-with-list-bijective; swap-with-list-reverse-is-right-inverse; swap-with-list-nfunc)
-open import Plasmaduck.Counting.Permutation.Defs using (IsNFunc; IsNFuncLower; IsWeakNFuncPermutation)
+open import Plasmaduck.Counting.Permutation.SwapList using (SwapList; IsValidSwapList; IsSwapDecomposition; IsValidSwapList-reverse; swap-with-list; swap-pop-initial; swap-with-list-bijective; swap-with-list-reverse-is-right-inverse; swap-with-list-nfunc)
+open import Plasmaduck.Counting.Permutation.Defs using (IsNFunc; IsNFuncLower; IsNFuncPermutation)
 
 
 
@@ -107,6 +107,17 @@ module _ where
     decompose-permutation : ℕ → (ℕ → ℕ) → SwapList
     decompose-permutation n f = reverse (decompose-inverse n f)
 
+    decompose-inverse-valid :
+        (n : ℕ) → (f : ℕ → ℕ) →
+        IsValidSwapList n (decompose-inverse n f)
+    decompose-inverse-valid zero f = All.[]
+    decompose-inverse-valid n@(suc n') f = partial-decomposition-valid f n' n<sn [] All.[]
+
+    decompose-permutation-valid :
+        (n : ℕ) → (f : ℕ → ℕ) →
+        IsValidSwapList n (decompose-permutation n f)
+    decompose-permutation-valid n f = IsValidSwapList-reverse (decompose-inverse-valid n f)
+
     -- This statement is stronger than the lemma in SwapSort,
     -- since we're working with a injective(?) function,
     -- rather than an arbitrary one.
@@ -128,19 +139,17 @@ module _ where
     decompose-inverse-is-right-inverse :
         {n : ℕ}
         (f : ℕ → ℕ) →
-        IsNFuncLower n f →
-        Injective _≡_ _≡_ f →
+        IsNFuncPermutation n f →
         ∀ k → .(k < n) → (f ∘ swap-with-list (decompose-inverse n f)) k ≡ k
-    decompose-inverse-is-right-inverse {n = n@(suc n')} f f-nfunc-lower f-inj k k<n = strictly-monotonic⇒is-id (f ∘ swap-with-list (decompose-inverse n f)) (f-nfunc-lower ∘ (swap-with-list-nfunc {n} (decompose-inverse n f) (partial-decomposition-valid f n' n<sn [] All.[])) .proj₁ , partial-decomposition-strictly-monotonic-theorem {n} f f-inj) k k<n
+    decompose-inverse-is-right-inverse {n = n@(suc n')} f ((f-nfunc-lower , _) , (f-inj , _)) k k<n = strictly-monotonic⇒is-id (f ∘ swap-with-list (decompose-inverse n f)) (f-nfunc-lower ∘ (swap-with-list-nfunc {n} (decompose-inverse n f) (partial-decomposition-valid f n' n<sn [] All.[])) .proj₁ , partial-decomposition-strictly-monotonic-theorem {n} f f-inj) k k<n
 
     is-permutation-decomposition :
         {n : ℕ}
         (f : ℕ → ℕ) →
-        IsNFunc n f →
-        Injective _≡_ _≡_ f →
+        IsNFuncPermutation n f →
         IsSwapDecomposition f (decompose-permutation n f)
-    is-permutation-decomposition {n = zero} f (f-nfunc-lower , f-nfunc-upper) f-inj k = sym (f-nfunc-upper {k} z≤n)
-    is-permutation-decomposition {n = n@(suc n')} f (f-nfunc-lower , f-nfunc-upper) f-inj k with ≤-cmp n k
+    is-permutation-decomposition {n = zero} f f-perm@((_ , f-nfunc-upper) , _) k = sym (f-nfunc-upper {k} z≤n)
+    is-permutation-decomposition {n = n@(suc n')} f f-perm@((_ , f-nfunc-upper) , _) k with ≤-cmp n k
     ... | inj₁ n≤k =
         swap-with-list (reverse l) k    ≡⟨ swap-with-list-nfunc {n} (reverse l) (IsValidSwapList-reverse {n} {l} (partial-decomposition-valid f n' n<sn [] All.[])) .proj₂ {k} n≤k ⟩
         k                               ≡⟨ sym (f-nfunc-upper {k} n≤k) ⟩
@@ -149,7 +158,7 @@ module _ where
             open ≡-Reasoning
             l = partial-decomposition f n' []
     ... | inj₂ n>k =
-        swap-with-list (reverse l) k                            ≡⟨ sym (decompose-inverse-is-right-inverse {n} f f-nfunc-lower f-inj (swap-with-list (reverse l) k) (swap-with-list-nfunc {n} (reverse l) (IsValidSwapList-reverse {n} {l} (partial-decomposition-valid f n' n<sn [] All.[])) .proj₁ {k} n>k)) ⟩
+        swap-with-list (reverse l) k                            ≡⟨ sym (decompose-inverse-is-right-inverse {n} f f-perm (swap-with-list (reverse l) k) (swap-with-list-nfunc {n} (reverse l) (IsValidSwapList-reverse {n} {l} (partial-decomposition-valid f n' n<sn [] All.[])) .proj₁ {k} n>k)) ⟩
         (f ∘ swap-with-list l ∘ swap-with-list (reverse l)) k   ≡⟨ cong f (swap-with-list-reverse-is-right-inverse l k) ⟩
         f k                                                     ∎
         where
