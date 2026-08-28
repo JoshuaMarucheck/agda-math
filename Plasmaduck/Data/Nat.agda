@@ -5,8 +5,10 @@ open import Relation.Binary using (tri<; tri≈; tri>; Recomputable; Setoid)
 open import Relation.Nullary.Decidable using (Dec; yes; no; recompute)
 open import Relation.Nullary.Negation using (¬_)
 import Relation.Nullary as Nullary
-open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_; _>_; _∸_; <-cmp; _<?_; _≤?_; s≤s; z≤n; s≤s⁻¹; zero; suc; pred)
-open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-<-trans; ≤-trans; <-trans; ≤-reflexive; <⇒≤; +-mono-≤; +-comm; +-suc; _≟_; m∸n+n≡m)
+open import Data.Nat using (ℕ; _+_; _*_; _≤_; _≥_; _<_; _>_; _∸_; <-cmp; _<?_; _≤?_; s≤s; z≤n; s≤s⁻¹; zero; suc; pred; NonZero)
+open import Data.Nat.Properties using (<-irrefl; <-≤-trans; ≤-<-trans; ≤-trans; <-trans; ≤-reflexive; <⇒≤; +-mono-≤; +-comm; +-suc; _≟_; m∸n+n≡m; m+n∸n≡m)
+open import Data.Nat.DivMod using (_/_; _%_; m/n≡1+[m∸n]/n; m<n⇒m/n≡0; +-distrib-/-∣ˡ; m*n/n≡m)
+open import Data.Nat.Divisibility using (divides)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁; proj₂; uncurry)
 open import Data.Empty using (⊥; ⊥-elim)
@@ -155,6 +157,22 @@ m≡spm {m = m} m≢0 | m' , m≡sm' =
     suc m'              ≡⟨⟩
     suc (suc m' ∸ 1)    ≡⟨ cong (λ x → suc (x ∸ 1)) (≡-sym m≡sm') ⟩
     suc (m ∸ 1)         ∎
+    where open ≡-Reasoning
+
+[m+n]/n=1+m/n : {{_ : NonZero n}} → (m + n) / n ≡ 1 + m / n
+[m+n]/n=1+m/n {n = n} {m = m} =
+    (m + n) / n             ≡⟨ m/n≡1+[m∸n]/n {m + n} {n} (+-mono-≤ {0} {m} {n} {n} z≤n n≤n) ⟩
+    1 + (m + n ∸ n) / n     ≡⟨ cong (λ q → 1 + q / n) (m+n∸n≡m m n) ⟩
+    1 + m / n               ∎
+    where open ≡-Reasoning
+
+[m*n+i]/n=i : {m n i : ℕ} → {{_ : NonZero n}} → i < n → (m * n + i) / n ≡ m
+[m*n+i]/n=i {m} {n@(suc n')} {i} i<n =
+    (m * n + i) / n     ≡⟨ +-distrib-/-∣ˡ {m * n} i {n} (divides m ≡-refl) ⟩
+    m * n / n + i / n   ≡⟨ cong (_+ i / n) (m*n/n≡m m n) ⟩
+    m + i / n           ≡⟨ cong (m +_) ((m<n⇒m/n≡0 {i} {n} i<n)) ⟩
+    m + zero            ≡⟨ +-comm m zero ⟩
+    m                   ∎
     where open ≡-Reasoning
 
 module _

@@ -135,8 +135,8 @@ IsNFuncUpper-∘ {n} {g} {f} g-is-nfunc-upper f-is-nfunc-upper {i} i≥n = trans
         fi≥n : f i ≥ n
         fi≥n = ≤-trans i≥n (≤-reflexive (sym fi=i))
 
-IsNFunc-∘ : {n : ℕ} {g f : ℕ → ℕ} → IsNFunc n g → IsNFunc n f → IsNFunc n (g ∘ f)
-IsNFunc-∘ g-nfunc f-nfunc = IsNFuncLower-∘ (g-nfunc .proj₁) (f-nfunc .proj₁) , IsNFuncUpper-∘ (g-nfunc .proj₂) (f-nfunc .proj₂)
+_IsNFunc-∘_ : {n : ℕ} {g f : ℕ → ℕ} → IsNFunc n g → IsNFunc n f → IsNFunc n (g ∘ f)
+_IsNFunc-∘_ g-nfunc f-nfunc = IsNFuncLower-∘ (g-nfunc .proj₁) (f-nfunc .proj₁) , IsNFuncUpper-∘ (g-nfunc .proj₂) (f-nfunc .proj₂)
 
 IsNFuncLower-recompute : (n : ℕ) → (f : ℕ → ℕ) → Recomputable (IsNFuncLower n f)
 IsNFuncLower-recompute n f fi<n-irr i<n = ≤-recompute (fi<n-irr i<n)

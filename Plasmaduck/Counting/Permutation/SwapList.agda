@@ -32,7 +32,7 @@ open import Plasmaduck.Function.Bijection using (_∘-bijective_; id-bijective; 
 open import Plasmaduck.Function using (_≈_; ≈-sym)
 
 open import Plasmaduck.Counting.Permutation.Swap using (swp; swp-involution; swp-nfunc; swp-is-bijective)
-open import Plasmaduck.Counting.Permutation.Defs using (NFunc; IsNFunc; IsNFunc-∘; id-nfunc)
+open import Plasmaduck.Counting.Permutation.Defs using (NFunc; IsNFunc; _IsNFunc-∘_; id-nfunc)
 
 
 module Plasmaduck.Counting.Permutation.SwapList where
@@ -132,7 +132,7 @@ swap-with-things-nfunc :
     (l : SwapList) → IsValidSwapList n l →
     IsNFunc n (swap-with-things f l)
 swap-with-things-nfunc f f-nfunc [] l-valid = f-nfunc
-swap-with-things-nfunc {n = n} f f-nfunc ((x , y) ∷ l) ((x<n , y<n) All.∷ l-valid) = swap-with-things-nfunc {n} (swp x y ∘ f) (IsNFunc-∘ (swp-nfunc x<n y<n) f-nfunc) l l-valid
+swap-with-things-nfunc {n = n} f f-nfunc ((x , y) ∷ l) ((x<n , y<n) All.∷ l-valid) = swap-with-things-nfunc {n} (swp x y ∘ f) ((swp-nfunc x<n y<n) IsNFunc-∘ f-nfunc) l l-valid
 
 swap-with-list-nfunc :
     (l : SwapList) → IsValidSwapList n l →

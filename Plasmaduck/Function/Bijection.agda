@@ -88,6 +88,9 @@ module InverseFunction {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} (bij : 
         i           ∎
         where open import Relation.Binary.Reasoning.Setoid s₁
 
+    inv-bijective : Bijective _≈₂_ _≈₁_ inv
+    inv-bijective = inv-injective , inv-surjective
+
 
 
 invert-bijection : {s₁ : Setoid c ℓ₁} {s₂ : Setoid d ℓ₂} → Bijection s₁ s₂ → Bijection s₂ s₁

@@ -66,6 +66,18 @@ module _
     RightInverse : (g : B → A) → Set (b ⊔ ℓ₂)
     RightInverse g = ∀ {y : B} → f (g y) ≈ y
 
+    {-
+        Note that this is not enough to show that g is congruent.
+        Counterexample:
+
+        A = {0} {1}
+        B = {0 1}
+
+        f = id
+        g = id
+
+        then f and g are inverses, but g is not congruent (despite f's congruence)
+    -}
     BothInverse : (g : B → A) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
     BothInverse g = LeftInverse g × RightInverse g
 
@@ -136,6 +148,19 @@ module _
                 f (g y)   ∎)
                 where open import Relation.Binary.Reasoning.Setoid B-setoid
 
+module _
+    {a b ℓ₁ ℓ₂ : Level}
+    (A-setoid : Setoid a ℓ₁) (B-setoid : Setoid b ℓ₂)
+    where
+
+    private
+        A = A-setoid .Carrier
+        B = B-setoid .Carrier
+
+    has-both-inverse-invert : (func : SetoidFunction A-setoid B-setoid) →
+        (func-has-inv : HasBothInverse A-setoid B-setoid func) →
+        HasBothInverse B-setoid A-setoid (func-has-inv .proj₁)
+    has-both-inverse-invert func func-has-inv = func , func-has-inv .proj₂ .proj₂ , func-has-inv .proj₂ .proj₁
 
 module _
     {a b c ℓ₁ ℓ₂ ℓ₃ : Level}

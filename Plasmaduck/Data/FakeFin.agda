@@ -135,3 +135,4 @@ realize-bijection {n = n} = record {
     cong = from-discrete-cong (discrete-setoid (Fin n)) (realize {n});
     bijective = realize-bijective
     }
+
