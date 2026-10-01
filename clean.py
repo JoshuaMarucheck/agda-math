@@ -13,11 +13,13 @@ assert (
 )
 # Known bugs:
 # probably doesn't handle multiline imports well (which is especially bad if it deletes public
+#   currently, it'll delete just the first line of a multiline import if nothing is listed on that first line
 # doesn't seek through all subdirectories somehow??? I added a star to the glob,
 #   but I don't think that's the right fix since now it just searches one directory lower,
 #   and it needs to search one down, meaning it won't find top-level files.
 # deletes modules if they're used for qualified imports (like import Function, and then Function.id appears somewhere (esp open import Function using (flip), and then Function.id is used somewhere))
-
+#   likewise, if a module is imported using keyword 'as', this is not noticed
+# **Not Idempotent!!** will delete more things if you run it again! (This is probably due to name overlaps between modules and things in said modules.)
 
 def min_existing(*idx: int) -> int:
     """Takes indices from find function (which return -1 if not found), and returns the minimum of those that are not -1.
