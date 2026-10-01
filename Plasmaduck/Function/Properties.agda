@@ -1,6 +1,7 @@
 open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary using (Setoid; Rel)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 
 
@@ -21,6 +22,15 @@ module GenericFunction
 
     EssentiallyIdentical : (g : A → B) → Set _
     EssentiallyIdentical g = ∀ {x₁ x₂ : A} → x₁ ≈A x₂ → (f x₁) ≈B (g x₂)
+
+    LeftInverse : (g : B → A) → Set (a ⊔ ℓ₁)
+    LeftInverse g = ∀ {x : A} → g (f x) ≈A x
+
+    RightInverse : (g : B → A) → Set (b ⊔ ℓ₂)
+    RightInverse g = ∀ {y : B} → f (g y) ≈B y
+
+    BothInverse : (g : B → A) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
+    BothInverse g = LeftInverse g × RightInverse g
 
 open GenericFunction public
 
@@ -57,6 +67,43 @@ module _ {a ℓ : Level} (A-setoid : Setoid a ℓ) where
 
         Commutative : Set (a ⊔ ℓ)
         Commutative = ∀ {x y} → x ∙ y ≈ y ∙ x
+
+        private
+            assoc-middle-left : Associative → LeftCongruent _≈_ _≈_ _≈_ _∙_ → ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ (w ∙ (x ∙ y)) ∙ z
+            assoc-middle-left assoc left-cong {w} {x} {y} {z} = begin
+                (w ∙ x) ∙ (y ∙ z)   ≈⟨ assoc ⟩
+                ((w ∙ x) ∙ y) ∙ z   ≈⟨ left-cong {y = z} (sym assoc) ⟩
+                (w ∙ (x ∙ y)) ∙ z   ∎
+                where
+                    open import Relation.Binary.Reasoning.Setoid A-setoid
+                    open Setoid A-setoid using (refl; sym; trans)
+
+            assoc-middle-right : Associative → RightCongruent _≈_ _≈_ _≈_ _∙_ → ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ (w ∙ (x ∙ y)) ∙ z
+            assoc-middle-right assoc right-cong {w} {x} {y} {z} = begin
+                (w ∙ x) ∙ (y ∙ z)   ≈⟨ sym assoc ⟩
+                w ∙ (x ∙ (y ∙ z))   ≈⟨ right-cong {w} assoc ⟩
+                w ∙ ((x ∙ y) ∙ z)   ≈⟨ assoc ⟩
+                (w ∙ (x ∙ y)) ∙ z   ∎
+                where
+                    open import Relation.Binary.Reasoning.Setoid A-setoid
+                    open Setoid A-setoid using (refl; sym; trans)
+
+        assoc-middle :
+            Associative →
+            LeftCongruent _≈_ _≈_ _≈_ _∙_ ⊎ RightCongruent _≈_ _≈_ _≈_ _∙_ →
+            ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ (w ∙ (x ∙ y)) ∙ z
+        assoc-middle assoc (inj₁ left-cong) = assoc-middle-left assoc left-cong
+        assoc-middle assoc (inj₂ right-cong) = assoc-middle-right assoc right-cong
+
+        exchange-middle : Associative → Commutative → Congruent₂ _≈_ _≈_ _≈_ _∙_ → ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ (w ∙ y) ∙ (x ∙ z)
+        exchange-middle assoc comm cong {w} {x} {y} {z} = begin
+            (w ∙ x) ∙ (y ∙ z) ≈⟨ assoc-middle assoc (inj₁ λ x₁≈x₂ → cong x₁≈x₂ refl) ⟩
+            (w ∙ (x ∙ y)) ∙ z ≈⟨ cong (cong refl comm) refl ⟩
+            (w ∙ (y ∙ x)) ∙ z ≈⟨ sym (assoc-middle assoc (inj₁ λ x₁≈x₂ → cong x₁≈x₂ refl)) ⟩
+            (w ∙ y) ∙ (x ∙ z) ∎
+            where
+                open import Relation.Binary.Reasoning.Setoid A-setoid
+                open Setoid A-setoid using (refl; sym; trans)
 
 
         LeftIdentity : A → Set (a ⊔ ℓ)

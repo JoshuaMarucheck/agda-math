@@ -1,6 +1,7 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Sum using (inj₂)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _which-is-cong_; _←_; property-subset-setoid)
 open import Plasmaduck.Function.Properties using (module SingleOperator)
@@ -30,7 +31,7 @@ record RawGroup (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 
     _∙_ : Carrier → Carrier → Carrier
     _∙_ = _←₂_ op
-    infixr 10 _∙_
+    infixl 10 _∙_
 
     ∙-cong = op .SetoidFunction₂.respects
     inv-cong = inverse .SetoidFunction.respects
@@ -40,7 +41,7 @@ record RawGroup (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 
 record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     open RawGroup rawGroup
-    open SingleOperator CarrierSetoid
+    open SingleOperator CarrierSetoid renaming (assoc-middle to assoc-middle')
 
     field
         id-is-left-id : LeftIdentity _∙_ id
@@ -50,17 +51,14 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     open import Relation.Binary.Reasoning.Setoid CarrierSetoid
     open IsEquivalence (CarrierSetoid .Setoid.isEquivalence)
 
-    assoc-middle : ∀ {w x y z} → (w ∙ x) ∙ (y ∙ z) ≈ w ∙ (x ∙ y) ∙ z
-    assoc-middle {w} {x} {y} {z} = begin
-        (w ∙ x) ∙ (y ∙ z)   ≈⟨ sym assoc ⟩
-        w ∙ (x ∙ (y ∙ z))   ≈⟨ ∙-cong refl assoc ⟩
-        w ∙ (x ∙ y) ∙ z     ∎
+    assoc-middle = assoc-middle' _∙_ assoc (inj₂ (∙-cong refl))
 
     inv-is-right-inv : ∀ {x : Carrier} → x ∙ inv x ≈ id
     inv-is-right-inv {x} = begin
         x ∙ inv x                           ≈⟨ sym id-is-left-id ⟩
         id ∙ (x ∙ inv x)                    ≈⟨ ∙-cong (sym inv-is-left-inv) refl ⟩
         (inv (inv x) ∙ inv x) ∙ (x ∙ inv x) ≈⟨ assoc-middle ⟩
+        (inv (inv x) ∙ (inv x ∙ x)) ∙ inv x ≈⟨ sym assoc ⟩
         inv (inv x) ∙ ((inv x ∙ x) ∙ inv x) ≈⟨ ∙-cong refl (∙-cong inv-is-left-inv refl) ⟩
         inv (inv x) ∙ (id ∙ inv x)          ≈⟨ ∙-cong refl id-is-left-id ⟩
         inv (inv x) ∙ inv x                 ≈⟨ inv-is-left-inv ⟩
@@ -87,8 +85,8 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     inv-flip-distributes {x} {y} = begin
         inv (x ∙ y)                                 ≈⟨ sym id-is-right-id ⟩
         inv (x ∙ y) ∙ id                            ≈⟨ ∙-cong refl (sym inv-is-right-inv) ⟩
-        inv (x ∙ y) ∙ (x ∙ inv x)                   ≈⟨ ∙-cong refl (∙-cong refl (sym id-is-left-id)) ⟩
-        inv (x ∙ y) ∙ (x ∙ id ∙ inv x)              ≈⟨ ∙-cong refl (∙-cong refl (∙-cong (sym inv-is-right-inv) refl)) ⟩
+        inv (x ∙ y) ∙ (x ∙ inv x)                   ≈⟨ ∙-cong refl (∙-cong (sym id-is-right-id) refl) ⟩
+        inv (x ∙ y) ∙ (x ∙ id ∙ inv x)              ≈⟨ ∙-cong refl (∙-cong (∙-cong refl (sym inv-is-right-inv)) refl) ⟩
         inv (x ∙ y) ∙ (x ∙ (y ∙ inv y) ∙ inv x)     ≈⟨ ∙-cong refl (sym assoc-middle) ⟩
         inv (x ∙ y) ∙ ((x ∙ y) ∙ (inv y ∙ inv x))   ≈⟨ assoc ⟩
         (inv (x ∙ y) ∙ (x ∙ y)) ∙ (inv y ∙ inv x)   ≈⟨ ∙-cong inv-is-left-inv refl ⟩
@@ -117,7 +115,7 @@ record Group (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 --------------------
 
 record GroupHomomorphism (A : RawGroup a ℓ₁) (B : RawGroup b ℓ₂) : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂) where
-    open RawGroup A using (_∙_) renaming ()
+    open RawGroup A using (_∙_)
     open RawGroup B using (_≈_) renaming (_∙_ to _*_)
     field
         func : SetoidFunction (A .RawGroup.CarrierSetoid) (B .RawGroup.CarrierSetoid)
