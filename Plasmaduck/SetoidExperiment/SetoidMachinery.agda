@@ -1,5 +1,5 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary.PropositionalEquality using (_≡_) renaming (subst to ≡-subst; cong to ≡-cong; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≗_) renaming (subst to ≡-subst; cong to ≡-cong; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -8,6 +8,7 @@ open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Function using (Congruent; _∘_; _on_; Bijection)
 
+open import Plasmaduck.Data.PropositionalEquality using (≗-eq)
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence; FunctionalProperty)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
 open import Plasmaduck.Function.Properties using (Congruent₂; Idempotent)
@@ -214,12 +215,8 @@ maybe-setoid setoid = record {
 discrete-function-setoid : (A : Set a) (B : Set b) → Setoid (a ⊔ b) (a ⊔ b)
 discrete-function-setoid A B = record {
     Carrier = A → B;
-    _≈_ = λ f g → ∀ x → f x ≡ g x;
-    isEquivalence = record {
-        refl = λ {x} x₁ → ≡-refl;
-        sym = λ f~g x → ≡-sym (f~g x);
-        trans = λ f~g g~h x → ≡-trans (f~g x) (g~h x)
-        }
+    _≈_ = _≗_;
+    isEquivalence = ≗-eq
     }
 
 IdempotentFunc : {A-setoid : Setoid a ℓ₁} → (f-func : SetoidFunction A-setoid A-setoid) → Set (a ⊔ ℓ₁)

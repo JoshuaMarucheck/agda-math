@@ -1,13 +1,17 @@
 open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans)
+open import Function using (id; _∘_; flip)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import Relation.Binary using (Rel; IsEquivalence; Reflexive; Symmetric; Transitive)
+open import Relation.Binary using (Rel; IsEquivalence; Reflexive; Symmetric; Transitive; Sym; Trans)
+open import Relation.Nullary using (¬_; contraposition)
+open import Data.Unit using (⊤; tt)
+open import Data.Empty using (⊥; ⊥-elim)
 
 
 module Plasmaduck.Function where
 
 variable
-    α β γ : Level
+    α β γ ℓ : Level
     A : Set α
     B : Set β
     C : Set γ
@@ -56,13 +60,36 @@ module _ {α β : Level} {A : Set α} {B : A → Set β} where
 -- dependent-equality : (f g : A → B) → f ≈ g → (P : B → Set γ) → (∀ (x : A) → P (f x)) ≡ (∀ (x : A) → P (g x))
 -- dependent-equality f g f≈g P = {!   !}
 
+-- I want to talk about the function arrow
+_⇒_ : {α β : Level} (A : Set α) (B : Set β) → Set (α ⊔ β)
+A ⇒ B = A → B
+
+infixr 100 _⇒_
+
+
+⇒-refl : Reflexive (_⇒_ {α})
+⇒-refl = Function.id
+
+⇒-trans : A ⇒ B → B ⇒ C → A ⇒ C
+⇒-trans f g = g ∘ f
+
+
 _⇔_ : {α β : Level} (A : Set α) (B : Set β) → Set (α ⊔ β)
 A ⇔ B = (A → B) × (B → A)
+infix 0 _⇔_
+
+⇔-refl : Reflexive (_⇔_ {α = ℓ})
+⇔-refl = (λ z → z) , (λ z → z)
+
+⇔-sym : Sym (_⇔_ {α} {β}) _⇔_
+⇔-sym = λ z → z .proj₂ , z .proj₁
+
+⇔-trans : Trans (_⇔_ {α} {β}) (_⇔_ {β} {γ}) _⇔_
+⇔-trans = λ z z₁ → (λ z₂ → z₁ .proj₁ (z .proj₁ z₂)) , (λ z₂ → z .proj₂ (z₁ .proj₂ z₂))
 
 ⇔-isEquivalence : {ℓ : Level} → IsEquivalence (_⇔_ {α = ℓ} {β = ℓ})
 ⇔-isEquivalence = record {
-    refl = λ {x} → (λ z → z) , (λ z → z);
-    sym = λ {x} {y} z → z .proj₂ , z .proj₁;
-    trans = λ {i} {j} {k} z z₁ →
-        (λ z₂ → z₁ .proj₁ (z .proj₁ z₂)) , (λ z₂ → z .proj₂ (z₁ .proj₂ z₂))
+    refl = ⇔-refl;
+    sym = ⇔-sym;
+    trans = ⇔-trans
     }

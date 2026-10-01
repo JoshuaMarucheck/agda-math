@@ -13,6 +13,7 @@ open import Plasmaduck.SetoidExperiment.SetoidMachinery using (⊎-setoid; ⊎-r
 open import Plasmaduck.Relation.Defs using (CongruentProperty)
 open import Plasmaduck.Property.Defs using (DecidableProperty; _Extends_)
 open import Plasmaduck.Function using (FunctionalProperty)
+open import Plasmaduck.Function.Properties using (module GenericFunction)
 
 
 
@@ -60,14 +61,9 @@ module _
         ≈-trans = B-setoid .isEquivalence .IsEquivalence.trans
 
 
-    LeftInverse : (g : B → A) → Set (a ⊔ ℓ₁)
-    LeftInverse g = ∀ {x : A} → g (f x) ~ x
-
-    RightInverse : (g : B → A) → Set (b ⊔ ℓ₂)
-    RightInverse g = ∀ {y : B} → f (g y) ≈ y
-
+    open GenericFunction _~_ _≈_ f using (LeftInverse; RightInverse; BothInverse) public
     {-
-        Note that this is not enough to show that g is congruent.
+        Note that BothInverse is not enough to show that g is congruent.
         Counterexample:
 
         A = {0} {1}
@@ -78,8 +74,6 @@ module _
 
         then f and g are inverses, but g is not congruent (despite f's congruence)
     -}
-    BothInverse : (g : B → A) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-    BothInverse g = LeftInverse g × RightInverse g
 
     -- Technically this is too strong; g only needs to be congruent when its domain is restricted to the range of f.
     HasLeftInverse : Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
