@@ -19,6 +19,7 @@ open import Relation.Binary using (TotalOrder; DecTotalOrder; IsTotalOrder; IsSt
 module Plasmaduck.Relation.Equivalence where
 
 open import Plasmaduck.Util.TypeChange using (cong₂-dependent) public
+open import Plasmaduck.Data.PropositionalEquality using (≡-isEquivalence) public
 
 variable
     ℓ α β a b : Level
@@ -31,14 +32,6 @@ record Equivalence (A : Set α) (ℓ : Level) : Set (α ⊔ lsuc ℓ) where
     field
         _~_ : Rel A ℓ
         isEquivalence : IsEquivalence _~_
-
-
-≡-isEquivalence : IsEquivalence (_≡_ {A = A})
-≡-isEquivalence = record {
-    refl = λ {x} → refl;
-    sym = λ {x} {y} x≡y → sym x≡y;
-    trans = λ {x} {y} {z} x≡y y≡z → trans x≡y y≡z
-    }
 
 all-respectsˡ-≡ : (_#_ : Rel A α) → _#_ Respectsˡ _≡_
 all-respectsˡ-≡ _#_ {x} {y} {z} y≡z y#x with y≡z

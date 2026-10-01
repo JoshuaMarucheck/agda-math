@@ -123,6 +123,9 @@ from-discrete-cong {A} B f {x} {y} x≡y rewrite x≡y = B .Setoid.refl
 into-indiscrete-cong : (A : Setoid c ℓ) {B : Set b} (f : A .Carrier → B) → Congruent (A ._≈_) (indiscrete-setoid B ._≈_) f
 into-indiscrete-cong A {B} f {x} {y} _ = tt
 
+from-discrete-cong₂ : {A : Set a} {B : Set b} (C : Setoid c ℓ) (f : A → B → C .Carrier) → Congruent₂ _≡_ _≡_ (C ._≈_) f
+from-discrete-cong₂ {A = A} {B} C f {x₁} {x₂} {y₁} {y₂} x₁≡x₂ y₁≡y₂ rewrite x₁≡x₂ rewrite y₁≡y₂ = C .Setoid.refl
+
 property-subset-setoid : (A : Setoid a ℓ) → (P : A .Carrier → Set ℓ₂) → Setoid (a ⊔ ℓ₂) ℓ
 property-subset-setoid A P = record {
     Carrier = Σ (A .Carrier) P;
