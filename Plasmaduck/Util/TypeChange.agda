@@ -42,6 +42,23 @@ change-type-elim refl = refl
 change-type-swap : (pf : A ≡ B) {x : A} {y : B} → x ≡ change-type (sym pf) y → change-type pf x ≡ y
 change-type-swap refl refl = refl
 
+change-type-flat-cong :
+    {A : Set a} {i j : A} (i=j : i ≡ j) {B : Set b} {x : B} →
+    change-type (cong (λ _ → B) i=j) x ≡ x
+change-type-flat-cong refl = refl
+
+change-type-arrow-input :
+    {A₁ A₂ : Set a} (pf : A₁ ≡ A₂) (B : (i : A₁) → Set c) →
+    ((i : A₁) → B i) ≡ ((j : A₂) → B (change-type (sym pf) j))
+change-type-arrow-input refl B = refl
+
+-- Changes the working type of f and i so that they pass through A₂ instead of A₁.
+change-type-bridge :
+    {A₁ A₂ : Set a} (pf : A₁ ≡ A₂) (B : (i : A₁) → Set c) → (f : (i : A₁) → B i) →
+    (i : A₁) →
+    f i ≡ change-type (cong B (change-type-flatten pf (sym pf))) ((change-type (change-type-arrow-input pf B) f) (change-type pf i))
+change-type-bridge refl B f i = refl
+
 change-type-input-dependence-irrelevance :
     {A : Set a} (B : A → Set b) {C : Set c} → (f : {k : A} → B k → C) →
     {i j : A} → (i≡j : i ≡ j) →

@@ -74,6 +74,18 @@ foldl-carrying-lemma :
 foldl-carrying-lemma combine start zero P P-carries P[start] = P[start]
 foldl-carrying-lemma combine start i@(suc i') P P-carries P[start] = foldl-carrying-lemma combine (combine start i') i' P P-carries (P-carries start i' P[start])
 
+foldl-local-carrying-lemma :
+    {A : Set ℓ}
+    (combine : A → ℕ → A) →
+    (start : A)
+    (i : ℕ)
+    (P : A → Set ℓ₁) →
+    (∀ (x : A) (j : ℕ) → .(j < i) → P x → P (combine x j)) →
+    (P start) →
+    P (foldl combine start i)
+foldl-local-carrying-lemma combine start zero P P-carries P[start] = P[start]
+foldl-local-carrying-lemma combine start i@(suc i') P P-carries P[start] = foldl-local-carrying-lemma combine (combine start i') i' P (λ x j j<i' → P-carries x j (≤-trans j<i' n≤sn)) (P-carries start i' n<sn P[start])
+
 -- If a property at each index is imposed and preserved by combining, then it exists on all indices after folding.
 foldl-all-lemma :
     {A : Set ℓ}

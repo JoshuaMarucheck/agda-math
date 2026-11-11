@@ -29,6 +29,8 @@ module GenericFunction
     RightInverse : (g : B → A) → Set (b ⊔ ℓ₂)
     RightInverse g = ∀ {y : B} → f (g y) ≈B y
 
+    SidedInverse = RightInverse
+
     BothInverse : (g : B → A) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
     BothInverse g = LeftInverse g × RightInverse g
 

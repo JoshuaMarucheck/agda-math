@@ -3,20 +3,23 @@ open import Relation.Binary.PropositionalEquality using (_≡_; cong; cong₂; i
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
 open import Relation.Nullary using (Dec; yes; no)
 open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Empty using (⊥; ⊥-elim; ⊥-elim-irr)
 open import Data.Product using (Σ; _×_; proj₁; proj₂)
+open import Data.Bool using (false; true)
 open import Data.Nat as ℕ using (ℕ)
-open import Data.Nat.Properties as NatProperties using ()
+open import Data.Nat.Properties as NatProperties using (<-irrefl; ≤-<-trans; <ᵇ⇒<)
 open import Data.Nat.DivMod using (m≡m%n+[m/n]*n; m%n≡m∸m/n*n; m*n/n≡m; m/n*n≡m; m≥n⇒m/n>0; m%n<n; 0/n≡0) renaming (/-mono-≤ to /-ℕ-mono-≤)
 open import Data.Nat.Divisibility using (divides-refl; m%n≡0⇒n∣m) renaming (divides to dividesℕ)
 open import Data.Sign.Base as Sign using (Sign)
 import Data.Sign.Properties as SignProperties
-open import Data.Integer using (ℤ; 0ℤ; 1ℤ; -1ℤ; +_; -_; +0; -[1+_]; +[1+_]; _+_; _-_; _*_; _/_; _/ℕ_; _%ℕ_; Positive; NonNegative; Negative; NonZero; ≢-nonZero; ∣_∣; sign; _◃_; _≟_)
-open import Data.Integer.Properties using (i≡j⇒i-j≡0; ◃-inverse; +-assoc; +-comm; +-identity; +-inverse; *-assoc; *-comm; *-identity; *-distrib-+; abs-*; abs-◃; -1*i≡-i; +◃n≡+n; -◃n≡-n; ◃-distrib-*)
+open import Data.Integer using (ℤ; 0ℤ; 1ℤ; -1ℤ; +_; -_; _⊖_; +0; -[1+_]; +[1+_]; _+_; _-_; _*_; _/_; _/ℕ_; _%ℕ_; Positive; NonNegative; Negative; NonZero; ≢-nonZero; ∣_∣; sign; _◃_; _≟_)
+open import Data.Integer.Properties using (i≡j⇒i-j≡0; ◃-inverse; +-assoc; +-comm; +-identity; +-inverse; *-assoc; *-comm; *-identity; *-zero; *-distrib-+; abs-*; abs-◃; -1*i≡-i; +◃n≡+n; -◃n≡-n; ◃-distrib-*)
 open import Data.Integer.DivMod using (a≡a%ℕn+[a/ℕn]*n; a≡a%n+[a/n]*n; div-pos-is-/ℕ; div-neg-is-neg-/ℕ)
 open import Data.Integer.Divisibility using () renaming (_∣_ to _∣'_)
 
 open import Plasmaduck.Data.Nat using (m∣n⇒m≤n)
+open import Plasmaduck.Data.Bool using (form-T-true)
+
 
 
 module Plasmaduck.Data.Integer where
@@ -98,6 +101,28 @@ abs-neg (-[1+ n ]) = ≡-refl
     Sign.+ ◃ n                  ∎
     where open ≡-Reasoning
 
+◃-onto-fst : ∀ s m n → s ◃ (m ℕ.* n) ≡ (s ◃ m) * + n
+◃-onto-fst Sign.- ℕ.zero n = ≡-sym (*-zero .proj₁ (+ n))
+◃-onto-fst Sign.- (ℕ.suc m) n = ≡-refl
+◃-onto-fst Sign.+ m n =
+    Sign.+ ◃ m ℕ.* n                                        ≡⟨⟩
+    Sign.+ ◃ ∣ + m ∣ ℕ.* n                                  ≡⟨ cong (λ q → Sign.+ ◃ ∣ q ∣ ℕ.* n) (≡-sym (+◃n≡+n m)) ⟩
+    Sign.+ ◃ ∣ Sign.+ ◃ m ∣ ℕ.* n                           ≡⟨ cong (_◃ ∣ Sign.+ ◃ m ∣ ℕ.* n) (
+        Sign.+                          ≡⟨⟩
+        sign (+ m) Sign.* Sign.+        ≡⟨ cong (λ q → sign q Sign.* Sign.+) (≡-sym (+◃n≡+n m)) ⟩
+        sign (Sign.+ ◃ m) Sign.* Sign.+ ∎) ⟩
+    sign (Sign.+ ◃ m) Sign.* Sign.+ ◃ ∣ Sign.+ ◃ m ∣ ℕ.* n  ≡⟨⟩
+    (Sign.+ ◃ m) * + n                                      ∎
+    where open ≡-Reasoning
+
+◃-onto-snd : ∀ s m n → s ◃ (m ℕ.* n) ≡ + m * (s ◃ n)
+◃-onto-snd s m n =
+    s ◃ m ℕ.* n     ≡⟨ cong (s ◃_) (NatProperties.*-comm m n) ⟩
+    s ◃ n ℕ.* m     ≡⟨ ◃-onto-fst s n m ⟩
+    (s ◃ n) * + m   ≡⟨ *-comm (s ◃ n) (+ m) ⟩
+    + m * (s ◃ n)   ∎
+    where open ≡-Reasoning
+
 div-sign-is-signed-/ℕ₁ : ∀ n d .{{_ : NonZero d}} →
     n / d ≡ (inject-sign (sign d)) * (n /ℕ ∣ d ∣)
 div-sign-is-signed-/ℕ₁ n (+ d) =
@@ -169,3 +194,8 @@ foil i j k l =
     (i * k + i * l) + (j * k + j * l)   ≡⟨ ≡-sym (+-assoc (i * k + i * l) (j * k) (j * l)) ⟩
     i * k + i * l + j * k + j * l       ∎
     where open ≡-Reasoning
+
+⊖-force-pos : ∀ m n → .(m ℕ.≥ n) → ∣ m ⊖ n ∣ ≡ m ℕ.∸ n
+⊖-force-pos m n m≥n with m ℕ.<ᵇ n | inspect (m ℕ.<ᵇ_) n
+... | false | [ eq ] = ≡-refl
+... | true | [ eq ] = ⊥-elim-irr (<-irrefl ≡-refl (≤-<-trans m≥n (<ᵇ⇒< m n (form-T-true eq))))

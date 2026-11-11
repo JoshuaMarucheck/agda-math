@@ -48,6 +48,9 @@ infix 4 _∣_
 ∣-min : ∀ i → 1ℤ ∣ i
 ∣-min i = divides i (≡-sym (*-identity .proj₂ i))
 
+0∣i⇒i=0 : ∀ {i} → 0ℤ ∣ i → i ≡ 0ℤ
+0∣i⇒i=0 {i} (divides k i=k*0) = ≡-trans i=k*0 (*-zero .proj₂ k)
+
 ∣⇒∣' : ∀ {i j} → i ∣ j → i ∣' j
 ∣⇒∣' {i} {j} (divides q j=q*i) = dividesℕ ∣ q ∣ (
     ∣ j ∣               ≡⟨ cong ∣_∣ j=q*i ⟩
@@ -127,12 +130,12 @@ i%ℕm=0⇒∣i∣%m=0 (-[1+ i' ]) m i%ℕm=0 with ℕ.suc i' ℕ.% m | inspect 
 ∣i∣%m=0⇒m∣i i m ∣i∣%m=0 = ∣'⇒∣ (∣i∣%m=0⇒m∣'i i m ∣i∣%m=0)
 
 m∣i⇒i%ℕm=0 : ∀ {i m} .{{_ : ℕ.NonZero m}} → (+ m) ∣ i → i %ℕ m ≡ 0
-m∣i⇒i%ℕm=0 {+ i} {m} m∣i = m∣n⇒n%m≡0 i m (∣⇒∣' m∣i)
+m∣i⇒i%ℕm=0 {+ i} {m} m∣i = m∣n⇒n%m≡0 {i} {m} (∣⇒∣' m∣i)
 m∣i⇒i%ℕm=0 {(-[1+ i' ])} {m} m∣i with ℕ.suc i' ℕ.% m | inspect (ℕ._% m) (ℕ.suc i')
 ... | ℕ.zero | _ = ≡-refl
 ... | r@(ℕ.suc r') | [ i%m=r ] = ⊥-elim (sn≠0 r' (
     r                   ≡⟨ ≡-sym i%m=r ⟩
-    (ℕ.suc i') ℕ.% m    ≡⟨ m∣n⇒n%m≡0 (ℕ.suc i') m (∣⇒∣' m∣i) ⟩
+    (ℕ.suc i') ℕ.% m    ≡⟨ m∣n⇒n%m≡0 {ℕ.suc i'} {m} (∣⇒∣' m∣i) ⟩
     0                   ∎))
     where open ≡-Reasoning
 
@@ -195,11 +198,7 @@ i∣j⇒j/i=quotient i j (divides k j=k*i) =
 ∣-dec : Decidable _∣_
 ∣-dec i j with i ≟ 0ℤ | j ≟ 0ℤ
 ... | yes _ |  yes ≡-refl = yes (divides 0ℤ (≡-sym (*-zero .proj₁ i)))
-... | yes ≡-refl | no j≠0 = no λ 0∣j → j≠0 (
-    j                       ≡⟨ 0∣j ._∣_.equality ⟩
-    0∣j ._∣_.quotient * 0ℤ  ≡⟨ *-zero .proj₂ (0∣j ._∣_.quotient) ⟩
-    0ℤ                      ∎)
-    where open ≡-Reasoning
+... | yes ≡-refl | no j≠0 = no λ 0∣j → j≠0 (0∣i⇒i=0 0∣j)
 ... | no i≠0 | _ with (_%_ j i {{≢-nonZero i≠0}}) ℕ.≟ 0
 ...     | yes j%i=0 = yes (j%i=0⇒i∣j i j j%i=0)
     where instance i-nonZero = ≢-nonZero i≠0

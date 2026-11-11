@@ -1,5 +1,5 @@
 open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
-open import Relation.Binary using (Rel; Decidable; Irreflexive; Reflexive; Transitive; Asymmetric; IsEquivalence; IsStrictTotalOrder; IsStrictPartialOrder; tri<; tri≈; tri>; _Respects₂_)
+open import Relation.Binary using (_⇒_; Rel; Decidable; Irreflexive; Reflexive; Transitive; Asymmetric; Antisymmetric; IsEquivalence; IsStrictTotalOrder; IsStrictPartialOrder; IsPreorder; IsPartialOrder; tri<; tri≈; tri>; _Respects₂_)
 open import Function using (flip)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Relation.OrderHelpers using (_Extends_; WeakTri; cmp₁; cmp₂; cmp₃)
@@ -57,3 +57,28 @@ show-total-order ≈-isEquivalence _<_ <-irrefl <-trans <-cmp <-resp-≈ = recor
 
         <-asym : Asymmetric _<_
         <-asym = IsStrictPartialOrder.asym isStrictPartialOrder
+
+module _ (≈-isEquivalence : IsEquivalence _≈_) (_≤_ : Rel S a) where
+    open IsEquivalence ≈-isEquivalence using () renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans)
+
+    Transitive-flip : Transitive _≤_ → Transitive (flip _≤_)
+    Transitive-flip trans = flip trans
+
+    Reflexive-flip : _≈_ ⇒ _≤_ → _≈_ ⇒ flip _≤_
+    Reflexive-flip ≈⇒≤ x≈y = ≈⇒≤ (≈-sym x≈y)
+
+    Antisymmetric-flip : Antisymmetric _≈_ _≤_ → Antisymmetric _≈_ (flip _≤_)
+    Antisymmetric-flip antisym = flip antisym
+
+    IsPreorder-flip : IsPreorder _≈_ _≤_ → IsPreorder _≈_ (flip _≤_)
+    IsPreorder-flip isPreorder = record {
+        isEquivalence = IsPreorder.isEquivalence isPreorder;
+        reflexive = Reflexive-flip (IsPreorder.reflexive isPreorder);
+        trans = Transitive-flip (IsPreorder.trans isPreorder)
+        }
+
+    IsPartialOrder-flip : IsPartialOrder _≈_ _≤_ → IsPartialOrder _≈_ (flip _≤_)
+    IsPartialOrder-flip isPartialOrder = record {
+        isPreorder = IsPreorder-flip (IsPartialOrder.isPreorder isPartialOrder);
+        antisym = Antisymmetric-flip (IsPartialOrder.antisym isPartialOrder)
+        }

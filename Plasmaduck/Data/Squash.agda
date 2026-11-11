@@ -2,6 +2,7 @@ open import Level using (Level)
 open import Relation.Binary.PropositionalEquality using (_≡_; cong; refl; sym; trans; Reveal_·_is_; [_])
 open import Relation.Nullary using (Irrelevant)
 open import Function using (_∘_)
+open import Data.Product using (Σ; _,_)
 
 open import Plasmaduck.Util.TypeChange using (change-type)
 
@@ -17,6 +18,7 @@ record Squash (A : Set α) : Set α where
     constructor squash
     field
         .unsquash : A
+open Squash public
 
 squash-irrelevant : ∀ {A : Set ℓ} → Irrelevant (Squash A)
 squash-irrelevant (squash p₁) (squash p₂) = refl
@@ -36,3 +38,10 @@ unsquash-function f x = f (squash x)
 irrelevant-inspect : ∀ {A : Set a} {B : .A → Set b}
           (f : .(x : A) → B x) .(x : A) → Reveal_·_is_ {B = squash-function B} (squash-function f) (squash x) (f x)
 irrelevant-inspect f x = [ refl ]
+
+squash-proj : {A : Set a} {B : .A → Set b} → (.(x : A) → B x) → ((squash x) : Squash A) → B x
+squash-proj f (squash x) = f x
+
+squash-≡ : {A : Set a} {B : A → Set b} →
+    {x-pair@(x , _) y-pair@(y , _) : Σ A (Squash ∘ B)} → x ≡ y → x-pair ≡ y-pair
+squash-≡ {x-pair = (x , squash _)} {(y , squash _)} refl = refl

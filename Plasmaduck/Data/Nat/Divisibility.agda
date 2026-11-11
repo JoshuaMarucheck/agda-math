@@ -1,15 +1,17 @@
-open import Relation.Binary.PropositionalEquality using (_≡_; cong; cong₂; subst) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
+open import Level using () renaming (zero to lzero)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; cong; cong₂; subst; resp₂) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary.PropositionalEquality.Properties using (module ≡-Reasoning)
-open import Relation.Binary using (Decidable; Reflexive; Transitive; IsPartialOrder; IsPreorder; Antisymmetric)
-open import Relation.Nullary using (Dec; yes; no)
-open import Data.Product using (proj₂)
-open import Data.Nat using (zero; suc; _+_; _∸_; _*_; _/_; _%_; NonZero; ≢-nonZero; ≢-nonZero⁻¹; _≟_; _≤_)
-open import Data.Nat.Properties using (+-identity; *-assoc; *-identity; *-zero; *-distrib-+; *-distrib-∸; m+n∸n≡m; ≤-reflexive; ≤-trans; ≤-antisym; m≤n*m; m*n≡0⇒m≡0)
-open import Data.Nat.Divisibility using (_∣_; divides; m%n≡0⇒n∣m; n∣m⇒m%n≡0)
-open import Data.Nat.DivMod using (m≡m%n+[m/n]*n)
+open import Relation.Binary using (Rel; Decidable; Reflexive; Transitive; Trans; IsPartialOrder; IsPreorder; Antisymmetric; Asymmetric)
+open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Nat using (ℕ; zero; suc; pred; _+_; _∸_; _*_; _/_; _%_; _!; NonZero; ≢-nonZero; ≢-nonZero⁻¹; NonTrivial; _≟_; _≤_; _<_)
+open import Data.Nat.Properties using (+-identity; *-comm; *-assoc; *-identity; *-zero; *-distrib-+; *-distrib-∸; m+n∸n≡m; ≤-reflexive; ≤-trans; ≤-antisym; m≤n*m; m*n≡0⇒m≡0; ≤∧≢⇒<)
+open import Data.Nat.Divisibility using (_∣_; divides; m%n≡0⇒n∣m; n∣m⇒m%n≡0; ∣m∣n⇒∣m+n; m≤n⇒m!∣n!; *-monoˡ-∣; *-monoʳ-∣)
+open import Data.Nat.DivMod using (m≡m%n+[m/n]*n; n%n≡0)
 
 open import Plasmaduck.Data.PropositionalEquality using (≡-isEquivalence)
-open import Plasmaduck.Data.Nat using (sn≠0)
+open import Plasmaduck.Data.Nat using (sn≠0; sn%n=1)
 
 
 module Plasmaduck.Data.Nat.Divisibility where
@@ -77,6 +79,9 @@ module Plasmaduck.Data.Nat.Divisibility where
 ∣-min : ∀ i → 1 ∣ i
 ∣-min i = divides i (≡-sym (*-identity .proj₂ i))
 
+∣-min' : ∀ {i} → i ∣ 1 → i ≡ 1
+∣-min' {i} i∣1 = ∣-antisym i∣1 (∣-min i)
+
 ∣-combine-% : ∀ m n o .{{_ : NonZero m}} → o ∣ n % m → o ∣ m → o ∣ n
 ∣-combine-% m n o o∣n%m@(divides p n%m=p*o) o∣m@(divides q m=q*o) = divides (p + n / m * q) (
     n                           ≡⟨ m≡m%n+[m/n]*n n m ⟩
@@ -96,6 +101,9 @@ module Plasmaduck.Data.Nat.Divisibility where
     (p ∸ n / o * q) * m             ∎)
     where open ≡-Reasoning
 
+*-mono-∣ : ∀ {m n o p} → m ∣ o → n ∣ p → m * n ∣ o * p
+*-mono-∣ {m} {n} {o} {p} m∣o n∣p = ∣-trans (*-monoˡ-∣ n m∣o) (*-monoʳ-∣ o n∣p)
+
 ∣⇒≤ : ∀ {m} {n} .{{_ : NonZero n}} → m ∣ n → m ≤ n
 ∣⇒≤ {m} {n} (divides k n=k*m) = subst (m ≤_) (≡-sym n=k*m) (m≤n*m m k)
     where
@@ -109,3 +117,60 @@ module Plasmaduck.Data.Nat.Divisibility where
                 where open ≡-Reasoning
 
 
+∣m∣n⇒∣m∸n : ∀ {d m n} .{{_ : NonZero d}} → d ∣ m → d ∣ n → d ∣ m ∸ n
+∣m∣n⇒∣m∸n {d} {m} {n} (divides i m=i*d) (divides j n=j*d) = divides (i ∸ j) (
+    m ∸ n           ≡⟨ cong₂ _∸_ m=i*d n=j*d ⟩
+    i * d ∸ j * d   ≡⟨ ≡-sym (*-distrib-∸ .proj₂ d i j) ⟩
+    (i ∸ j) * d     ∎)
+    where open ≡-Reasoning
+
+∣n∧∣1+n→=1 : ∀ m n → m ∣ n → m ∣ suc n → m ≡ 1
+∣n∧∣1+n→=1 m zero m∣n m∣1+n = ∣-min' m∣1+n
+∣n∧∣1+n→=1 m (suc zero) m∣n m∣1+n = ∣-min' m∣n
+∣n∧∣1+n→=1 m n@(suc (suc n'')) m∣n m∣1+n = ∣-min' (subst (m ∣_) (sn%n=1 n) (∣-mod-% m (suc n) n m∣1+n m∣n))
+
+m≤n⇒m∣n! : ∀ {m n} .{{_ : NonZero m}} → m ≤ n → m ∣ n !
+m≤n⇒m∣n! m@{suc m'} {n} m≤n = ∣-trans (divides (m' !) (*-comm m (m' !))) (m≤n⇒m!∣n! m≤n)
+
+m≤n⇒¬m∣1+n! : ∀ {m n} .{{_ : NonTrivial m}} → m ≤ n → m ∣ 1 + n ! → ⊥
+m≤n⇒¬m∣1+n! {m@(suc (suc m''))} {n} m≤n m∣n!+1 = sn≠0 m'' (cong pred (∣n∧∣1+n→=1 m (n !) (m≤n⇒m∣n! m≤n) m∣n!+1))
+
+-- strict divisibility
+_∣′_ : Rel ℕ lzero
+m ∣′ n = m ∣ n × m ≢ n
+
+∣′⇒< : ∀ {m n} .{{_ : NonZero n}} → m ∣′ n → m < n
+∣′⇒< {m} {n} (m∣n , m≠n) = ≤∧≢⇒< (∣⇒≤ m∣n) m≠n
+
+∣′-asym : Asymmetric _∣′_
+∣′-asym (x∣y , x≠y) (y∣x , y≠x) = x≠y (∣-antisym x∣y y∣x)
+
+∣′-trans : Transitive _∣′_
+∣′-trans i∣′j@(i∣j , i≠j) (j∣k , j≠k) = ∣-trans i∣j j∣k , λ { ≡-refl → i≠j (∣-antisym i∣j j∣k) }
+
+∣-∣′-trans : Trans _∣_ _∣′_ _∣′_
+∣-∣′-trans i∣j (j∣k , j≠k) = ∣-trans i∣j j∣k , λ { ≡-refl → j≠k (∣-antisym j∣k i∣j) }
+
+∣′-∣-trans : Trans _∣′_ _∣_ _∣′_
+∣′-∣-trans (i∣j , i≠j) j∣k = ∣-trans i∣j j∣k , λ { ≡-refl → i≠j (∣-antisym i∣j j∣k) }
+
+module ∣-Reasoning where
+    open import Relation.Binary.Reasoning.Base.Triple
+        {_≈_ = _≡_} {_≤_ = _∣_} {_<_ = _∣′_}
+        ∣-isPreorder
+        ∣′-asym
+        ∣′-trans
+        (resp₂ _∣′_)
+        proj₁
+        ∣′-∣-trans
+        ∣-∣′-trans
+        public
+        hiding (step-≈; step-≈˘; step-≈-⟩; step-≈-⟨)
+
+
+    -- y'alls why
+    step-∣ = step-≤
+    infixr 2 step-∣
+    syntax step-∣ x yRz x≤y = x ∣⟨ x≤y ⟩ yRz
+
+open ∣-Reasoning

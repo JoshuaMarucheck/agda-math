@@ -2,14 +2,15 @@ open import Level using (Level; _⊔_) renaming (suc to lsuc)
 open import Relation.Binary.PropositionalEquality using (subst)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence; IsPartialOrder; IsPreorder; Reflexive; Symmetric; Transitive; Antisymmetric)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Function using ()
 open import Data.Empty using (⊥)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ) renaming (zero to zeroℕ; suc to sucℕ; _+_ to _+ℕ_; _*_ to _*ℕ_; _∸_ to _∸ℕ_; _≤_ to _≤ℕ_)
 open import Data.Nat.Properties using (m∸n+n≡m)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _←₂_; SetoidFunction; _←_; property-subset-setoid)
-open import Plasmaduck.Algebra.Group.Defs using (RawGroup; IsGroup; IsAbelianGroup; Group)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _←₂_; SetoidFunction; _←_; property-subset-setoid; _which-is-cong₂_; flipSetoidFunction₂)
+open import Plasmaduck.Algebra.Group.Defs using (RawGroup; IsGroup; IsAbelianGroup; Group; opposite-is-abelian-group)
 open import Plasmaduck.Function.Properties using (Associative; Commutative; LeftIdentity; Identity; LeftDistributive; Distributive; LeftAbsorber; RightAbsorber; Absorber; Congruent₂; module SingleOperator)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty)
 open import Plasmaduck.Util.Case using (case_of_)
@@ -406,6 +407,7 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         assoc to +-assoc;
         id-is-left-id to zero-is-+-left-id;
         id-is-right-id to zero-is-+-right-id;
+        identity to +-identity;
         inv-is-left-inv to neg-is-+-left-inv;
         inv-is-right-inv to neg-is-+-right-inv;
         inv-is-involution to neg-is-involution;
@@ -946,3 +948,41 @@ record IsField (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
     all-unit : ∀ {x : NonzeroCarrier} → IsUnit (x .proj₁)
     all-unit {x'@(x , x≄0)} = (x' ⁻¹') , inv-gives-inverse
+
+
+-----------------------
+--- Other operators ---
+-----------------------
+
+-- I flip the + operator, but since + is commutative, this doesn't really matter
+opposite-raw-ring : RawRing c ℓ → RawRing c ℓ
+opposite-raw-ring rawRing = record {
+    S = S;
+    +-op = flipSetoidFunction₂ +-op;
+    +-inverse = +-inverse;
+    zero = zero;
+    *-op = flipSetoidFunction₂ *-op;
+    one = one
+    }
+    where
+        open RawRing rawRing
+
+opposite-is-ring : {rawRing : RawRing c ℓ} → IsRing rawRing → IsRing (opposite-raw-ring rawRing)
+opposite-is-ring {rawRing = rawRing} isRing =
+    record {
+        +-isAbelianGroup = opposite-is-abelian-group +-isAbelianGroup;
+        one-is-*-id = one-is-*-id .proj₂ , one-is-*-id .proj₁;
+        *-assoc = sym *-assoc;
+        *-+-distributive = (λ {x} {y} {z} → *-+-distributive .proj₂) , (λ {x} {y} {z} → *-+-distributive .proj₁)
+        }
+    where
+        open RawRing rawRing
+        open IsRing isRing
+        open Setoid S using (refl; sym; trans)
+
+opposite-ring : Ring c ℓ → Ring c ℓ
+opposite-ring ring = record {
+    rawRing = opposite-raw-ring rawRing;
+    isRing = opposite-is-ring isRing
+    }
+    where open Ring ring

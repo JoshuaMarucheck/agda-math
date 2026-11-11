@@ -9,8 +9,8 @@ open import Relation.Binary.Bundles using (Setoid)
 open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; zero; suc; _<_; _≤_; s≤s; s≤s⁻¹)
-open import Data.Nat.Properties using (≤-trans)
-open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Nat.Properties using (≤-trans; <-cmp)
+open import Data.Empty using (⊥; ⊥-elim; ⊥-elim-irr)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; discrete-setoid)
 open import Plasmaduck.Counting.Counting using (any; all; fin-nat-bijection)
@@ -118,6 +118,12 @@ module FindMinimum (PQ-dec : ∀ m → P m ⊎ Q m) where
 module IsMinimum (not-both-PQ : ∀ {m} → P m → Q m → ⊥) where
     minimum-is-minimum : ∀ {m n} → m < n → IsMinimum n → P m → ⊥
     minimum-is-minimum {m = m} m<n n-is-minimum P[m] = not-both-PQ P[m] (n-is-minimum .proj₂ (m , m<n))
+
+    minimum-unique : ∀ m n → .(IsMinimum m) → .(IsMinimum n) → m ≡ n
+    minimum-unique m n m-min n-min with <-cmp m n
+    ... | Relation.Binary.tri< m<n ¬m=n ¬m>n = ⊥-elim-irr (minimum-is-minimum m<n n-min (m-min .proj₁))
+    ... | Relation.Binary.tri≈ ¬m<n m=n ¬m>n = m=n
+    ... | Relation.Binary.tri> ¬m<n ¬m=n m>n = ⊥-elim-irr (minimum-is-minimum m>n m-min (n-min .proj₁))
 
     minimum-contradict : ∀ {n} → IsMinimum n → IsNotMinimum n → ⊥
     minimum-contradict (P[n] , Q[<n]) (inj₁ Q[n]) = not-both-PQ P[n] Q[n]

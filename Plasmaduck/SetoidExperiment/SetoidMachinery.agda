@@ -6,7 +6,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Binary.PropositionalEquality using (_≡_)
-open import Function using (Congruent; _∘_; _on_; Bijection)
+open import Function using (Congruent; _∘_; _on_; flip; Bijection)
 
 open import Plasmaduck.Data.PropositionalEquality using (≗-eq)
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence; FunctionalProperty)
@@ -36,6 +36,9 @@ record SetoidFunction (S₁ : Setoid a b) (S₂ : Setoid c d) : Set (a ⊔ b ⊔
     field
         func : S₁ .Carrier → S₂ .Carrier
         respects : Congruent (S₁ ._≈_) (S₂ ._≈_) func
+
+    domain = S₁
+    codomain = S₂
 
 _∘'_ : {S₁ : Setoid a ℓ₁} {S₂ : Setoid b ℓ₂} {S₃ : Setoid c ℓ₃} →
     SetoidFunction S₂ S₃ → SetoidFunction S₁ S₂ → SetoidFunction S₁ S₃
@@ -68,27 +71,54 @@ SetoidFunctionSetoid S₁ S₂ = record
     ; isEquivalence = SetoidFunctionEquality-eq S₁ S₂
     }
 
-record SetoidFunction₂ (A : Setoid a ℓ₁) (B : Setoid b ℓ₂) (C : Setoid c ℓ₃) : Set (a ⊔ b ⊔ c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₃) where
-    constructor _which-is-cong₂_
-    field
-        func : A .Carrier → B .Carrier → C .Carrier
-        respects : Congruent₂ (A ._≈_) (B ._≈_) (C ._≈_) func
+_⇒_ : Setoid a ℓ₁ → Setoid b ℓ₂ → Setoid (a ⊔ ℓ₁ ⊔ b ⊔ ℓ₂) (a ⊔ ℓ₁ ⊔ ℓ₂)
+_⇒_ = SetoidFunctionSetoid
 
-SetoidFunction₂→SetoidFunction :
-    {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} →
-    SetoidFunction₂ A B C →
-    SetoidFunction A (SetoidFunctionSetoid B C)
-SetoidFunction₂→SetoidFunction {A = A} (f which-is-cong₂ cong) = record {
-    func = λ x → record {
-        func = f x;
-        respects = λ y₁~y₂ → cong (A .Setoid.refl) y₁~y₂
-        };
-    respects = λ x₁~x₂ y₁~y₂ → cong x₁~x₂ y₁~y₂
-    }
+_⇒'_ : Setoid a ℓ₁ → Setoid b ℓ₂ → Set (a ⊔ ℓ₁ ⊔ b ⊔ ℓ₂)
+_⇒'_ = SetoidFunction
 
-_←₂_ : {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} → SetoidFunction₂ A B C → A .Carrier → B .Carrier → C .Carrier
-_←₂_ f = f .SetoidFunction₂.func
-infixl 100 _←₂_
+module TwoArgs where
+    record SetoidFunction₂ (A : Setoid a ℓ₁) (B : Setoid b ℓ₂) (C : Setoid c ℓ₃) : Set (a ⊔ b ⊔ c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₃) where
+        constructor _which-is-cong₂_
+        field
+            func : A .Carrier → B .Carrier → C .Carrier
+            respects : Congruent₂ (A ._≈_) (B ._≈_) (C ._≈_) func
+
+        domain₁ = A
+        domain₂ = B
+        codomain = C
+
+    SetoidFunction₂→SetoidFunction :
+        {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} →
+        SetoidFunction₂ A B C →
+        SetoidFunction A (SetoidFunctionSetoid B C)
+    SetoidFunction₂→SetoidFunction {A = A} (f which-is-cong₂ cong) = record {
+        func = λ x → record {
+            func = f x;
+            respects = λ y₁~y₂ → cong (A .Setoid.refl) y₁~y₂
+            };
+        respects = λ x₁~x₂ y₁~y₂ → cong x₁~x₂ y₁~y₂
+        }
+
+    _←₂_ : {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} → SetoidFunction₂ A B C → A .Carrier → B .Carrier → C .Carrier
+    _←₂_ f = f .SetoidFunction₂.func
+    infixl 100 _←₂_
+
+    flipSetoidFunction₂ :
+        {A : Setoid a ℓ₁} {B : Setoid b ℓ₂} {C : Setoid c ℓ₃} →
+        SetoidFunction₂ A B C →
+        SetoidFunction₂ B A C
+    flipSetoidFunction₂ f = record {
+        func = flip (f ←₂_);
+        respects = flip (f .SetoidFunction₂.respects)
+        }
+
+    ∘'-func : {S₁ : Setoid a ℓ₁} {S₂ : Setoid b ℓ₂} {S₃ : Setoid c ℓ₃} →
+        SetoidFunction₂ (S₂ ⇒ S₃) (S₁ ⇒ S₂) (S₁ ⇒ S₃)
+    ∘'-func = record {
+        func = _∘'_;
+        respects = λ g-cong f-cong → g-cong ∘ f-cong
+        }
 
 PropSetoid : (a : Level) → Setoid (lsuc a) a
 PropSetoid a = record
@@ -221,3 +251,5 @@ discrete-function-setoid A B = record {
 
 IdempotentFunc : {A-setoid : Setoid a ℓ₁} → (f-func : SetoidFunction A-setoid A-setoid) → Set (a ⊔ ℓ₁)
 IdempotentFunc {A-setoid = A-setoid} (f which-is-cong _) = Idempotent A-setoid f
+
+open TwoArgs public

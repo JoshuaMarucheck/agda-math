@@ -1,5 +1,6 @@
 open import Level using (Level; _⊔_; Lift; lift; Setω) renaming (suc to lsuc; zero to lzero)
 open import Relation.Nullary.Negation using (¬_)
+open import Data.Empty using (⊥-elim)
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
@@ -13,6 +14,10 @@ variable
 
 ¬¬-lift : A → ¬ ¬ A
 ¬¬-lift x ¬x = ¬x x
+
+dec⇒¬¬-flatten : Dec A → ¬ ¬ A → A
+dec⇒¬¬-flatten (no ¬a) ¬¬a = ⊥-elim (¬¬a ¬a)
+dec⇒¬¬-flatten (yes a) _ = a
 
 module DependentInversion where
     variable

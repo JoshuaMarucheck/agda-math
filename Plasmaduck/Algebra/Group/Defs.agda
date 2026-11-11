@@ -1,9 +1,10 @@
 open import Level using (Level; _⊔_; Lift; lift) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence)
+open import Function using (Bijective; Injective; Surjective)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (inj₂)
 
-open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _which-is-cong_; _←_; property-subset-setoid)
+open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _which-is-cong₂_; _←₂_; SetoidFunction; _which-is-cong_; _←_; property-subset-setoid; flipSetoidFunction₂)
 open import Plasmaduck.Function.Properties using (module SingleOperator)
 
 
@@ -29,19 +30,27 @@ record RawGroup (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     _≈_ = CarrierSetoid .Setoid._≈_
     infix 6 _≈_
 
+    open import Algebra.Definitions _≈_
+
     _∙_ : Carrier → Carrier → Carrier
     _∙_ = _←₂_ op
-    infixl 10 _∙_
-
-    ∙-cong = op .SetoidFunction₂.respects
-    inv-cong = inverse .SetoidFunction.respects
+    infixl 10 _∙_ _∸_
 
     inv : Carrier → Carrier
     inv = _←_ inverse
 
+    ∙-cong = op .SetoidFunction₂.respects
+    inv-cong = inverse .SetoidFunction.respects
+
+    _∸_ : Carrier → Carrier → Carrier
+    x ∸ y = x ∙ inv y
+
+    ∸-cong : Congruent₂ _∸_
+    ∸-cong ≈₁ ≈₂ = ∙-cong ≈₁ (inv-cong ≈₂)
+
 record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     open RawGroup rawGroup
-    open SingleOperator CarrierSetoid renaming (assoc-middle to assoc-middle')
+    open SingleOperator CarrierSetoid using (LeftIdentity; RightIdentity; Identity; Associative) renaming (assoc-middle to assoc-middle')
 
     field
         id-is-left-id : LeftIdentity _∙_ id
@@ -50,6 +59,12 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
 
     open import Relation.Binary.Reasoning.Setoid CarrierSetoid
     open IsEquivalence (CarrierSetoid .Setoid.isEquivalence)
+    -- TODO Eventually I'd like to switch to using these, which use explicit inputs
+    -- TOOD renamine id to e
+    open import Algebra.Definitions _≈_ using (LeftCancellative; RightCancellative; Cancellative)
+    open import Algebra.Consequences.Setoid CarrierSetoid
+        using (comm∧cancelʳ⇒cancelˡ; comm∧distrʳ⇒distrˡ; comm∧distrˡ⇒distrʳ
+            ; comm⇒sym[distribˡ])
 
     assoc-middle = assoc-middle' _∙_ assoc (inj₂ (∙-cong refl))
 
@@ -71,6 +86,9 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
         (x ∙ inv x) ∙ x ≈⟨ ∙-cong inv-is-right-inv refl ⟩
         id ∙ x          ≈⟨ id-is-left-id ⟩
         x               ∎
+
+    identity : Identity _∙_ id
+    identity = id-is-left-id , id-is-right-id
 
     inv-is-involution : ∀ {x : Carrier} → inv (inv x) ≈ x
     inv-is-involution {x} = begin
@@ -101,6 +119,70 @@ record IsGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
         inv (inv id ∙ id)       ≈⟨ inv-cong id-is-right-id ⟩
         inv (inv id)            ≈⟨ inv-is-involution ⟩
         id ∎
+
+    inv-flips-∸ : ∀ x y → inv (x ∸ y) ≈ y ∸ x
+    inv-flips-∸ x y = begin
+        inv (x ∸ y)             ≈⟨ inv-flip-distributes {x} {inv y} ⟩
+        inv (inv y) ∙ inv x     ≈⟨ ∙-cong inv-is-involution refl ⟩
+        y ∙ inv x               ≈⟨ refl ⟩
+        y ∸ x                   ∎
+
+    m∙n∸n=m : ∀ m n → m ∙ n ∸ n ≈ m
+    m∙n∸n=m m n = begin
+        m ∙ n ∙ inv n       ≈⟨ sym assoc ⟩
+        m ∙ (n ∙ inv n)     ≈⟨ ∙-cong refl inv-is-right-inv ⟩
+        m ∙ id              ≈⟨ id-is-right-id ⟩
+        m                   ∎
+
+    m∸n∙n=m : ∀ m n → m ∸ n ∙ n ≈ m
+    m∸n∙n=m m n = begin
+        m ∙ inv n ∙ n       ≈⟨ sym assoc ⟩
+        m ∙ (inv n ∙ n)     ≈⟨ ∙-cong refl inv-is-left-inv ⟩
+        m ∙ id              ≈⟨ id-is-right-id ⟩
+        m                   ∎
+
+    -m∙[m∙n]=n : ∀ m n → inv m ∙ (m ∙ n) ≈ n
+    -m∙[m∙n]=n m n = begin
+        inv m ∙ (m ∙ n)     ≈⟨ assoc ⟩
+        (inv m ∙ m) ∙ n     ≈⟨ ∙-cong inv-is-left-inv refl ⟩
+        id ∙ n              ≈⟨ id-is-left-id ⟩
+        n                   ∎
+
+    ∙-cancelʳ : RightCancellative _∙_
+    ∙-cancelʳ m n o n∙m=o∙m = begin
+        n           ≈⟨ sym (m∙n∸n=m n m) ⟩
+        n ∙ m ∸ m   ≈⟨ ∸-cong n∙m=o∙m refl ⟩
+        o ∙ m ∸ m   ≈⟨ m∙n∸n=m o m ⟩
+        o           ∎
+
+    ∙-cancelˡ : LeftCancellative _∙_
+    ∙-cancelˡ m n o m∙n=m∙o = begin
+        n                   ≈⟨ sym (-m∙[m∙n]=n m n) ⟩
+        inv m ∙ (m ∙ n)     ≈⟨ ∙-cong refl m∙n=m∙o ⟩
+        inv m ∙ (m ∙ o)     ≈⟨ -m∙[m∙n]=n m o ⟩
+        o                   ∎
+
+    ∙-cancel : Cancellative _∙_
+    ∙-cancel = ∙-cancelˡ , ∙-cancelʳ
+
+    inv-injective : Injective _≈_ _≈_ inv
+    inv-injective {x} {y} inv-x=inv-y = begin
+        x               ≈⟨ sym inv-is-involution ⟩
+        inv (inv x)     ≈⟨ inv-cong inv-x=inv-y ⟩
+        inv (inv y)     ≈⟨ inv-is-involution ⟩
+        y               ∎
+
+    inv-surjective : Surjective _≈_ _≈_ inv
+    inv-surjective x = inv x , λ {z} z≈inv-x → begin
+        inv z           ≈⟨ inv-cong z≈inv-x ⟩
+        inv (inv x)     ≈⟨ inv-is-involution ⟩
+        x               ∎
+
+    inv-bijective : Bijective _≈_ _≈_ inv
+    inv-bijective = inv-injective , inv-surjective
+
+    ∙-∸-assoc : ∀ m n o → (m ∙ n) ∸ o ≈ m ∙ (n ∸ o)
+    ∙-∸-assoc m n o = sym assoc
 
 
 record Group (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
@@ -176,6 +258,7 @@ record IsAbelianGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
     open RawGroup rawGroup
     open import Relation.Binary.Reasoning.Setoid CarrierSetoid
     open IsEquivalence (CarrierSetoid .Setoid.isEquivalence)
+    open import Algebra.Definitions _≈_ using (Commutative)
 
     inv-distributes : ∀ {x y} → inv (x ∙ y) ≈ inv x ∙ inv y
     inv-distributes {x} {y} = begin
@@ -183,9 +266,67 @@ record IsAbelianGroup (rawGroup : RawGroup c ℓ) : Set (c ⊔ ℓ) where
         inv y ∙ inv x   ≈⟨ abelian ⟩
         inv x ∙ inv y   ∎
 
+    comm : Commutative _∙_
+    comm x y = abelian
+
+    m∙n∙o=m∙o∙n : ∀ m n o → m ∙ n ∙ o ≈ m ∙ o ∙ n
+    m∙n∙o=m∙o∙n m n o = begin
+        m ∙ n ∙ o       ≈⟨ sym assoc ⟩
+        m ∙ (n ∙ o)     ≈⟨ ∙-cong {m} refl (comm n o) ⟩
+        m ∙ (o ∙ n)     ≈⟨ assoc ⟩
+        m ∙ o ∙ n       ∎
+
+    m∙n∸m=n : ∀ m n → m ∙ n ∸ m ≈ n
+    m∙n∸m=n m n = trans (∸-cong {u = m} (comm m n) refl) (m∙n∸n=m n m)
+
 record AbelianGroup (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     field
         rawGroup : RawGroup c ℓ
         isAbelianGroup : IsAbelianGroup rawGroup
     open RawGroup rawGroup public
     open IsAbelianGroup isAbelianGroup public
+
+----------------------
+--- Opposite Group ---
+----------------------
+
+opposite-raw-group : RawGroup c ℓ → RawGroup c ℓ
+opposite-raw-group rawGroup = record {
+    CarrierSetoid = CarrierSetoid;
+    op = flipSetoidFunction₂ op;
+    inverse = inverse;
+    id = id
+    }
+    where open RawGroup rawGroup
+
+opposite-is-group : {rawGroup : RawGroup c ℓ} → IsGroup rawGroup → IsGroup (opposite-raw-group rawGroup)
+opposite-is-group {rawGroup = rawGroup} isGroup = record {
+    id-is-left-id = id-is-right-id;
+    inv-is-left-inv = inv-is-right-inv;
+    assoc = sym assoc
+    }
+    where
+        open RawGroup rawGroup
+        open IsGroup isGroup
+        open Setoid CarrierSetoid using (sym)
+
+opposite-group : Group c ℓ → Group c ℓ
+opposite-group group = record {
+    rawGroup = opposite-raw-group rawGroup;
+    isGroup = opposite-is-group isGroup
+    }
+    where open Group group
+
+opposite-is-abelian-group : {rawGroup : RawGroup c ℓ} → IsAbelianGroup rawGroup → IsAbelianGroup (opposite-raw-group rawGroup)
+opposite-is-abelian-group {rawGroup = rawGroup} isAbelianGroup = record {
+    isGroup = opposite-is-group isGroup;
+    abelian = abelian
+    }
+    where open IsAbelianGroup isAbelianGroup
+
+opposite-abelian-group : AbelianGroup c ℓ → AbelianGroup c ℓ
+opposite-abelian-group group = record {
+    rawGroup = opposite-raw-group rawGroup;
+    isAbelianGroup = opposite-is-abelian-group isAbelianGroup
+    }
+    where open AbelianGroup group
