@@ -5,13 +5,14 @@ open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Relation.Binary.PropositionalEquality using (_≡_)
+open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl to ≡-refl)
 open import Function using (Congruent; _∘_; _on_; flip; Bijection)
 
 open import Plasmaduck.Data.PropositionalEquality using (≗-eq)
 open import Plasmaduck.Function using (_⇔_; ⇔-isEquivalence; FunctionalProperty)
 open import Plasmaduck.Relation.Equivalence using (≡-isEquivalence)
 open import Plasmaduck.Function.Properties using (Congruent₂; Idempotent)
+open import Plasmaduck.Util.TypeChange using (change-type; change-type-proof-irrelevance)
 
 
 
@@ -149,7 +150,7 @@ indiscrete-setoid S = record
     }
 
 from-discrete-cong : {A : Set a} (B : Setoid c ℓ) (f : A → B .Carrier) → Congruent _≡_ (B ._≈_) f
-from-discrete-cong {A} B f {x} {y} x≡y rewrite x≡y = B .Setoid.refl
+from-discrete-cong {A} B f {x} {y} ≡-refl = B .Setoid.refl
 
 into-indiscrete-cong : (A : Setoid c ℓ) {B : Set b} (f : A .Carrier → B) → Congruent (A ._≈_) (indiscrete-setoid B ._≈_) f
 into-indiscrete-cong A {B} f {x} {y} _ = tt
@@ -170,6 +171,11 @@ property-subset-setoid A P = record {
     where
         open IsEquivalence
 
+change-setoid : {A B : Set a} → SetoidFunction (indiscrete-setoid (A ≡ B)) (discrete-setoid (A → B))
+change-setoid {A} {B} = record {
+    func = change-type;
+    respects = λ { {≡-refl} {≡-refl} _ → ≡-refl }
+    }
 
 congruence-is-functional : {A : Set a} {_≈A_ : Rel A b} {B : Set c} {_≈B_ : Rel B d} → FunctionalProperty (Congruent _≈A_ _≈B_)
 congruence-is-functional {_≈A_ = _≈A_} {_≈B_ = _≈B_} {f = f} {g} f~g f-cong {x} {y} x~y = ≡-subst (_≈B g y) (f~g x) (≡-subst (f x ≈B_) (f~g y) (f-cong x~y))

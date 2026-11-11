@@ -127,6 +127,43 @@ opposite-category category = record {
 --- Morphism Properties ---
 ---------------------------
 
+module RawMorphismProperties (category : RawCategory a b c) where
+    open RawCategory category
+    open RawCategoryProperties category
+
+    module _ {x y : Object} where
+
+        IsSidedInverse : Morphism x y → Morphism y x → Set c
+        IsSidedInverse f g = f ∘ g ~ id y
+
+        -- Right cancellative. In a sense, this morphism fully represents its target.
+        IsEpimorphism : Morphism x y → Set (a ⊔ b ⊔ c)
+        IsEpimorphism f = ∀ {z : Object} (g₁ g₂ : Morphism y z) → g₁ ∘ f ~ g₂ ∘ f → g₁ ~ g₂
+
+        -- Left cancellative. In a sense, this morphism fully represents its domain.
+        IsMonomorphism : Morphism x y → Set (a ⊔ b ⊔ c)
+        IsMonomorphism g = ∀ {w : Object} (f₁ f₂ : Morphism w x) → g ∘ f₁ ~ g ∘ f₂ → f₁ ~ f₂
+
+    module _ {x y : Object} where
+        IsInverse : Morphism x y → Morphism y x → Set c
+        IsInverse f g = IsSidedInverse f g × IsSidedInverse g f
+
+        IsIsomorphism : Morphism x y → Set (b ⊔ c)
+        IsIsomorphism f = Σ (Morphism y x) (IsInverse f)
+
+    IsInitial : (x : Object) → Set (a ⊔ b ⊔ c)
+    IsInitial x = ∀ (y : Object) → UniqueMorphism x y
+
+    IsFinal : (x : Object) → Set (a ⊔ b ⊔ c)
+    IsFinal x = ∀ (y : Object) → UniqueMorphism y x
+
+    IsZero : (x : Object) → Set (a ⊔ b ⊔ c)
+    IsZero x = IsInitial x × IsFinal x
+
+    Isomorphic : (x y : Object) → Set (b ⊔ c)
+    Isomorphic x y = Σ (Morphism x y) IsIsomorphism
+
+
 module MorphismProperties (category : Category a b c) where
     open Category category
     open CategoryProperties category
@@ -219,6 +256,12 @@ module ExtraRawFunctorProperties
             }
         }
 
+RawFunctor' : (cat₁ : Category a b c) (cat₂ : Category α β γ) → Set _
+RawFunctor' cat₁ cat₂ = RawFunctor (cat₁ .Category.rawCategory) (cat₂ .Category.rawCategory)
+
+ExtraRawFunctor' : (cat₁ : Category a b c) (cat₂ : Category α β γ) → Set _
+ExtraRawFunctor' cat₁ cat₂ = ExtraRawFunctor (cat₁ .Category.rawCategory) (cat₂ .Category.rawCategory)
+
 record IsFunctor {cat₁ : RawCategory a b c} {cat₂ : RawCategory α β γ} (F : RawFunctor cat₁ cat₂) : Set (a ⊔ b ⊔ γ) where
     open RawFunctor F
     open RawCategory cat₁ using () renaming (_∘_ to _∘₁_; id to id₁; Object to Object₁; Morphism to Morphism₁)
@@ -230,9 +273,10 @@ record IsFunctor {cat₁ : RawCategory a b c} {cat₂ : RawCategory α β γ} (F
             {x y z : Object₁} → (g : Morphism₁ y z) (f : Morphism₁ x y) →
             mapₘ (g ∘₁ f) ~ (mapₘ g) ∘₂ (mapₘ f)
 
+-- Covariant functor, in particular
 record Functor (cat₁ : Category a b c) (cat₂ : Category α β γ) : Set (a ⊔ b ⊔ c ⊔ α ⊔ β ⊔ γ) where
     field
-        rawFunctor : RawFunctor (cat₁ .Category.rawCategory) (cat₂ .Category.rawCategory)
+        rawFunctor : RawFunctor' cat₁ cat₂
         isFunctor : IsFunctor rawFunctor
 
     open RawFunctor rawFunctor public

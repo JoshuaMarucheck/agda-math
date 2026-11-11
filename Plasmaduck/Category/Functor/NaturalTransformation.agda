@@ -2,15 +2,15 @@ open import Level using (Level; _⊔_) renaming (suc to lsuc)
 open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl to ≡-refl)
 open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 open import Function using (Congruent)
-open import Data.Product using (_×_; _,_)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂)
-open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor; opposite-category; opposite-functor; IsSidedInverse)
+open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor; opposite-category; opposite-functor; IsSidedInverse; module RawMorphismProperties)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Category.Functor.SimpleFunctors using (id-functor)
 open import Plasmaduck.Category.Functor.Properties using (RawFunctorSetoid; FunctorSetoid; Functor-compose-func) renaming (_∘_ to _∘-Functor_; _∘'_ to _∘-RawFunctor_)
 open import Plasmaduck.Function.Properties using (ExplicitlyCongruent; Congruent₂)
-open import Plasmaduck.Category.CommutativeSquare using (commutative-square-compose)
+open import Plasmaduck.Category.CommutativeSquare using (commutative-square-compose; associate-middle)
 open import Plasmaduck.Relation.On using (on-preserves-equality)
 
 
@@ -73,14 +73,28 @@ module _ {𝔸 : RawCategory a b c} {𝔹 : RawCategory α β γ} where
         η = λ X → RawCategory.id 𝔹 (mapₒ F X)
         }
 
+    record RawNaturalIsomorphism (F G : RawFunctor 𝔸 𝔹) : Set (a ⊔ β) where
+        field
+            forward : RawNaturalTransformation F G
+            backward : RawNaturalTransformation G F
+
+    AreOppositeNaturalTransformations : {F G : RawFunctor 𝔸 𝔹} → RawNaturalIsomorphism F G → Set (a ⊔ γ)
+    AreOppositeNaturalTransformations nat-iso = ∀ (X : RawCategory.Object 𝔸) → RawMorphismProperties.IsInverse 𝔹 (forward .RawNaturalTransformation.η X) (backward .RawNaturalTransformation.η X)
+        where open RawNaturalIsomorphism nat-iso
+
 module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} where
     open Functor using (mapₒ; mapₘ; rawFunctor)
-    open Category 𝔹 using (assoc; id-is-left-id; id-is-right-id; ~-refl; ~-sym; ~-trans) renaming (_∘_ to _∘₂_; _~_ to _~₂_)
+    open Category 𝔹 using (assoc; id-is-left-id; id-is-right-id; ~-refl; ~-sym; ~-trans) renaming (_∘_ to _∘₂_; _~_ to _~₂_; ∘-respects to ∘₂-respects)
 
+    RawNaturalTransformation' : (F G : Functor 𝔸 𝔹) → Set _
+    RawNaturalTransformation' F G = RawNaturalTransformation (F .rawFunctor) (G .rawFunctor)
+
+    RawNaturalIsomorphism' : (F G : Functor 𝔸 𝔹) → Set _
+    RawNaturalIsomorphism' F G = RawNaturalIsomorphism (F .rawFunctor) (G .rawFunctor)
 
     record NaturalTransformation (F G : Functor 𝔸 𝔹) : Set (a ⊔ b ⊔ β ⊔ γ) where
         field
-            rawNaturalTransformation : RawNaturalTransformation (F .rawFunctor) (G .rawFunctor)
+            rawNaturalTransformation : RawNaturalTransformation' F G
             isNaturalTransformation : IsNaturalTransformation rawNaturalTransformation
 
         open RawNaturalTransformation rawNaturalTransformation public
@@ -151,6 +165,43 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} where
             θ ∘ id F ≈ θ
         ∘-right-id θ X = id-is-right-id
 
+    record NaturalIsomorphism (F G : Functor 𝔸 𝔹) : Set (a ⊔ b ⊔ β ⊔ γ) where
+        field
+            rawNaturalIsomorphism : RawNaturalIsomorphism' F G
+            opposites : AreOppositeNaturalTransformations rawNaturalIsomorphism
+            forwardIsNatural : IsNaturalTransformation (RawNaturalIsomorphism.forward rawNaturalIsomorphism)
+
+        open RawNaturalIsomorphism rawNaturalIsomorphism using (forward; backward)
+
+        backwardIsNatural : IsNaturalTransformation (RawNaturalIsomorphism.backward rawNaturalIsomorphism)
+        backwardIsNatural = record {
+            commutes = λ {X} {Y} f → begin
+                backward .η Y ∘₂ mapₘ G f                                       ≈⟨ ~-sym id-is-right-id ⟩ 
+                (backward .η Y ∘₂ mapₘ G f) ∘₂ Category.id 𝔹 (mapₒ G X)         ≈⟨ ∘₂-respects ~-refl (~-sym (opposites X .proj₁)) ⟩ 
+                (backward .η Y ∘₂ mapₘ G f) ∘₂ (forward .η X ∘₂ backward .η X)  ≈⟨ associate-middle 𝔹 (backward .η Y) (mapₘ G f) (forward .η X) (backward .η X) ⟩ 
+                backward .η Y ∘₂ (mapₘ G f ∘₂ forward .η X) ∘₂ backward .η X    ≈⟨ ∘₂-respects ~-refl (∘₂-respects (~-sym (forwardIsNatural .IsNaturalTransformation.commutes f)) ~-refl) ⟩  
+                backward .η Y ∘₂ (forward .η Y ∘₂ mapₘ F f) ∘₂ backward .η X    ≈⟨ ~-sym (associate-middle 𝔹 (backward .η Y) (forward .η Y) (mapₘ F f) (backward .η X)) ⟩ 
+                (backward .η Y ∘₂ forward .η Y) ∘₂ (mapₘ F f ∘₂ backward .η X)  ≈⟨ ∘₂-respects (opposites Y .proj₂) ~-refl ⟩ 
+                (Category.id 𝔹 (mapₒ F Y)) ∘₂ (mapₘ F f ∘₂ backward .η X)       ≈⟨ id-is-left-id ⟩ 
+                mapₘ F f ∘₂ backward .η X                                       ∎
+            }
+            where
+                open RawNaturalTransformation using (η)
+                module _ {X Y : Category.Object 𝔹} where
+                    open import Relation.Binary.Reasoning.Setoid (Category.Morphism' 𝔹 X Y) public
+        
+        forwardNaturalTransformation : NaturalTransformation F G
+        forwardNaturalTransformation = record {
+            rawNaturalTransformation = forward;
+            isNaturalTransformation = forwardIsNatural
+            }
+
+        backwardNaturalTransformation : NaturalTransformation G F
+        backwardNaturalTransformation = record {
+            rawNaturalTransformation = backward;
+            isNaturalTransformation = backwardIsNatural
+            }
+
 
 ------------------------------
 --- Horizontal composition ---
@@ -216,7 +267,7 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} {ℂ : Category ℓ�
         *-assoc : (ψ * (φ * θ)) .NaturalTransformation.rawNaturalTransformation ≈' ((ψ * φ) * θ) .NaturalTransformation.rawNaturalTransformation
         *-assoc X = begin
             (ψ * (φ * θ)) .η X                                                                  ≈⟨ refl ⟩
-            ψ .η (mapₒ I (mapₒ G X)) ∘₄ (mapₘ J ((φ .η (mapₒ G X)) ∘₃ mapₘ H (θ .η X)))         ≈⟨ Category.∘-respects 𝔻 ~-refl (Functor.consistent-on-∘ J (φ .η (mapₒ G X)) (mapₘ H (θ .η X))) ⟩ -- this requires respecfulness of J
+            ψ .η (mapₒ I (mapₒ G X)) ∘₄ (mapₘ J ((φ .η (mapₒ G X)) ∘₃ mapₘ H (θ .η X)))         ≈⟨ Category.∘-respects 𝔻 ~-refl (Functor.consistent-on-∘ J (φ .η (mapₒ G X)) (mapₘ H (θ .η X))) ⟩ -- this requires respectfulness of J
             ψ .η (mapₒ I (mapₒ G X)) ∘₄ (mapₘ J (φ .η (mapₒ G X)) ∘₄ mapₘ J (mapₘ H (θ .η X)))  ≈⟨ ~-sym (Category.assoc 𝔻 (ψ .η (mapₒ I (mapₒ G X))) (mapₘ J (φ .η (mapₒ G X))) (mapₘ J (mapₘ H (θ .η X)))) ⟩ -- this requires associativity of ∘₄
             (ψ .η (mapₒ I (mapₒ G X)) ∘₄ mapₘ J (φ .η (mapₒ G X))) ∘₄ mapₘ J (mapₘ H (θ .η X))  ≈⟨ refl ⟩
             ((ψ * φ) * θ) .η X                                                                  ∎
