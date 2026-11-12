@@ -82,30 +82,30 @@ decompose-swap-helper-is-swap-decomposition : (i j : ℕ) → .(i≤j : i ≤ j)
 decompose-swap-helper-is-swap-decomposition zero zero i≤j k = sym (swp-matchₐ-lemma zero k)
 decompose-swap-helper-is-swap-decomposition i j@(suc j') i≤j k with i ≟ j | i ≟ j'
 ... | yes refl | _ =
-    flip-swap j (j ∸ j) k     ≡⟨ cong (λ q → flip-swap j q k) (n∸n≡0 j) ⟩
-    flip-swap j 0 k                     ≡⟨⟩
-    k                                               ≡⟨ sym (swp-matchₐ-lemma j k) ⟩
-    swp j j k       ∎
+    flip-swap j (j ∸ j) k   ≡⟨ cong (λ q → flip-swap j q k) (n∸n≡0 j) ⟩
+    flip-swap j 0 k         ≡⟨⟩
+    k                       ≡⟨ sym (swp-matchₐ-lemma j k) ⟩
+    swp j j k               ∎
     where open ≡-Reasoning
 
 ... | no i≠j | yes refl =
     flip-swap j' (j ∸ j') k     ≡⟨⟩
     flip-swap j' (j ∸ j') k     ≡⟨ cong (λ q → flip-swap j' q k) {j ∸ j'} {1} (trans (sym (∸-suc j j n≤n)) (cong suc (n∸n≡0 j))) ⟩
-    flip-swap j' (1) k          ≡⟨⟩
+    flip-swap j' 1 k            ≡⟨⟩
     flip j' k                   ≡⟨⟩
     swp j' j k                  ∎
     where open ≡-Reasoning
 ...  | no i≠j | no i≠j' =
     flip-swap i (j ∸ i) k                   ≡⟨⟩
-    flip-swap i (suc j' ∸ i) k            ≡⟨ cong (λ q → flip-swap i q k) (cong (λ q → suc q ∸ i) (sym sj''=j')) ⟩
-    flip-swap i (suc (suc j'') ∸ i) k     ≡⟨ cong (λ q → flip-swap i q k) (trans (sym (∸-suc (suc j'') i i≤sj'')) (cong suc (sym (∸-suc j'' i i≤j'')))) ⟩
-    flip-swap i (suc (suc (j'' ∸ i))) k   ≡⟨⟩
+    flip-swap i (suc j' ∸ i) k              ≡⟨ cong (λ q → flip-swap i q k) (cong (λ q → suc q ∸ i) (sym sj''=j')) ⟩
+    flip-swap i (suc (suc j'') ∸ i) k       ≡⟨ cong (λ q → flip-swap i q k) (trans (sym (∸-suc (suc j'') i i≤sj'')) (cong suc (sym (∸-suc j'' i i≤j'')))) ⟩
+    flip-swap i (suc (suc (j'' ∸ i))) k     ≡⟨⟩
     (flip (suc (j'' ∸ i) + i) ∘ flip-swap i (suc (j'' ∸ i)) ∘ flip (suc (j'' ∸ i) + i)) k   ≡⟨ cong (λ q → (q ∘ flip-swap i (suc (j'' ∸ i)) ∘ q) k) flip= ⟩
-    (flip j' ∘ flip-swap i (suc (j'' ∸ i))    ∘ flip j') k        ≡⟨ cong (λ q → (flip j' ∘ flip-swap i q ∘ flip j') k) (trans (∸-suc j'' i i≤j'') (cong (_∸ i) sj''=j')) ⟩
-    (flip j' ∘ flip-swap i (j' ∸ i)           ∘ flip j') k        ≡⟨⟩
-    (flip j' ∘ flip-swap i (j' ∸ i)             ∘ flip j') k        ≡⟨ cong (flip j') (decompose-swap-helper-is-swap-decomposition i j' i≤j' (flip j' k)) ⟩
-    (flip j' ∘ swp i j'                         ∘ flip j') k        ≡⟨ swp-contract-three' {j} {j'} {i} (≢-sym i≠j) (≢-sym i≠j') k ⟩
-    swp i j k                                                       ∎
+    (flip j' ∘ flip-swap i (suc (j'' ∸ i))                  ∘ flip j') k    ≡⟨ cong (λ q → (flip j' ∘ flip-swap i q ∘ flip j') k) (trans (∸-suc j'' i i≤j'') (cong (_∸ i) sj''=j')) ⟩
+    (flip j' ∘ flip-swap i (j' ∸ i)                         ∘ flip j') k    ≡⟨⟩
+    (flip j' ∘ flip-swap i (j' ∸ i)                         ∘ flip j') k    ≡⟨ cong (flip j') (decompose-swap-helper-is-swap-decomposition i j' i≤j' (flip j' k)) ⟩
+    (flip j' ∘ swp i j'                                     ∘ flip j') k    ≡⟨ swp-contract-three' {j} {j'} {i} (≢-sym i≠j) (≢-sym i≠j') k ⟩
+    swp i j k                                                               ∎
     where
         i<j : i < j
         i<j with ≤→<≡ i≤j

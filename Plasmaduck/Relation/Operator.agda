@@ -436,7 +436,7 @@ not-sym-trans-commute' inj ℓ₁ =
         <-is-transitive-closure-< =  transitive-closure-is-minimal _<_ _<_ id <-trans , transitive-closure-is-extensive _<_
 
         sym-trans-<-is-~ : SameRel (symmetric-closure (transitive-closure _<_)) _~_
-        sym-trans-<-is-~ = symmetric-closure-is-rel-congruent {ℓ₂ = ℓ ⊔ ℓ₁} {ℓ₃ = ℓ ⊔ ℓ₁} (<-is-transitive-closure-<)
+        sym-trans-<-is-~ = symmetric-closure-is-rel-congruent {ℓ₂ = ℓ ⊔ ℓ₁} {ℓ₃ = ℓ ⊔ ℓ₁} <-is-transitive-closure-<
 
     in _<_ , <-cong , λ sym-trans-comm-same-rel → let
         ~-trans' : Transitive (symmetric-closure (transitive-closure _<_))

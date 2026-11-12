@@ -293,7 +293,7 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         ascending-+ i (sucℕ j) = ⊆RawIdeal-trans (ascending-+ i j) (ascending (j +ℕ i))
 
         ascending-≤ : ∀ i j → i ≤ℕ j → rawChain i ⊆RawIdeal rawChain j
-        ascending-≤ i j i≤j = subst (λ q → rawChain i ⊆RawIdeal rawChain q) (m∸n+n≡m i≤j) (ascending-+ (i) (j ∸ℕ i))
+        ascending-≤ i j i≤j = subst (λ q → rawChain i ⊆RawIdeal rawChain q) (m∸n+n≡m i≤j) (ascending-+ i (j ∸ℕ i))
 
     -- IntegralClosure : RawIdeal α → RawIdeal {!   !}
     -- IntegralClosure I = {!   !}

@@ -41,7 +41,7 @@ module RelationTree {A : Set a} (_~_ : Rel A ℓ) where
     ...                                                     | (q , w~q , q↔x) = q , w~q , branch (x , y , q↔x , x~y , y↔z)
 
     append-first : {x y z : A} → x ~ y → RelTree y z → branch-type x z
-    append-first {x = x} {y} {z} x~y (y↔z) = x , y , leaf x , x~y , y↔z
+    append-first {x = x} {y} {z} x~y y↔z = x , y , leaf x , x~y , y↔z
 
     append-first-branch : {x y z : A} → x ~ y → branch-type y z → branch-type x z
     append-first-branch {x = v} {w} {z} v~w b = append-first v~w (branch b)

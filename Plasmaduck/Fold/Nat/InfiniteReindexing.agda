@@ -856,7 +856,7 @@ sum-all {vec} vec-nonZero n (suc i) =
     sum-lesser-vec vec (all-index-vectors vec-nonZero n) i + inner-sum-vec-of vec (all-index-vectors vec-nonZero n) i   ≡⟨ cong (_+ inner-sum-vec-of vec (all-index-vectors vec-nonZero n) i) (sum-all vec-nonZero n i) ⟩
     n % i-prod + inner-sum-vec-of vec (all-index-vectors vec-nonZero n) i                                               ≡⟨⟩
     n % i-prod + i-prod * all-index-vectors vec-nonZero n i                                                             ≡⟨⟩
-    n % i-prod + i-prod * (n / i-prod % vec i)                          ≡⟨ cong (n % i-prod +_) (*-comm (i-prod) (n / i-prod % vec i)) ⟩
+    n % i-prod + i-prod * (n / i-prod % vec i)                          ≡⟨ cong (n % i-prod +_) (*-comm i-prod (n / i-prod % vec i)) ⟩
     n % i-prod + n / i-prod % vec i * i-prod                            ≡⟨ cong (n % i-prod +_) (*-distribˡ-% i-prod (n / i-prod) (vec i)) ⟩
     n % i-prod + (n / i-prod * i-prod) % (vec i * i-prod)               ≡⟨ cong (n % i-prod +_) (%-congʳ {vec i * i-prod} {si-prod} {n / i-prod * i-prod} thing=si-prod) ⟩
     n % i-prod + n / i-prod * i-prod % si-prod                          ≡⟨ cong (_+ (n / i-prod * i-prod) % si-prod) (≡-sym (m%n%o=m%n n i-prod si-prod (index-head-product-weakly-monotonic {vec} vec-nonZero {i} {suc i} n≤sn))) ⟩

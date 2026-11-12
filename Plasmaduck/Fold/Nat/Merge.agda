@@ -794,27 +794,27 @@ module AddIdentity
     ∙'-id : Identity _≈'_ _∙'_ id
     ∙'-id = (λ {
         (just x) → maybe-rel-just ≈-refl;
-        (nothing) → maybe-rel-nothing
+        nothing → maybe-rel-nothing
         }) , λ {
         (just x) → maybe-rel-just ≈-refl;
-        (nothing) → maybe-rel-nothing
+        nothing → maybe-rel-nothing
         }
 
     assoc-carries : Associative _≈_ _∙_ → Associative _≈'_ _∙'_
     assoc-carries ∙-assoc (just x) (just y) (just z) = maybe-rel-just (∙-assoc x y z)
-    assoc-carries ∙-assoc (just _) (just _) (nothing) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (just _) (nothing) (just _) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (just _) (nothing) (nothing) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (nothing) (just _) (just _) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (nothing) (just _) (nothing) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (nothing) (nothing) (just _) = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc (nothing) (nothing) (nothing) = maybe-rel-nothing
+    assoc-carries ∙-assoc (just _) (just _) nothing = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (just _) nothing (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (just _) nothing nothing = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc nothing (just _) (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc nothing (just _) nothing = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc nothing nothing (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc nothing nothing nothing = maybe-rel-nothing
 
     comm-carries : Commutative _≈_ _∙_ → Commutative _≈'_ _∙'_
     comm-carries ∙-comm (just x) (just y) = maybe-rel-just (∙-comm x y)
-    comm-carries ∙-comm (just _) (nothing) = maybe-rel-just ≈-refl
-    comm-carries ∙-comm (nothing) (just _) = maybe-rel-just ≈-refl
-    comm-carries ∙-comm (nothing) (nothing) = maybe-rel-nothing
+    comm-carries ∙-comm (just _) nothing = maybe-rel-just ≈-refl
+    comm-carries ∙-comm nothing (just _) = maybe-rel-just ≈-refl
+    comm-carries ∙-comm nothing nothing = maybe-rel-nothing
 
 
 -- module _ {a ℓ : Level} (I-setoid : Setoid a ℓ) where

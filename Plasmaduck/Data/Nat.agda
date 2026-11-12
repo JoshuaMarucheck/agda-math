@@ -188,6 +188,13 @@ m<o∧n<p⇒s[m+o]<n+p {m = m} {n = n} m<o n<p = ≤-trans (≤-reflexive (cong 
         p           ∎) n≥p)
     where open ≤-Reasoning
 
+-- not tight
+≤-+-split' : ∀ m n o p → .(m + n ≤ o + p) → (m ≤ o) ⊎ (n ≤ p)
+≤-+-split' m n o p m+n≤o+p with ≤-+-split m n o p m+n≤o+p
+... | cmp₁ m<o = inj₁ (<⇒≤ m<o)
+... | cmp₂ (m=o , _) = inj₁ (≤-reflexive m=o)
+... | cmp₃ n<p = inj₂ (<⇒≤ n<p)
+
 <-+-split : ∀ m n o p → .(m + n < o + p) → m < o ⊎ n < p
 <-+-split m n o p m+n<o+p with ≤-cmp o m
 ... | inj₂ m<o = inj₁ m<o

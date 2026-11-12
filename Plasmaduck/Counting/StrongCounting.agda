@@ -328,7 +328,7 @@ surj⇒inj-fin {n} f f-surj {i} {j} fi=fj with i ≟-fin j
 ...     | no f-inv[fi]≠i = ⊥-elim (surj⇒inj-fin-helper f f-surj {i} {j} fi=fj i≠j f-inv[fi]≠i)
 ...     | yes f-inv[fi]=i = ⊥-elim (surj⇒inj-fin-helper f f-surj {j} {i} (≡-sym fi=fj) (≢-sym i≠j) λ f-inv[fj]=j → i≠j (
     i               ≡⟨ ≡-sym f-inv[fi]=i ⟩
-    f-inv (f i)     ≡⟨ cong f-inv (fi=fj) ⟩
+    f-inv (f i)     ≡⟨ cong f-inv fi=fj ⟩
     f-inv (f j)     ≡⟨ f-inv[fj]=j ⟩
     j               ∎))
     where

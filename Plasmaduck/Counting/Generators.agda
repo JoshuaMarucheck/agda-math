@@ -191,7 +191,7 @@ module CeilToGenerator
         P⇒ceil= : ∀ n → .(P n) → ceil n ≡ n
         P⇒ceil= n P[n] with ceil n ≟ n
         ... | yes ceil[n]=n = ceil[n]=n
-        ... | no ceil[n]≠n = ⊥-elim-irr (PQ-contradict n P[n] (Q-middle n n ≤-refl (≤∧≢⇒< (ceil-forward n) (≢-sym (ceil[n]≠n)))))
+        ... | no ceil[n]≠n = ⊥-elim-irr (PQ-contradict n P[n] (Q-middle n n ≤-refl (≤∧≢⇒< (ceil-forward n) (≢-sym ceil[n]≠n))))
 
         Q⇒ceil> : ∀ n → .(Q n) → ceil n > n
         Q⇒ceil> n Q[n] with ≤-cmp (ceil n) n
@@ -324,7 +324,7 @@ module ExistsToCeil
             suc (n ∸ m)                     ≡⟨ ∸-suc n m m≤n ⟩
             suc n ∸ m                       ≤⟨ ∸-monoˡ-≤ {suc n} {ceil} m n<ceil ⟩
             ceil ∸ m                        ≡⟨⟩
-            ceil-min-value .proj₁ + m ∸ m   ≡⟨ m+n∸n≡m (ceil-min-value .proj₁) (m) ⟩
+            ceil-min-value .proj₁ + m ∸ m   ≡⟨ m+n∸n≡m (ceil-min-value .proj₁) m ⟩
             ceil-min-value .proj₁           ∎)))
             where open ≤-Reasoning
 
