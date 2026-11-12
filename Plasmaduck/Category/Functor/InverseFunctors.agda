@@ -60,12 +60,12 @@ thing-resp {𝔸 = 𝔸} {𝔹} F G G' F' (FF'X=X , FF'f~f) (GG'X=X , GG'f~f) = 
             ((F ∘-Functor G) ∘-Functor G' ∘-Functor F') (id-functor 𝔸))
             ((Function.∣ Function.constᵣ ⟩- (λ r → Functor.rawFunctor r))
             ((F ∘-Functor G) ∘-Functor G' ∘-Functor F') (id-functor 𝔸))
-        fst X = begin 
-            mapₒ F (mapₒ G (mapₒ G' (mapₒ F' X))) ≡⟨ ≡-cong (mapₒ F) (GG'X=X (mapₒ F' X)) ⟩ 
-            mapₒ F (mapₒ F' X)                    ≡⟨ FF'X=X X ⟩ 
-            X                                     ∎ 
+        fst X = begin
+            mapₒ F (mapₒ G (mapₒ G' (mapₒ F' X))) ≡⟨ ≡-cong (mapₒ F) (GG'X=X (mapₒ F' X)) ⟩
+            mapₒ F (mapₒ F' X)                    ≡⟨ FF'X=X X ⟩
+            X                                     ∎
             where open ≡-Reasoning
-        
+
         snd : ≈-morph-map (Category.rawCategory 𝔸) (Category.rawCategory 𝔸)
             (((λ r → Functor.rawFunctor r) Function.-⟨ Function.const ∣)
             ((F ∘-Functor G) ∘-Functor G' ∘-Functor F') (id-functor 𝔸))
@@ -103,23 +103,23 @@ SameCategory-sym {x = 𝔸} {y = 𝔹} (G , F , GF~id , FG~id) = F , G , FG~id ,
 SameCategory-trans : Trans (SameCategory {a} {b} {c} {α} {β} {γ}) (SameCategory {α} {β} {γ} {ℓ₁} {ℓ₂} {ℓ₃}) SameCategory
 SameCategory-trans {i = 𝔸} {j = 𝔹} {k = ℂ} (F , F' , FF'-inv , F'F-inv) (G , G' , GG'-inv , G'G-inv) = G ∘-Functor F , F' ∘-Functor G' , thing-resp G F F' G' GG'-inv FF'-inv , thing-resp F' G' G F F'F-inv G'G-inv
 -- record {
---     mapₒ-inverse = λ X → begin 
+--     mapₒ-inverse = λ X → begin
 --         mapₒ G (mapₒ F (mapₒ F' (mapₒ G' X)))   ≡⟨ ≡-cong (mapₒ G) (FF'-inv .mapₒ-inverse (mapₒ G' X)) ⟩
 --         mapₒ G (mapₒ G' X)                      ≡⟨ GG'-inv .mapₒ-inverse X ⟩
 --         X                                       ∎;
 --     mapₘ-inverse = λ {X} {Y} f → {! begin   !}
---     } , {!   !} 
+--     } , {!   !}
 --     where open ≡-Reasoning
 
---     -- begin 
+--     -- begin
 --     --     mapₒ F' (mapₒ G' (mapₒ G (mapₒ F X)))   ≡⟨ {! G'G-inv .mapₒ-inverse   !} ⟩
---     --     mapₒ F' (mapₒ F X)                      ≡⟨ {!   !} ⟩ 
+--     --     mapₒ F' (mapₒ F X)                      ≡⟨ {!   !} ⟩
 --     --     X                                       ∎
 
 
 -- SameCategory-refl : Reflexive (SameCategory {a} {b} {c})
--- SameCategory-refl {x = 𝔸} = id-functor 𝔸 , id-functor 𝔸 , record { 
---         mapₒ-inverse = λ X → ≡-refl; 
+-- SameCategory-refl {x = 𝔸} = id-functor 𝔸 , id-functor 𝔸 , record {
+--         mapₒ-inverse = λ X → ≡-refl;
 --         mapₘ-inverse = λ f → Category.~-refl 𝔸
 --     } , record {
 --         mapₒ-inverse = λ X → ≡-refl;
@@ -131,16 +131,15 @@ SameCategory-trans {i = 𝔸} {j = 𝔹} {k = ℂ} (F , F' , FF'-inv , F'F-inv) 
 
 -- SameCategory-trans : Trans (SameCategory {a} {b} {c} {α} {β} {γ}) (SameCategory {α} {β} {γ} {ℓ₁} {ℓ₂} {ℓ₃}) SameCategory
 -- SameCategory-trans {i = 𝔸} {j = 𝔹} {k = ℂ} (F , F' , FF'-inv , F'F-inv) (G , G' , GG'-inv , G'G-inv) = G ∘-Functor F , F' ∘-Functor G' , record {
---     mapₒ-inverse = λ X → begin 
+--     mapₒ-inverse = λ X → begin
 --         mapₒ G (mapₒ F (mapₒ F' (mapₒ G' X)))   ≡⟨ ≡-cong (mapₒ G) (FF'-inv .mapₒ-inverse (mapₒ G' X)) ⟩
 --         mapₒ G (mapₒ G' X)                      ≡⟨ GG'-inv .mapₒ-inverse X ⟩
 --         X                                       ∎;
 --     mapₘ-inverse = λ {X} {Y} f → {! begin   !}
---     } , {!   !} 
+--     } , {!   !}
 --     where open ≡-Reasoning
 
---     -- begin 
+--     -- begin
 --     --     mapₒ F' (mapₒ G' (mapₒ G (mapₒ F X)))   ≡⟨ {! G'G-inv .mapₒ-inverse   !} ⟩
---     --     mapₒ F' (mapₒ F X)                      ≡⟨ {!   !} ⟩ 
+--     --     mapₒ F' (mapₒ F X)                      ≡⟨ {!   !} ⟩
 --     --     X                                       ∎
-

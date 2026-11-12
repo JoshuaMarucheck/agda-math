@@ -65,13 +65,13 @@ is-permutation-decomposition n@(suc n') f f-perm k =
     swap-with-list decompose-f k                                        ≡⟨⟩
     foldl (λ acc (i , j) → swp i j ∘ acc) id decompose-f k              ≡⟨ cong-app ((foldl-cong {f = λ acc (i , j) → swp i j ∘ acc} {∣ Function.flip _∘'_ ⟩- uncurry swp} (λ x y → refl) id) decompose-f) k ⟩
     foldl (∣ Function.flip _∘'_ ⟩- uncurry swp) id decompose-f k        ≡⟨ sym (cong-app (foldl-map (Function.flip _∘'_) (uncurry swp) id decompose-f) k) ⟩
-    foldl (Function.flip _∘'_) id (map (uncurry swp) decompose-f) k     ≡⟨ foldl-reverse' f-setoid {_∘'_} ∘-cong ∘-id (λ _ → refl) (map (uncurry swp) decompose-f) k ⟩
+    foldl (Function.flip _∘'_) id (map (uncurry swp) decompose-f) k     ≡⟨ foldl-reverse' f-setoid {_∘'_} ∘-cong ∘-id (λ _ _ _ _ → refl) (map (uncurry swp) decompose-f) k ⟩
     foldl _∘'_ id (reverse (map (uncurry swp) decompose-f)) k           ≡⟨ cong (λ q → foldl _∘'_ id q k) (sym (reverse-map (uncurry swp) decompose-f)) ⟩
     foldl _∘'_ id (map (uncurry swp) (reverse decompose-f)) k           ≡⟨ cong (λ q → foldl _∘'_ id (map (uncurry swp) q) k) (reverse-involutive invert-decompose-f) ⟩
     foldl _∘'_ id (map (uncurry swp) invert-decompose-f) k              ≡⟨ foldl-map-cong f-setoid f-setoid (discrete-setoid (ℕ × ℕ)) {_∘'_} ∘-cong id (uncurry swp) alt-swp (λ { {ij} refl k → swp-via-flip ij k }) invert-decompose-f k ⟩
     foldl _∘'_ id (map (foldl _∘'_ id ∘ map flip ∘ (uncurry flip-swap-list)) invert-decompose-f) k              ≡⟨ cong (λ q → foldl _∘'_ id q k) (map-∘ {g = foldl _∘'_ id ∘ map flip} {uncurry flip-swap-list} invert-decompose-f) ⟩
     foldl _∘'_ id (map (foldl _∘'_ id ∘ map flip) (map (uncurry flip-swap-list) invert-decompose-f)) k          ≡⟨ cong (λ q → foldl _∘'_ id q k) (map-∘ {g = foldl _∘'_ id} {map flip} (map (uncurry flip-swap-list) invert-decompose-f)) ⟩
-    foldl _∘'_ id (map (foldl _∘'_ id) (map (map flip) (map (uncurry flip-swap-list) invert-decompose-f))) k    ≡⟨ foldl-concat f-setoid {_∘'_} ∘-cong {Function.id} ∘-id (λ _ → refl) (map (map flip) ((map (uncurry flip-swap-list) invert-decompose-f))) k ⟩
+    foldl _∘'_ id (map (foldl _∘'_ id) (map (map flip) (map (uncurry flip-swap-list) invert-decompose-f))) k    ≡⟨ foldl-concat f-setoid {_∘'_} ∘-cong {Function.id} ∘-id (λ _ _ _ _ → refl) (map (map flip) ((map (uncurry flip-swap-list) invert-decompose-f))) k ⟩
     foldl _∘'_ id (concat (map (map flip) ((map (uncurry flip-swap-list) invert-decompose-f)))) k               ≡⟨ cong (λ q → foldl _∘'_ id q k) (concat-map {f = flip} ((map (uncurry flip-swap-list) invert-decompose-f))) ⟩
     foldl _∘'_ id (map flip (concat (map (uncurry flip-swap-list) invert-decompose-f))) k                       ≡⟨ cong-app (foldl-map _∘'_ flip id (concat (map (uncurry flip-swap-list) invert-decompose-f))) k ⟩
     foldl (∣ _∘'_ ⟩- flip) id (concat (map (uncurry flip-swap-list) invert-decompose-f)) k                      ≡⟨⟩
@@ -92,8 +92,8 @@ is-permutation-decomposition n@(suc n') f f-perm k =
         ∘-cong : Congruent₂ _≈_ _≈_ _≈_ _∘'_
         ∘-cong {g₁} {g₂} {f₁} {f₂} g₁≈g₂ f₁≈f₂ x = trans (cong g₁ (f₁≈f₂ x)) (g₁≈g₂ (f₂ x))
 
-        ∘-id : Identity f-setoid _∘'_ Function.id
-        ∘-id = (λ {x} x₁ → refl) , (λ {x} x₁ → refl)
+        ∘-id : Identity _≈_ _∘'_ Function.id
+        ∘-id = (λ x x₁ → refl) , (λ x x₁ → refl)
 
         alt-swp = foldl _∘'_ id ∘ map flip ∘ uncurry flip-swap-list
 

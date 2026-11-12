@@ -80,7 +80,7 @@ module _
     HasLeftInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → LeftInverse g }
 
     left-inv→injective : HasLeftInverse → Injective _~_ _≈_ f
-    left-inv→injective (g which-is-cong g-cong , gfx~x) fx≈fy = ~-trans (~-trans (~-sym gfx~x) (g-cong fx≈fy)) gfx~x
+    left-inv→injective (g which-is-cong g-cong , gfx~x) {x} {y} fx≈fy = ~-trans (~-trans (~-sym (gfx~x x)) (g-cong fx≈fy)) (gfx~x y)
 
     HasWeakLeftInverse : Set (a ⊔ b ⊔ ℓ₁)
     HasWeakLeftInverse = Σ (B → A) LeftInverse
@@ -91,13 +91,13 @@ module _
     HasRightInverse = Σ (SetoidFunction B-setoid A-setoid) λ { (g which-is-cong _) → RightInverse g }
 
     right-inv→surjective : HasRightInverse → Surjective _~_ _≈_ f
-    right-inv→surjective (g which-is-cong g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
+    right-inv→surjective (g which-is-cong g-cong , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) (fgy~y y)
 
     weak-right-inv-is-injective : {g : B → A} → RightInverse g → Injective _≈_ _~_ g
     weak-right-inv-is-injective {g} fgy~y {x} {y} gx~gy = begin
-        x       ≈⟨ ≈-sym fgy~y ⟩
+        x       ≈⟨ ≈-sym (fgy~y x) ⟩
         f (g x) ≈⟨ f-cong gx~gy ⟩
-        f (g y) ≈⟨ fgy~y ⟩
+        f (g y) ≈⟨ fgy~y y ⟩
         y       ∎
         where open import Relation.Binary.Reasoning.Setoid B-setoid
 
@@ -109,10 +109,10 @@ module _
     HasWeakRightInverse = Σ (B → A) RightInverse
 
     surjective→weak-right-inv : Surjective _~_ _≈_ f → HasWeakRightInverse
-    surjective→weak-right-inv f-surj = proj₁ ∘ f-surj , λ {y} → f-surj y .proj₂ ~-refl
+    surjective→weak-right-inv f-surj = proj₁ ∘ f-surj , λ y → f-surj y .proj₂ ~-refl
 
     weak-right-inv→surjective : HasWeakRightInverse → Surjective _~_ _≈_ f
-    weak-right-inv→surjective (g , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) fgy~y
+    weak-right-inv→surjective (g , fgy~y) y = g y , λ {z} z~gy → ≈-trans (f-cong z~gy) (fgy~y y)
 
 
     -- This, however, is just right
@@ -123,22 +123,22 @@ module _
     both-inv→bijective (g , left-inv , right-inv) = left-inv→injective  (g , left-inv) , right-inv→surjective (g , right-inv)
 
     bijective→both-inv : Bijective _~_ _≈_ f → HasBothInverse
-    bijective→both-inv (injective , surjective) = g which-is-cong g-cong , (λ {x} →  gfx~x) , (λ {y} → fgy≈y)
+    bijective→both-inv (injective , surjective) = g which-is-cong g-cong , gfx~x , fgy≈y
         where
             g : B → A
             g = proj₁ ∘ surjective
 
-            gfx~x : ∀ {x : A} → g (f x) ~ x
-            gfx~x {x} = injective (surjective (f x) .proj₂ ~-refl)
+            gfx~x : ∀ x → g (f x) ~ x
+            gfx~x x = injective (surjective (f x) .proj₂ ~-refl)
 
-            fgy≈y : ∀ {y : B} → f (g y) ≈ y
-            fgy≈y {y} = surjective y .proj₂ ~-refl
+            fgy≈y : ∀ y → f (g y) ≈ y
+            fgy≈y y = surjective y .proj₂ ~-refl
 
             g-cong : Congruent _≈_ _~_ g
             g-cong {x} {y} x≈y = injective (begin
-                f (g x)   ≈⟨ fgy≈y ⟩
+                f (g x)   ≈⟨ fgy≈y x ⟩
                 x           ≈⟨ x≈y ⟩
-                y           ≈⟨ ≈-sym (fgy≈y) ⟩
+                y           ≈⟨ ≈-sym (fgy≈y y) ⟩
                 f (g y)   ∎)
                 where open import Relation.Binary.Reasoning.Setoid B-setoid
 
@@ -173,9 +173,9 @@ module _
         {f-inv : B → A} →
         RightInverse A-setoid B-setoid f-func f-inv →
         RightInverse A-setoid C-setoid (g-func ∘' f-func) (f-inv ∘ g-inv)
-    RightInverse-conjunct = λ z {f-inv} z₁ {y} →
+    RightInverse-conjunct {g-inv} z {f-inv} z₁ y =
         IsEquivalence.trans (isEquivalence C-setoid)
-        (g-func .SetoidFunction.respects z₁) z
+        (g-func .SetoidFunction.respects (z₁ (g-inv y))) (z y)
 
     HasRightInverse-conjunct :
         HasRightInverse B-setoid C-setoid g-func →

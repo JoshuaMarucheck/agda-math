@@ -11,7 +11,7 @@ open import Data.Nat.Properties using (m∸n+n≡m)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; _←₂_; SetoidFunction; _←_; property-subset-setoid; _which-is-cong₂_; flipSetoidFunction₂)
 open import Plasmaduck.Algebra.Group.Defs using (RawGroup; IsGroup; IsAbelianGroup; Group; opposite-is-abelian-group)
-open import Plasmaduck.Function.Properties using (Associative; Commutative; LeftIdentity; Identity; LeftDistributive; Distributive; LeftAbsorber; RightAbsorber; Absorber; Congruent₂; module SingleOperator)
+open import Plasmaduck.Function.Properties using (Associative; Commutative; LeftIdentity; Identity; module WithEquality; module Helpers; LeftAbsorber; RightAbsorber; Absorber; Congruent₂; module SingleOperator)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty)
 open import Plasmaduck.Util.Case using (case_of_)
 
@@ -389,13 +389,14 @@ record IsGCDDomain (R : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
 record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     open RawRing rawRing
+    open WithEquality _≈_ using (_DistributesOver_)
 
     field
         +-isAbelianGroup : IsAbelianGroup +-raw-group
 
-        one-is-*-id : Identity S _*_ one
-        *-assoc : Associative S _*_
-        *-+-distributive : Distributive S _*_ _+_
+        one-is-*-id : Identity _≈_ _*_ one
+        *-assoc : Associative _≈_ _*_
+        *-+-distributive : _*_ DistributesOver _+_
 
     *-+-left-distributive = *-+-distributive .proj₁
     *-+-right-distributive = *-+-distributive .proj₂
@@ -418,28 +419,28 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
     open import Relation.Binary.Reasoning.Setoid S
     open IsEquivalence (S .Setoid.isEquivalence)
-    open SingleOperator using (assoc-middle)
+    open Helpers using (assoc-middle)
 
     one-unit : IsUnit one
-    one-unit = one , one-is-*-left-id , one-is-*-left-id
+    one-unit = one , one-is-*-left-id one , one-is-*-left-id one
 
     zero-zero : IsZero zero
     zero-zero = refl
 
-    *-assoc-middle : ∀ {w x y z} → (w * x) * (y * z) ≈ w * (x * y) * z
-    *-assoc-middle = assoc-middle S _*_ *-assoc (inj₂ (*-cong refl))
+    *-assoc-middle : ∀ w x y z → (w * x) * (y * z) ≈ w * (x * y) * z
+    *-assoc-middle = assoc-middle S _*_ *-assoc (inj₂ (λ _ → *-cong refl))
 
-    +-assoc-middle : ∀ {w x y z} → (w + x) + (y + z) ≈ w + (x + y) + z
-    +-assoc-middle = assoc-middle S _+_ +-assoc (inj₂ (+-cong refl))
+    +-assoc-middle : ∀ w x y z → (w + x) + (y + z) ≈ w + (x + y) + z
+    +-assoc-middle = assoc-middle S _+_ +-assoc (inj₂ (λ _ → +-cong refl))
 
     unique-inverse : {x₁ x₂ y₁ y₂ : Carrier} → x₁ ≈ x₂ → AreInverses x₁ y₁ → AreInverses x₂ y₂ → y₁ ≈ y₂
     unique-inverse {x₁} {x₂} {y₁} {y₂} x₁≈x₂ (x₁*y₁=1 , y₁*x₁=1) (x₂*y₂=1 , y₂*x₂=1) = begin
-        y₁              ≈⟨ sym one-is-*-right-id ⟩
+        y₁              ≈⟨ sym (one-is-*-right-id y₁) ⟩
         y₁ * one        ≈⟨ *-cong refl (sym x₂*y₂=1) ⟩
-        y₁ * (x₂ * y₂)  ≈⟨ *-assoc ⟩
+        y₁ * (x₂ * y₂)  ≈⟨ sym (*-assoc y₁ x₂ y₂) ⟩
         (y₁ * x₂) * y₂  ≈⟨ *-cong (*-cong refl (sym x₁≈x₂)) refl ⟩
         (y₁ * x₁) * y₂  ≈⟨ *-cong y₁*x₁=1 refl ⟩
-        one * y₂        ≈⟨ one-is-*-left-id ⟩
+        one * y₂        ≈⟨ one-is-*-left-id y₂ ⟩
         y₂              ∎
 
     -- The group of units of this ring
@@ -454,17 +455,17 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         CarrierSetoid = S*;
         op = record {
             func = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) (y , y⁻¹ , y*y⁻¹=1 , y⁻¹*y=1) → (x * y , y⁻¹ * x⁻¹ , (begin
-                (x * y) * (y⁻¹ * x⁻¹)   ≈⟨ sym *-assoc ⟩
-                x * (y * (y⁻¹ * x⁻¹))   ≈⟨ *-cong refl *-assoc ⟩
+                (x * y) * (y⁻¹ * x⁻¹)   ≈⟨ *-assoc x y (y⁻¹ * x⁻¹) ⟩
+                x * (y * (y⁻¹ * x⁻¹))   ≈⟨ *-cong refl (sym (*-assoc y y⁻¹ x⁻¹)) ⟩
                 x * ((y * y⁻¹) * x⁻¹)   ≈⟨ *-cong refl (*-cong y*y⁻¹=1 refl) ⟩
-                x * (one * x⁻¹)         ≈⟨ *-cong refl one-is-*-left-id ⟩
+                x * (one * x⁻¹)         ≈⟨ *-cong refl (one-is-*-left-id x⁻¹) ⟩
                 x * x⁻¹                 ≈⟨ x*x⁻¹=1 ⟩
                 one                     ∎
                 ) , (begin
-                (y⁻¹ * x⁻¹) * (x * y)   ≈⟨ sym *-assoc ⟩
-                y⁻¹ * (x⁻¹ * (x * y))   ≈⟨ *-cong refl *-assoc ⟩
+                (y⁻¹ * x⁻¹) * (x * y)   ≈⟨ *-assoc y⁻¹ x⁻¹ (x * y) ⟩
+                y⁻¹ * (x⁻¹ * (x * y))   ≈⟨ *-cong refl (sym (*-assoc x⁻¹ x y)) ⟩
                 y⁻¹ * ((x⁻¹ * x) * y)   ≈⟨ *-cong refl (*-cong x⁻¹*x=1 refl) ⟩
-                y⁻¹ * (one * y)         ≈⟨ *-cong refl one-is-*-left-id ⟩
+                y⁻¹ * (one * y)         ≈⟨ *-cong refl (one-is-*-left-id y) ⟩
                 y⁻¹ * y                 ≈⟨ y⁻¹*y=1 ⟩
                 one                     ∎
                 ));
@@ -474,14 +475,14 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
             func = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) → x⁻¹ , x , x⁻¹*x=1 , x*x⁻¹=1;
             respects = λ {(x₁ , x₁⁻¹ , x₁-inv)} {(x₂ , x₂⁻¹ , x₂-inv)} x₁=x₂ → unique-inverse x₁=x₂ x₁-inv x₂-inv
             };
-        id = one , one , one-is-*-id .proj₁ , one-is-*-id .proj₁
+        id = one , one , one-is-*-id .proj₁ one , one-is-*-id .proj₁ one
         }
 
     S*-isGroup : IsGroup S*-rawGroup
     S*-isGroup = record {
-        id-is-left-id = λ {(x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1)} → one-is-*-left-id;
-        inv-is-left-inv = λ {(x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1)} → x⁻¹*x=1;
-        assoc = *-assoc
+        id-is-left-id = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) → one-is-*-left-id x;
+        inv-is-left-inv = λ (x , x⁻¹ , x*x⁻¹=1 , x⁻¹*x=1) → x⁻¹*x=1;
+        assoc = λ (x , _) (y , _) (z , _) → *-assoc x y z
         }
 
     S*-group : Group (c ⊔ ℓ) ℓ
@@ -490,82 +491,81 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         isGroup = S*-isGroup
         }
 
-
     ^-+ℕ-*-distributivity : ∀ (x : Carrier) (m n : ℕ) → x ^ (m +ℕ n) ≈ x ^ m * x ^ n
-    ^-+ℕ-*-distributivity x zeroℕ n = sym one-is-*-left-id
+    ^-+ℕ-*-distributivity x zeroℕ n = sym (one-is-*-left-id (x ^ n))
     ^-+ℕ-*-distributivity x (sucℕ m) n = begin
         x ^ (sucℕ m +ℕ n)       ≈⟨ refl ⟩
         x * x ^ (m +ℕ n)        ≈⟨ *-cong refl (^-+ℕ-*-distributivity x m n) ⟩
-        x * (x ^ m * x ^ n)     ≈⟨ *-assoc ⟩
+        x * (x ^ m * x ^ n)     ≈⟨ sym (*-assoc x (x ^ m) (x ^ n)) ⟩
         (x * x ^ m) * x ^ n     ≈⟨ refl ⟩
         x ^ sucℕ m * x ^ n      ∎
 
     inverse→left-cancellative : {x y : Carrier} → AreSidedInverses x y → ∀ {v w} → y * v ≈ y * w → v ≈ w
     inverse→left-cancellative {x} {y} x*y=1 {v} {w} y*v=y*w = begin
-        v               ≈⟨ sym one-is-*-left-id ⟩
+        v               ≈⟨ sym (one-is-*-left-id v) ⟩
         one * v         ≈⟨ *-cong (sym x*y=1) refl ⟩
-        (x * y) * v     ≈⟨ sym *-assoc ⟩
+        (x * y) * v     ≈⟨ *-assoc x y v ⟩
         x * (y * v)     ≈⟨ *-cong refl y*v=y*w ⟩
-        x * (y * w)     ≈⟨ *-assoc ⟩
+        x * (y * w)     ≈⟨ sym (*-assoc x y w) ⟩
         (x * y) * w     ≈⟨ *-cong x*y=1 refl ⟩
-        one * w         ≈⟨ one-is-*-left-id ⟩
+        one * w         ≈⟨ one-is-*-left-id w ⟩
         w               ∎
 
     swap-inverse : {x y : Carrier} → AreInverses x y → AreInverses y x
     swap-inverse {x} {y} (x*y=1 , y*x=1) = y*x=1 , x*y=1
 
 
-    zero-is-*-left-absorber : LeftAbsorber S _*_ zero
-    zero-is-*-left-absorber {x} = begin
-        zero * x                        ≈⟨ sym zero-is-+-right-id ⟩
-        zero * x + zero                 ≈⟨ +-cong refl (sym neg-is-+-right-inv) ⟩
-        zero * x + (one * x ∸ one * x)  ≈⟨ +-assoc ⟩
-        (zero * x + one * x) ∸ one * x  ≈⟨ ∸-cong (sym *-+-right-distributive) refl ⟩
-        (zero + one) * x ∸ one * x      ≈⟨ ∸-cong (*-cong zero-is-+-left-id refl) refl ⟩
-        one * x ∸ one * x               ≈⟨ neg-is-+-right-inv ⟩
+    zero-is-*-left-absorber : LeftAbsorber _≈_ _*_ zero
+    zero-is-*-left-absorber x = begin
+        zero * x                        ≈⟨ sym (zero-is-+-right-id (zero * x)) ⟩
+        zero * x + zero                 ≈⟨ +-cong refl (sym (neg-is-+-right-inv (one * x))) ⟩
+        zero * x + (one * x ∸ one * x)  ≈⟨ sym (+-assoc (zero * x) (one * x) (- (one * x))) ⟩
+        (zero * x + one * x) ∸ one * x  ≈⟨ ∸-cong (sym (*-+-right-distributive x zero one)) refl ⟩
+        (zero + one) * x ∸ one * x      ≈⟨ ∸-cong (*-cong (zero-is-+-left-id one) refl) refl ⟩
+        one * x ∸ one * x               ≈⟨ neg-is-+-right-inv (one * x) ⟩
         zero                            ∎
 
-    zero-is-*-right-absorber : RightAbsorber S _*_ zero
-    zero-is-*-right-absorber {x} = begin
-        x * zero                        ≈⟨ sym zero-is-+-right-id ⟩
-        x * zero + zero                 ≈⟨ +-cong refl (sym neg-is-+-right-inv) ⟩
-        x * zero + (x * one ∸ x * one)  ≈⟨ +-assoc ⟩
-        (x * zero + x * one) ∸ x * one  ≈⟨ ∸-cong (sym *-+-left-distributive) refl ⟩
-        x * (zero + one) ∸ x * one      ≈⟨ ∸-cong (*-cong refl zero-is-+-left-id) refl ⟩
-        x * one ∸ x * one               ≈⟨ neg-is-+-right-inv ⟩
+    zero-is-*-right-absorber : RightAbsorber _≈_ _*_ zero
+    zero-is-*-right-absorber x = begin
+        x * zero                        ≈⟨ sym (zero-is-+-right-id (x * zero)) ⟩
+        x * zero + zero                 ≈⟨ +-cong refl (sym (neg-is-+-right-inv (x * one))) ⟩
+        x * zero + (x * one ∸ x * one)  ≈⟨ sym (+-assoc (x * zero) (x * one) (- (x * one))) ⟩
+        (x * zero + x * one) ∸ x * one  ≈⟨ ∸-cong (sym (*-+-left-distributive x zero one)) refl ⟩
+        x * (zero + one) ∸ x * one      ≈⟨ ∸-cong (*-cong refl (zero-is-+-left-id one)) refl ⟩
+        x * one ∸ x * one               ≈⟨ neg-is-+-right-inv (x * one) ⟩
         zero                            ∎
 
-    zero-is-*-absorber : Absorber S _*_ zero
+    zero-is-*-absorber : Absorber _≈_ _*_ zero
     zero-is-*-absorber = zero-is-*-left-absorber , zero-is-*-right-absorber
 
     zero-is-*-strong-absorber : ∀ {x y} → IsZero x ⊎ IsZero y → IsZero (x * y)
     zero-is-*-strong-absorber {x} {y} (inj₁ x≈0) = begin
         x * y       ≈⟨ *-cong x≈0 refl ⟩
-        zero * y    ≈⟨ zero-is-*-left-absorber ⟩
+        zero * y    ≈⟨ zero-is-*-left-absorber y ⟩
         zero        ∎
     zero-is-*-strong-absorber {x} {y} (inj₂ y≈0) = begin
         x * y       ≈⟨ *-cong refl y≈0 ⟩
-        x * zero    ≈⟨ zero-is-*-right-absorber ⟩
+        x * zero    ≈⟨ zero-is-*-right-absorber x ⟩
         zero        ∎
 
 
     neg-one-*-is-neg : ∀ {x} → (- one) * x ≈ - x
     neg-one-*-is-neg {x} = begin
-        (- one) * x                     ≈⟨ sym zero-is-+-right-id ⟩
-        (- one) * x + zero              ≈⟨ +-cong refl (sym neg-is-+-right-inv) ⟩
-        (- one) * x + (x ∸ x)           ≈⟨ +-assoc ⟩
-        ((- one) * x + x) ∸ x           ≈⟨ ∸-cong (+-cong refl (sym one-is-*-left-id)) refl ⟩
-        ((- one) * x + one * x) ∸ x     ≈⟨ ∸-cong (sym *-+-right-distributive) refl ⟩
-        ((- one + one) * x) ∸ x         ≈⟨ ∸-cong (*-cong neg-is-+-left-inv refl) refl ⟩
-        (zero * x) ∸ x                  ≈⟨ ∸-cong zero-is-*-left-absorber refl ⟩
-        zero ∸ x                        ≈⟨ zero-is-+-left-id ⟩
+        (- one) * x                     ≈⟨ sym (zero-is-+-right-id ((- one) * x)) ⟩
+        (- one) * x + zero              ≈⟨ +-cong refl (sym (neg-is-+-right-inv x)) ⟩
+        (- one) * x + (x ∸ x)           ≈⟨ sym (+-assoc ((- one) * x) x (- x)) ⟩
+        ((- one) * x + x) ∸ x           ≈⟨ ∸-cong (+-cong refl (sym (one-is-*-left-id x))) refl ⟩
+        ((- one) * x + one * x) ∸ x     ≈⟨ ∸-cong (sym (*-+-right-distributive x (- one) one)) refl ⟩
+        ((- one + one) * x) ∸ x         ≈⟨ ∸-cong (*-cong (neg-is-+-left-inv one) refl) refl ⟩
+        (zero * x) ∸ x                  ≈⟨ ∸-cong (zero-is-*-left-absorber x) refl ⟩
+        zero ∸ x                        ≈⟨ zero-is-+-left-id (- x) ⟩
         - x                             ∎
 
     *-sidedInverses : ∀ {x⁻¹ x y⁻¹ y} → AreSidedInverses x⁻¹ x → AreSidedInverses y⁻¹ y → AreSidedInverses (y⁻¹ * x⁻¹) (x * y)
     *-sidedInverses {x⁻¹} {x} {y⁻¹} {y} x⁻¹x=1 y⁻¹y=1 = begin
-        (y⁻¹ * x⁻¹) * (x * y)   ≈⟨ *-assoc-middle ⟩
+        (y⁻¹ * x⁻¹) * (x * y)   ≈⟨ *-assoc-middle y⁻¹ x⁻¹ x y ⟩
         y⁻¹ * (x⁻¹ * x) * y     ≈⟨ *-cong (*-cong refl x⁻¹x=1) refl ⟩
-        y⁻¹ * one * y           ≈⟨ *-cong one-is-*-right-id refl ⟩
+        y⁻¹ * one * y           ≈⟨ *-cong (one-is-*-right-id y⁻¹) refl ⟩
         y⁻¹ * y                 ≈⟨ y⁻¹y=1 ⟩
         one                     ∎
 
@@ -574,28 +574,28 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
     sidedInverse-idem : ∀ {x y} → AreSidedInverses x y → IsIdempotent (y * x)
     sidedInverse-idem {x} {y} xy=1 = begin
-        (y * x) * (y * x)   ≈⟨ *-assoc-middle ⟩
+        (y * x) * (y * x)   ≈⟨ *-assoc-middle y x y x ⟩
         y * (x * y) * x     ≈⟨ *-cong (*-cong refl xy=1) refl ⟩
-        y * one * x         ≈⟨ *-cong one-is-*-right-id refl ⟩
+        y * one * x         ≈⟨ *-cong (one-is-*-right-id y) refl ⟩
         y * x               ∎
 
     inject-ℕ-respects-+ : ∀ m n → inject-ℕ (m +ℕ n) ≈ inject-ℕ m + inject-ℕ n
-    inject-ℕ-respects-+ zeroℕ n = sym zero-is-+-left-id
+    inject-ℕ-respects-+ zeroℕ n = sym (zero-is-+-left-id (inject-ℕ n))
     inject-ℕ-respects-+ (sucℕ m) n = begin
         inject-ℕ (sucℕ m +ℕ n)              ≈⟨ refl ⟩
         one + inject-ℕ (m +ℕ n)             ≈⟨ +-cong refl (inject-ℕ-respects-+ m n) ⟩
-        one + (inject-ℕ m + inject-ℕ n)     ≈⟨ +-assoc ⟩
+        one + (inject-ℕ m + inject-ℕ n)     ≈⟨ sym (+-assoc one (inject-ℕ m) (inject-ℕ n)) ⟩
         (one + inject-ℕ m) + inject-ℕ n     ≈⟨ refl ⟩
         inject-ℕ (sucℕ m) + inject-ℕ n      ∎
 
     inject-ℕ-respects-* : ∀ m n → inject-ℕ (m *ℕ n) ≈ inject-ℕ m * inject-ℕ n
-    inject-ℕ-respects-* zeroℕ n = sym zero-is-*-left-absorber
+    inject-ℕ-respects-* zeroℕ n = sym (zero-is-*-left-absorber (inject-ℕ n))
     inject-ℕ-respects-* (sucℕ m) n = begin
         inject-ℕ (sucℕ m *ℕ n)                      ≈⟨ refl ⟩
         inject-ℕ (n +ℕ m *ℕ n)                      ≈⟨ inject-ℕ-respects-+ n (m *ℕ n) ⟩
         inject-ℕ n + inject-ℕ (m *ℕ n)              ≈⟨ +-cong refl (inject-ℕ-respects-* m n) ⟩
-        inject-ℕ n + inject-ℕ m * inject-ℕ n        ≈⟨ +-cong (sym one-is-*-left-id) refl ⟩
-        one * inject-ℕ n + inject-ℕ m * inject-ℕ n  ≈⟨ sym *-+-right-distributive ⟩
+        inject-ℕ n + inject-ℕ m * inject-ℕ n        ≈⟨ +-cong (sym (one-is-*-left-id (inject-ℕ n))) refl ⟩
+        one * inject-ℕ n + inject-ℕ m * inject-ℕ n  ≈⟨ sym (*-+-right-distributive (inject-ℕ n) one (inject-ℕ m)) ⟩
         (one + inject-ℕ m) * inject-ℕ n             ≈⟨ refl ⟩
         inject-ℕ (sucℕ m) * inject-ℕ n              ∎
 
@@ -605,26 +605,26 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
     any-nonzero-implies-one-not-zero : ∀ {x} → IsNonzero x → IsNonzero one
     any-nonzero-implies-one-not-zero {x} x≄0 1≈0 = x≄0 (begin
-        x           ≈⟨ sym one-is-*-left-id ⟩
+        x           ≈⟨ sym (one-is-*-left-id x) ⟩
         one * x     ≈⟨ *-cong 1≈0 refl ⟩
-        zero * x    ≈⟨ zero-is-*-left-absorber ⟩
+        zero * x    ≈⟨ zero-is-*-left-absorber x ⟩
         zero        ∎)
 
     LeftZeroDiv[x]∧x∣1⇒⊥ : ∀ {x} → IsLeftZeroDivisor x → x ∣ one → ⊥
     LeftZeroDiv[x]∧x∣1⇒⊥ {x} (y , y-nonZero , xy=0) (divides x⁻¹ 1=x⁻¹x) = y-nonZero (begin
-        y               ≈⟨ sym one-is-*-left-id ⟩
+        y               ≈⟨ sym (one-is-*-left-id y) ⟩
         one * y         ≈⟨ *-cong 1=x⁻¹x refl ⟩
-        (x⁻¹ * x) * y   ≈⟨ sym *-assoc ⟩
+        (x⁻¹ * x) * y   ≈⟨ *-assoc x⁻¹ x y ⟩
         x⁻¹ * (x * y)   ≈⟨ *-cong refl xy=0 ⟩
-        x⁻¹ * zero      ≈⟨ zero-is-*-right-absorber ⟩
+        x⁻¹ * zero      ≈⟨ zero-is-*-right-absorber x⁻¹ ⟩
         zero            ∎)
 
 
     ~-reflexive : _≈_ Relation.Binary.⇒ _~_
-    ~-reflexive x≈y = record {
+    ~-reflexive {x} {y} x≈y = record {
         u = one;
-        isUnit = one , one-is-*-left-id , one-is-*-left-id;
-        equality = trans x≈y (sym one-is-*-left-id)
+        isUnit = one , one-is-*-left-id one , one-is-*-left-id one;
+        equality = trans x≈y (sym (one-is-*-left-id y))
         }
 
     ~-refl : Reflexive _~_
@@ -635,9 +635,9 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         u = v;
         isUnit = u , isUnit .proj₂ .proj₂ , isUnit .proj₂ .proj₁;
         equality = begin
-            y               ≈⟨ sym one-is-*-left-id ⟩
+            y               ≈⟨ sym (one-is-*-left-id y) ⟩
             one * y         ≈⟨ *-cong (sym (isUnit .proj₂ .proj₂)) refl ⟩
-            (v * u) * y     ≈⟨ sym *-assoc ⟩
+            (v * u) * y     ≈⟨ *-assoc v u y ⟩
             v * (u * y)     ≈⟨ *-cong refl (sym equality) ⟩
             v * x           ∎
         }
@@ -652,7 +652,7 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         equality = begin
             x               ≈⟨ xyEquality ⟩
             u * y           ≈⟨ *-cong refl yzEquality ⟩
-            u * (v * z)     ≈⟨ *-assoc ⟩
+            u * (v * z)     ≈⟨ sym (*-assoc u v z) ⟩
             (u * v) * z     ∎
         }
         where
@@ -671,11 +671,11 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     ∣-trans {i} {j} {k} (divides m j≈m*i) (divides n k≈n*j) = divides (n * m) (begin
         k               ≈⟨ k≈n*j ⟩
         n * j           ≈⟨ *-cong refl j≈m*i ⟩
-        n * (m * i)     ≈⟨ *-assoc ⟩
+        n * (m * i)     ≈⟨ sym (*-assoc n m i) ⟩
         (n * m) * i     ∎)
 
     ∣-refl : Reflexive _∣_
-    ∣-refl = divides one (sym one-is-*-left-id)
+    ∣-refl {x} = divides one (sym (one-is-*-left-id x))
 
     ∣-reflexive-∥ : _∥_ Relation.Binary.⇒ _∣_
     ∣-reflexive-∥ = proj₁
@@ -685,16 +685,16 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
         where y~x = ~-sym x~y
 
     ∣-max : ∀ {x} → x ∣ zero
-    ∣-max = divides zero (sym zero-is-*-left-absorber)
+    ∣-max {x} = divides zero (sym (zero-is-*-left-absorber x))
 
     ∣-min : ∀ {x} → one ∣ x
-    ∣-min {x} = divides x (sym one-is-*-right-id)
+    ∣-min {x} = divides x (sym (one-is-*-right-id x))
 
     ∣-unit-divides-all : ∀ {x} → IsUnit x → ∀ {y} → x ∣ y
     ∣-unit-divides-all {x} (x⁻¹ , _ , x⁻¹*x≈1) {y} = divides (y * x⁻¹) (begin
-        y               ≈⟨ sym one-is-*-right-id ⟩
+        y               ≈⟨ sym (one-is-*-right-id y) ⟩
         y * one         ≈⟨ *-cong refl (sym x⁻¹*x≈1) ⟩
-        y * (x⁻¹ * x)   ≈⟨ *-assoc ⟩
+        y * (x⁻¹ * x)   ≈⟨ sym (*-assoc y x⁻¹ x) ⟩
         (y * x⁻¹) * x   ∎)
 
     ∥-refl : Reflexive _∥_
@@ -841,17 +841,18 @@ record GCDDomain (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 ---------------------
 
 IsCommutative : (rawRing : RawRing c ℓ) → Set (c ⊔ ℓ)
-IsCommutative rawRing = Commutative S _*_
+IsCommutative rawRing = Commutative _≈_ _*_
     where open RawRing rawRing
 
 -- Reduced the proofs needed by using commutativity of *
 record IsCommutativeRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     open RawRing rawRing
+    open WithEquality (S .Setoid._≈_) using (_DistributesOverˡ_)
     field
         +-isAbelianGroup : IsAbelianGroup +-raw-group
-        one-is-*-left-id : LeftIdentity S _*_ one
-        *-assoc : Associative S _*_
-        *-+-left-distributive : LeftDistributive S _*_ _+_
+        one-is-*-left-id : LeftIdentity _≈_ _*_ one
+        *-assoc : Associative _≈_ _*_
+        *-+-left-distributive : _*_ DistributesOverˡ _+_
         *-comm : IsCommutative rawRing
 
     open import Relation.Binary.Reasoning.Setoid S
@@ -860,16 +861,16 @@ record IsCommutativeRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     isRing : IsRing rawRing
     isRing = record {
         +-isAbelianGroup = +-isAbelianGroup;
-        one-is-*-id = one-is-*-left-id , (λ {x} → begin
-            x * one     ≈⟨ *-comm ⟩
-            one * x     ≈⟨ one-is-*-left-id ⟩
+        one-is-*-id = one-is-*-left-id , (λ x → begin
+            x * one     ≈⟨ *-comm x one ⟩
+            one * x     ≈⟨ one-is-*-left-id x ⟩
             x           ∎);
         *-assoc = *-assoc;
-        *-+-distributive = *-+-left-distributive , λ {x} {y} {z} → begin
-            (x + y) * z     ≈⟨ *-comm ⟩
-            z * (x + y)     ≈⟨ *-+-left-distributive ⟩
-            z * x + z * y   ≈⟨ +-cong *-comm *-comm ⟩
-            x * z + y * z   ∎
+        *-+-distributive = *-+-left-distributive , (λ x y z → begin
+            (y + z) * x     ≈⟨ *-comm (y + z) x ⟩
+            x * (y + z)     ≈⟨ *-+-left-distributive x y z ⟩
+            x * y + x * z   ≈⟨ +-cong (*-comm x y) (*-comm x z) ⟩
+            y * x + z * x   ∎)
         }
     open IsRing isRing public hiding (one-is-*-left-id; *-+-left-distributive)
 
@@ -931,8 +932,8 @@ record IsField (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     inverse-is-not-zero : ∀ {x : NonzeroCarrier} → IsNonzero (x ⁻¹')
     inverse-is-not-zero {x , x≄0} x⁻¹≈0 = any-nonzero-implies-one-not-zero x≄0 (begin
         one                 ≈⟨ sym (inv-gives-inverse {x , x≄0} .proj₁) ⟩
-        x * (x , x≄0) ⁻¹'    ≈⟨ *-cong refl x⁻¹≈0 ⟩
-        x * zero            ≈⟨ zero-is-*-right-absorber ⟩
+        x * (x , x≄0) ⁻¹'   ≈⟨ *-cong refl x⁻¹≈0 ⟩
+        x * zero            ≈⟨ zero-is-*-right-absorber x ⟩
         zero                ∎)
 
     _⁻¹ : NonzeroCarrier → NonzeroCarrier
@@ -972,8 +973,8 @@ opposite-is-ring {rawRing = rawRing} isRing =
     record {
         +-isAbelianGroup = opposite-is-abelian-group +-isAbelianGroup;
         one-is-*-id = one-is-*-id .proj₂ , one-is-*-id .proj₁;
-        *-assoc = sym *-assoc;
-        *-+-distributive = (λ {x} {y} {z} → *-+-distributive .proj₂) , (λ {x} {y} {z} → *-+-distributive .proj₁)
+        *-assoc = λ x y z → sym (*-assoc z y x);
+        *-+-distributive = (λ x y z → *-+-distributive .proj₂ x z y) , (λ x y z → *-+-distributive .proj₁ x z y)
         }
     where
         open RawRing rawRing

@@ -147,7 +147,7 @@ toℕ-bijective = both-inv→bijective (discrete-setoid (Fin mod)) NatModSetoid 
             cycle j                         ∎
 
         cycle-inject : RightInverse _≃_ _≡_ cycle inject
-        cycle-inject {i} =
+        cycle-inject i =
             cycle (inject i)            ≡⟨⟩
             fromℕ< {toℕ i % mod} _      ≡⟨ fromℕ<-cong (toℕ i % mod) (toℕ i) {mod} (m<n⇒m%n≡m {mod} {toℕ i} (toℕ<n i)) _ (toℕ<n i) ⟩
             fromℕ< {toℕ i} (toℕ<n i)    ≡⟨ fromℕ<-toℕ i (toℕ<n i) ⟩
@@ -157,7 +157,7 @@ toℕ-bijective = both-inv→bijective (discrete-setoid (Fin mod)) NatModSetoid 
                 i<mod = toℕ<n i
 
         inject-cycle : LeftInverse _≃_ _≡_ cycle inject
-        inject-cycle {n} =
+        inject-cycle n =
             inject (cycle n) % mod          ≡⟨⟩
             toℕ (fromℕ< {n % mod} _) % mod  ≡⟨ %-congˡ (toℕ-fromℕ< {n % mod} {mod} (m%n<n n mod)) ⟩
             n % mod % mod                   ≡⟨ m%n%n≡m%n n mod ⟩
@@ -241,7 +241,7 @@ minus-func = record {
 
 ^-cong : Congruent₂ _≃_ _≡_ _≃_ _^_
 ^-cong {m₁} {m₂} {zero} m₁≃m₂ ≡-refl = ≃-refl
-^-cong {m₁} {m₂} {suc n} m₁≃m₂ ≡-refl = *-cong m₁≃m₂ (^-cong {y₁ = n} m₁≃m₂ ≡-refl)
+^-cong {m₁} {m₂} {suc n} m₁≃m₂ ≡-refl = *-cong m₁≃m₂ (^-cong {u = n} m₁≃m₂ ≡-refl)
 
 ^-func : SetoidFunction₂ NatModSetoid (discrete-setoid ℕ) NatModSetoid
 ^-func = record {
@@ -318,11 +318,11 @@ minus-reverse m n = +-comm m (neg n)
         };
     isAbelianGroup = record {
         isGroup = record {
-            id-is-left-id = λ {x} → ≡-refl;
-            inv-is-left-inv = λ {x} → ≃-trans (≃-sym (minus-reverse x x)) (m-m≃0 x);
-            assoc = λ {m} {n} {o} → ≃-sym (+-assoc m n o)
+            id-is-left-id = λ x → ≡-refl;
+            inv-is-left-inv = λ x → ≃-trans (≃-sym (minus-reverse x x)) (m-m≃0 x);
+            assoc = +-assoc
             };
-        abelian = λ {m} {n} → +-comm m n
+        abelian = +-comm
         }
     }
 
@@ -340,11 +340,10 @@ open AbelianGroup +-group using () renaming (
     ) public
 
 *-identity : Identity 1 _*_
-*-identity = (λ x → +-identity .proj₂ {x}) , (λ x → ≃-trans (*-comm x 1) (+-identity .proj₂ {x}))
+*-identity = (λ x → +-identity .proj₂ x) , (λ x → ≃-trans (*-comm x 1) (+-identity .proj₂ x))
 
 m%mod≃m : ∀ m → m % mod ≃ m
 m%mod≃m m = m%n%n≡m%n m mod
-
 
 minus-bound : ∀ m n → .(m < n) → .(n ≤ mod) → m + (mod ∸ n) < mod
 minus-bound m n m<n n≤mod = begin

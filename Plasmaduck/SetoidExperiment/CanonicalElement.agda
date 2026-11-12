@@ -59,5 +59,3 @@ canonize-cong₂ : Congruent _~_ _~~_ canonize
 canonize-cong₂ {x = x} {y} x~~y = begin
     canonize x  ≈⟨ x~~y ⟩
     canonize y  ∎
-
-

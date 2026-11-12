@@ -110,11 +110,11 @@ module _ {n : ℕ} where
         _≤?_ = _≤?_
         }
 
-realize-falsify : (realize ∘ falsify) i ≡ i
-realize-falsify {i = i} = fromℕ<-toℕ i (toℕ<n i)
+realize-falsify : ∀ (i : Fin n) → (realize ∘ falsify) i ≡ i
+realize-falsify i = fromℕ<-toℕ i (toℕ<n i)
 
-falsify-realize : ∀ {x : FakeFin n} → (falsify ∘ realize) x ≡ x
-falsify-realize {x = m , squash m<n} = Σ≡ (toℕ-fromℕ< m<n) (squash-irrelevant _ _)
+falsify-realize : ∀ (x : FakeFin n) → (falsify ∘ realize) x ≡ x
+falsify-realize (m , squash m<n) = Σ≡ (toℕ-fromℕ< m<n) (squash-irrelevant _ _)
 
 falsify-bijective : Bijective _≡_ _≡_ (falsify {n})
 falsify-bijective {n = n} = both-inv→bijective (discrete-setoid (Fin n)) (discrete-setoid (FakeFin n)) (falsify {n} which-is-cong from-discrete-cong (discrete-setoid (FakeFin n)) (falsify {n})) ((realize which-is-cong from-discrete-cong (discrete-setoid (Fin n)) realize) , realize-falsify , falsify-realize)
@@ -135,4 +135,3 @@ realize-bijection {n = n} = record {
     cong = from-discrete-cong (discrete-setoid (Fin n)) (realize {n});
     bijective = realize-bijective
     }
-

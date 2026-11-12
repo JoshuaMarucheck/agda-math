@@ -15,7 +15,7 @@ open import Plasmaduck.Relation.Operator using (transitive-closure-fold)
 open import Plasmaduck.Relation.RelationVector using (module RelationTree; module RelationList; module Flattening; module Mapping; tree→list; branch→cons; cons→branch; trans-flatten-branch; PairwiseRelationList; PairwiseRelationListCons; []; _∷_; init; cons; tree→list-branch→cons-same)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Function.Properties using (Congruent₂)
-open import Plasmaduck.Category.Category using (RawCategory; Category; ExtraRawFunctor; Functor; module CategoryProperties; module MakeFunctor; module MakeFunctor')
+open import Plasmaduck.Category.Category using (RawCategory; Category; ExtraRawFunctor; Functor; module ExtraRawFunctorProperties; module CategoryProperties; module MakeFunctor; module MakeFunctor')
 
 
 
@@ -249,8 +249,8 @@ module ExampleCategories where
         P : Set _
         -- P = inj' m₁₃ ∘ₘ inj' m₀₁ ~ inj' m₂₃ ∘ₘ inj' m₀₂
         P = mapₘ (inj m₁₃ ∘₁ inj m₀₁) ~ mapₘ (inj m₂₃ ∘₁ inj m₀₂)
-        thing : MakeFunctor'.IsCongruent (commutative-square .Category.rawCategory) Target mapₒ mapₘ → P
-        thing cong = cong {zero} {(suc ∘ suc ∘ suc) zero} {x = inj m₁₃ ∘₁ inj m₀₁} {y = inj m₂₃ ∘₁ inj m₀₂} tt
+        thing : MakeFunctor'.IsExplicitlyCongruent (commutative-square .Category.rawCategory) Target mapₒ mapₘ → P
+        thing cong = cong {zero} {(suc ∘ suc ∘ suc) zero} (inj m₁₃ ∘₁ inj m₀₁) (inj m₂₃ ∘₁ inj m₀₂) tt
 
         variable
             Whatever : Set
@@ -267,8 +267,8 @@ module ExampleCategories where
         -- TODO make it so that a proof that the List version of morphisms is congruent
         -- leads to a proof that the branch version of morphisms is congruent
 
-        thing' : P → MakeFunctor'.IsCongruent (commutative-square .Category.rawCategory) Target mapₒ mapₘ
-        thing' pf {i} {j} {inj₁ f} {inj₁ g} tt with branch→cons f | branch→cons g
+        thing' : P → MakeFunctor'.IsExplicitlyCongruent (commutative-square .Category.rawCategory) Target mapₒ mapₘ
+        thing' pf {i} {j} (inj₁ f) (inj₁ g) tt with branch→cons f | branch→cons g
         ... | m₀₁ ∷' m₁₃ ∷ [] | m₀₁ ∷' m₁₃ ∷ [] = {!   !}
         ... | m₀₁ ∷' m₁₃ ∷ [] | m₀₂ ∷' m₂₃ ∷ [] = {!   !}
         ... | m₀₂ ∷' m₂₃ ∷ [] | m₀₁ ∷' m₁₃ ∷ [] = {!   !}
@@ -281,8 +281,8 @@ module ExampleCategories where
         ... | m₀₂ ∷' [] | m₀₂ ∷' m₂₃ ∷ () ∷ y
         ... | m₁₃ ∷' [] | m₁₃ ∷' [] = {!   !}
         ... | m₂₃ ∷' [] | m₂₃ ∷' [] = {!   !}
-        thing' pf {i} {j} {inj₂ f} {inj₁ g} tt = {!   !}
-        thing' pf {i} {j} {inj₁ f} {inj₂ g} tt = {!   !}
-        thing' pf {i} {j} {inj₂ f} {inj₂ g} tt = {!   !}
+        thing' pf {i} {j} (inj₂ f) (inj₁ g) tt = {!   !}
+        thing' pf {i} {j} (inj₁ f) (inj₂ g) tt = {!   !}
+        thing' pf {i} {j} (inj₂ f) (inj₂ g) tt = {!   !}
 
 open ExampleCategories public

@@ -188,7 +188,7 @@ module _
     canonize-cong : Congruent _~-fine_ _~-fine_ canonize
     canonize-cong x~y = canonize-makes-fine (fine→coarse x~y)
 
-    idempotent : Idempotent A-setoid canonize
+    idempotent : Idempotent _~-fine_ canonize
     idempotent x = canonize-makes-fine (canonize-related x)
 
     open import Plasmaduck.SetoidExperiment.CanonicalElement A-setoid (canonize which-is-cong canonize-cong) idempotent using (on-bijection)

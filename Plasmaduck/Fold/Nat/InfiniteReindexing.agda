@@ -63,12 +63,12 @@ private
     merge-*-pop-last :
         (generate : ℕ → ℕ) (n : ℕ) →
         merge _*_ 1 generate (suc n) ≡ merge _*_ 1 generate n * generate n
-    merge-*-pop-last = merge-pop-last (_*_ which-is-cong₂ *-cong) (λ {x} {y} {z} → ≡-sym (*-assoc x y z)) {1} ((λ {x} → *-identity .proj₁ x) , (λ {x} → *-identity .proj₂ x))
+    merge-*-pop-last = merge-pop-last (_*_ which-is-cong₂ *-cong) *-assoc {1} *-identity
 
     merge-+-pop-last :
         (generate : ℕ → ℕ) (n : ℕ) →
         merge _+_ 0 generate (suc n) ≡ merge _+_ 0 generate n + generate n
-    merge-+-pop-last = merge-pop-last (_+_ which-is-cong₂ +-cong) (λ {x} {y} {z} → ≡-sym (+-assoc x y z)) {0} ((λ {x} → +-identity .proj₁ x) , (λ {x} → +-identity .proj₂ x))
+    merge-+-pop-last = merge-pop-last (_+_ which-is-cong₂ +-cong) +-assoc {0} +-identity
 
 
 InfiniteVector : Set
@@ -1044,7 +1044,7 @@ module FiniteVectorBijections
         where open ≡-Reasoning
 
     sum-all-inverse : LeftInverse {A = ℕ} {LesserInfiniteVector basesVec} _≃_ _~′_ all-index-vectors-lesser sum-lesser-vec-lesser
-    sum-all-inverse {n} =
+    sum-all-inverse n =
         sum-lesser-vec-lesser (all-index-vectors-lesser n) % J                  ≡⟨⟩
         sum-lesser-vec basesVec (all-index-vectors basesVec-NonZero n) j % J    ≡⟨ %-congˡ (sum-all basesVec-NonZero n j) ⟩
         n % J % J                                                               ≡⟨ m%n%n≡m%n n J ⟩
@@ -1052,7 +1052,7 @@ module FiniteVectorBijections
         where open ≡-Reasoning
 
     all-sum-inverse : RightInverse {A = ℕ} {LesserInfiniteVector basesVec} _≃_ _~′_ all-index-vectors-lesser sum-lesser-vec-lesser
-    all-sum-inverse lesser-vec@{vec , vec≺basesVec} i with ≤-cmp j i
+    all-sum-inverse lesser-vec@(vec , vec≺basesVec) i with ≤-cmp j i
     ... | inj₁ j≤i =
         (all-index-vectors-lesser (sum-lesser-vec-lesser lesser-vec)) .proj₁ i  ≡⟨⟩
         all-index-vectors basesVec-NonZero (sum-lesser-vec basesVec vec j) i    ≡⟨ n<1⇒n≡0 (<-≤-trans (all-index-vectors≺ basesVec-NonZero (sum-lesser-vec basesVec vec j) i) (≤-reflexive (basesVec-HasOneTail .proj₂ i j≤i))) ⟩
@@ -1066,10 +1066,10 @@ module FiniteVectorBijections
         where open ≡-Reasoning
 
     all-index-vectors-lesser-bijective : Bijective _≃_ _~′_ all-index-vectors-lesser
-    all-index-vectors-lesser-bijective = both-inv→bijective NatModSetoid (LesserInfiniteVectorSetoid basesVec) (all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) ((sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) , sum-all-inverse , λ {x} → all-sum-inverse {x})
+    all-index-vectors-lesser-bijective = both-inv→bijective NatModSetoid (LesserInfiniteVectorSetoid basesVec) (all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) ((sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) , sum-all-inverse , all-sum-inverse)
 
     sum-lesser-vec-lesser-bijective : Bijective _~′_ _≃_ sum-lesser-vec-lesser
-    sum-lesser-vec-lesser-bijective = both-inv→bijective (LesserInfiniteVectorSetoid basesVec) NatModSetoid (sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) ((all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) , (λ {x} → all-sum-inverse {x}), sum-all-inverse)
+    sum-lesser-vec-lesser-bijective = both-inv→bijective (LesserInfiniteVectorSetoid basesVec) NatModSetoid (sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) ((all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) , all-sum-inverse , sum-all-inverse)
 
     finite-vector-bijection : Bijection NatModSetoid (LesserInfiniteVectorSetoid basesVec)
     finite-vector-bijection = record {
@@ -1122,7 +1122,7 @@ module InfiniteVectorBijections
         where open ≡-Reasoning
 
     sum-all-inverse : LeftInverse {A = ℕ} {FiniteBoundedVector basesVec} _≡_ _~′_ all-index-vectors-lesser sum-lesser-vec-lesser
-    sum-all-inverse {n} =
+    sum-all-inverse n =
         sum-lesser-vec-lesser (all-index-vectors-lesser n)                  ≡⟨⟩
         sum-lesser-vec basesVec (all-index-vectors basesVec-NonZero n) j    ≡⟨ sum-all basesVec-NonZero n j ⟩
         n % index-head-product basesVec j                                   ≡⟨ m<n⇒m%n≡m n<J ⟩
@@ -1141,7 +1141,7 @@ module InfiniteVectorBijections
                 j-prod-nonZero = vec-nonZero⇒index-head-product-nonZero basesVec-NonZero j
 
     all-sum-inverse : RightInverse {A = ℕ} {FiniteBoundedVector basesVec} _≡_ _~′_ all-index-vectors-lesser sum-lesser-vec-lesser
-    all-sum-inverse lesser-vec@{u , u≺bases , i , u-zero-at-i} j =
+    all-sum-inverse lesser-vec@(u , u≺bases , i , u-zero-at-i) j =
         all-index-vectors-lesser (sum-lesser-vec-lesser (u , u≺bases , i , u-zero-at-i)) .proj₁ j   ≡⟨⟩
         all-index-vectors basesVec-NonZero (sum-lesser-vec basesVec u i) j                          ≡⟨ cong (λ q → all-index-vectors basesVec-NonZero q j) (sum-lesser-vec-skip-zero-tail' basesVec u i (i ⊔ suc j) (⊔≥₁ i (suc j)) u-zero-at-i) ⟩
         all-index-vectors basesVec-NonZero (sum-lesser-vec basesVec u (i ⊔ suc j)) j                ≡⟨ all-sum u≺bases basesVec-NonZero (i ⊔ suc j) j (⊔≥₂ i (suc j)) ⟩
@@ -1149,10 +1149,10 @@ module InfiniteVectorBijections
         where open ≡-Reasoning
 
     all-index-vectors-lesser-bijective : Bijective _≡_ _~′_ all-index-vectors-lesser
-    all-index-vectors-lesser-bijective = both-inv→bijective (discrete-setoid ℕ) (FiniteBoundedVectorSetoid basesVec) (all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) ((sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) , sum-all-inverse , λ {x} → all-sum-inverse {x})
+    all-index-vectors-lesser-bijective = both-inv→bijective (discrete-setoid ℕ) (FiniteBoundedVectorSetoid basesVec) (all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) ((sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) , sum-all-inverse , all-sum-inverse)
 
     sum-lesser-vec-lesser-bijective : Bijective _~′_ _≡_ sum-lesser-vec-lesser
-    sum-lesser-vec-lesser-bijective = both-inv→bijective (FiniteBoundedVectorSetoid basesVec) (discrete-setoid ℕ) (sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) ((all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) , (λ {x} → all-sum-inverse {x}), sum-all-inverse)
+    sum-lesser-vec-lesser-bijective = both-inv→bijective (FiniteBoundedVectorSetoid basesVec) (discrete-setoid ℕ) (sum-lesser-vec-lesser which-is-cong λ {x} {y} → sum-lesser-vec-lesser-cong {x} {y}) ((all-index-vectors-lesser which-is-cong all-index-vectors-lesser-cong) , all-sum-inverse , sum-all-inverse)
 
     infinite-vector-bijection : Bijection (discrete-setoid ℕ) (FiniteBoundedVectorSetoid basesVec)
     infinite-vector-bijection = record {

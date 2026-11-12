@@ -5,7 +5,6 @@ open import Data.Unit using (⊤; tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Relation.Binary.PropositionalEquality using (_≡_) renaming (refl to ≡-refl)
 open import Function using (Congruent; _∘_; _on_; flip; Bijection)
 
 open import Plasmaduck.Data.PropositionalEquality using (≗-eq)
@@ -256,6 +255,6 @@ discrete-function-setoid A B = record {
     }
 
 IdempotentFunc : {A-setoid : Setoid a ℓ₁} → (f-func : SetoidFunction A-setoid A-setoid) → Set (a ⊔ ℓ₁)
-IdempotentFunc {A-setoid = A-setoid} (f which-is-cong _) = Idempotent A-setoid f
+IdempotentFunc {A-setoid = A-setoid} (f which-is-cong _) = Idempotent (A-setoid ._≈_) f
 
 open TwoArgs public

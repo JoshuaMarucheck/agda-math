@@ -252,7 +252,7 @@ module FoldlOnSetoid (A-setoid : Setoid a α) (B-setoid : Setoid b β) where
         (l : List B) →
         foldl _∙_ start l ≈A foldl _∙_ start' l
     foldl-substitute-start ∙-left-cong {start} {start'} start-cong [] = start-cong
-    foldl-substitute-start {_∙_ = _∙_} ∙-left-cong {start} {start'} start-cong (x ∷ l) = foldl-substitute-start ∙-left-cong {start ∙ x} {start' ∙ x} (∙-left-cong start-cong) l
+    foldl-substitute-start {_∙_ = _∙_} ∙-left-cong {start} {start'} start-cong (x ∷ l) = foldl-substitute-start ∙-left-cong {start ∙ x} {start' ∙ x} (∙-left-cong x start-cong) l
 
     foldl-substitute-list :
         {_∙_ : A → B → A} →
@@ -266,7 +266,7 @@ module FoldlOnSetoid (A-setoid : Setoid a α) (B-setoid : Setoid b β) where
 -- For foldl using a binary operator on a single setoid
 module MergeOnSetoid (B-setoid : Setoid c ℓ) where
     open import Plasmaduck.Function.Properties using (module SingleOperator)
-    open SingleOperator B-setoid using (Associative; Identity)
+    open SingleOperator (B-setoid .Setoid._≈_) using (Associative; Identity)
 
     open Setoid B-setoid using () renaming (
         Carrier to B;
@@ -289,8 +289,8 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
     foldl-pop {_*_} *-assoc *-right-cong i j (x ∷ xs) = begin
         foldl _*_ (i * j) (x ∷ xs)  ≈⟨ ≈-refl ⟩
         foldl _*_ ((i * j) * x) xs  ≈⟨ foldl-pop {_*_} *-assoc *-right-cong (i * j) x xs ⟩
-        (i * j) * foldl _*_ x xs    ≈⟨ ≈-sym (*-assoc {i} {j} {foldl _*_ x xs}) ⟩
-        i * (j * foldl _*_ x xs)    ≈⟨ *-right-cong {i} (≈-sym (foldl-pop {_*_} *-assoc *-right-cong j x xs)) ⟩
+        (i * j) * foldl _*_ x xs    ≈⟨ *-assoc i j (foldl _*_ x xs) ⟩
+        i * (j * foldl _*_ x xs)    ≈⟨ *-right-cong i (≈-sym (foldl-pop {_*_} *-assoc *-right-cong j x xs)) ⟩
         i * (foldl _*_ (j * x) xs)  ≈⟨ ≈-refl ⟩
         i * foldl _*_ j (x ∷ xs)    ∎
         where open import Relation.Binary.Reasoning.Setoid B-setoid
@@ -305,8 +305,8 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
         foldl _*_ id (x ∷ xs) ≈ x * foldl _*_ id xs
     merge-pop-first {_*_} *-cong {id} *-id *-assoc x xs = begin
         foldl _*_ id (x ∷ xs)   ≈⟨ ≈-refl ⟩
-        foldl _*_ (id * x) xs   ≈⟨ foldl-substitute-start {_*_} (λ z → *-cong z ≈-refl) {id * x} {x * id} (≈-trans (*-id .proj₁) (≈-sym (*-id .proj₂))) xs ⟩
-        foldl _*_ (x * id) xs   ≈⟨ foldl-pop {_*_} *-assoc (*-cong ≈-refl) x id xs ⟩
+        foldl _*_ (id * x) xs   ≈⟨ foldl-substitute-start {_*_} (λ _ z → *-cong z ≈-refl) {id * x} {x * id} (≈-trans (*-id .proj₁ x) (≈-sym (*-id .proj₂ x))) xs ⟩
+        foldl _*_ (x * id) xs   ≈⟨ foldl-pop {_*_} *-assoc (λ _ → *-cong ≈-refl) x id xs ⟩
         x * foldl _*_ id xs     ∎
         where open import Relation.Binary.Reasoning.Setoid B-setoid
 
@@ -323,7 +323,7 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
     foldl-concat' {_*_} *-cong {id} *-id *-assoc start ([] ∷ xss) = begin
         foldl _*_ start (map (foldl _*_ id) ([] ∷ xss))     ≈⟨ ≈-refl ⟩
         foldl _*_ start (id ∷ map (foldl _*_ id) xss)       ≈⟨ ≈-refl ⟩
-        foldl _*_ (start * id) (map (foldl _*_ id) xss)     ≈⟨ foldl-substitute-start (λ z → *-cong z ≈-refl) (*-id .proj₂) (map (foldl _*_ id) xss) ⟩
+        foldl _*_ (start * id) (map (foldl _*_ id) xss)     ≈⟨ foldl-substitute-start (λ _ z → *-cong z ≈-refl) (*-id .proj₂ start) (map (foldl _*_ id) xss) ⟩
         foldl _*_ start (map (foldl _*_ id) xss)            ≈⟨ foldl-concat' *-cong *-id *-assoc start xss ⟩
         foldl _*_ start (concat xss)                        ≈⟨ ≈-refl ⟩
         foldl _*_ start (concat ([] ∷ xss))                 ∎
@@ -331,10 +331,10 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
     foldl-concat' {_*_} *-cong {id} *-id *-assoc start ((x ∷ xs) ∷ xss) = begin
         foldl _*_ start (map (foldl _*_ id) ((x ∷ xs) ∷ xss))               ≈⟨ ≈-refl ⟩
         foldl _*_ start ((foldl _*_ id (x ∷ xs)) ∷ map (foldl _*_ id) xss)  ≈⟨ ≈-refl ⟩
-        foldl _*_ start ((foldl _*_ (id * x) xs) ∷ map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-list *-cong ((foldl _*_ (id * x) xs) ∷ map (foldl _*_ id) xss) ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss) (≡-refl , All._∷_ (foldl-substitute-start (λ z → *-cong z ≈-refl) (≈-trans (*-id .proj₁) (≈-sym (*-id .proj₂))) xs) ≈ZipList-refl) ⟩
-        foldl _*_ start ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-list *-cong ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss) ((x * foldl _*_ id xs) ∷ map (foldl _*_ id) xss) (≡-refl , All._∷_ (foldl-pop {_*_} *-assoc (λ {x₁} {y} {z} → *-cong ≈-refl) x id xs) ≈ZipList-refl) ⟩
+        foldl _*_ start ((foldl _*_ (id * x) xs) ∷ map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-list *-cong ((foldl _*_ (id * x) xs) ∷ map (foldl _*_ id) xss) ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss) (≡-refl , All._∷_ (foldl-substitute-start (λ _ z → *-cong z ≈-refl) (≈-trans (*-id .proj₁ x) (≈-sym (*-id .proj₂ x))) xs) ≈ZipList-refl) ⟩
+        foldl _*_ start ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-list *-cong ((foldl _*_ (x * id) xs) ∷ map (foldl _*_ id) xss) ((x * foldl _*_ id xs) ∷ map (foldl _*_ id) xss) (≡-refl , All._∷_ (foldl-pop {_*_} *-assoc (λ _ → *-cong ≈-refl) x id xs) ≈ZipList-refl) ⟩
         foldl _*_ start ((x * foldl _*_ id xs) ∷ map (foldl _*_ id) xss)    ≈⟨ ≈-refl ⟩
-        foldl _*_ (start * (x * foldl _*_ id xs)) (map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-start (λ z → *-cong z ≈-refl) *-assoc (map (foldl _*_ id) xss) ⟩
+        foldl _*_ (start * (x * foldl _*_ id xs)) (map (foldl _*_ id) xss)  ≈⟨ foldl-substitute-start (λ _ z → *-cong z ≈-refl) (≈-sym (*-assoc start x (foldl _*_ id xs))) (map (foldl _*_ id) xss) ⟩ -- ⟩
         foldl _*_ ((start * x) * foldl _*_ id xs) (map (foldl _*_ id) xss)  ≈⟨ ≈-refl ⟩
         foldl _*_ (start * x) (foldl _*_ id xs ∷ map (foldl _*_ id) xss)    ≈⟨ ≈-refl ⟩
         foldl _*_ (start * x) (map (foldl _*_ id) (xs ∷ xss))               ≈⟨ foldl-concat' *-cong *-id *-assoc (start * x) (xs ∷ xss) ⟩
@@ -364,7 +364,7 @@ module MergeOnSetoid (B-setoid : Setoid c ℓ) where
     foldl-reverse {_*_} *-cong {id} *-id *-assoc (x ∷ xs) = begin
         foldl (flip _*_) id (reverse (x ∷ xs))                          ≈⟨ ≈-reflexive (cong (foldl (flip _*_) id) (reverse-++ (x ∷ []) xs)) ⟩
         foldl (flip _*_) id (reverse xs ++ x ∷ [])                      ≈⟨ ≈-reflexive (foldl-++ (flip _*_) id (reverse xs) (x ∷ [])) ⟩
-        foldl (flip _*_) (foldl (flip _*_) id (reverse xs)) (x ∷ [])    ≈⟨ foldl-substitute-start {flip _*_} (*-cong ≈-refl) (foldl-reverse *-cong *-id *-assoc xs) (x ∷ []) ⟩
+        foldl (flip _*_) (foldl (flip _*_) id (reverse xs)) (x ∷ [])    ≈⟨ foldl-substitute-start {flip _*_} (λ _ → *-cong ≈-refl) (foldl-reverse *-cong *-id *-assoc xs) (x ∷ []) ⟩
         foldl (flip _*_) (foldl _*_ id xs) (x ∷ [])                     ≈⟨ ≈-refl ⟩
         x * foldl _*_ id xs                                             ≈⟨ ≈-sym (merge-pop-first {_*_} *-cong {id} *-id *-assoc x xs) ⟩
         foldl _*_ id (x ∷ xs)                                           ∎

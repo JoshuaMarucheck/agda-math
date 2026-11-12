@@ -574,7 +574,7 @@ module Folding {S-setoid : Setoid c ℓ} {n : ℕ} (n-S-bij : HasSize S-setoid n
         (∀ (x : A) (i j : S) → P x j → P (combine x i) j) →
         ∀ (k : S) → P (fold combine start) k
     fold-all-theorem combine start P P-cong-over-state combine-imposes-P combine-preserves-P k =
-        P-cong-over-state (fold combine start) (invert-is-right-inverse n-S-bij)
+        P-cong-over-state (fold combine start) (invert-is-right-inverse n-S-bij k)
             (fold-fin-all-theorem n (combine-transform combine) start
                 (λ x i → P x (n-S-bij .Bijection.to i))
                 (λ x i → combine-imposes-P x (n-S-bij .Bijection.to i))

@@ -217,7 +217,7 @@ module MergeOnSetoid
         infixl 20 _∙_
 
     merge-pop-startᵣ :
-        Associative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
         (startₗ : A)
         (startᵣ : A)
         (generate : ℕ → A) →
@@ -227,26 +227,26 @@ module MergeOnSetoid
     merge-pop-startᵣ ∙-assoc startₗ startᵣ generate zero = refl
     merge-pop-startᵣ ∙-assoc startₗ startᵣ generate i@(suc i') = begin
         merge _∙_ (startₗ ∙ startᵣ) generate (suc i')               ≈⟨ refl ⟩
-        merge _∙_ (generate i' ∙ (startₗ ∙ startᵣ)) generate i'     ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ ∙-assoc generate i' ⟩
+        merge _∙_ (generate i' ∙ (startₗ ∙ startᵣ)) generate i'     ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (sym (∙-assoc (generate i') startₗ startᵣ)) generate i' ⟩
         merge _∙_ ((generate i' ∙ startₗ) ∙ startᵣ) generate i'     ≈⟨ merge-pop-startᵣ ∙-assoc (generate i' ∙ startₗ) startᵣ generate i' ⟩
         merge _∙_ (generate i' ∙ startₗ) generate i' ∙ startᵣ       ≈⟨ refl ⟩
         merge _∙_ startₗ generate i ∙ startᵣ                        ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-pop-start :
-        Associative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
         (id : A) →
-        Identity A-setoid _∙_ id →
+        Identity _≈_ _∙_ id →
         (start : A)
         (generate : ℕ → A) →
         (i : ℕ) →
         merge _∙_ start generate i ≈
         merge _∙_ id generate i ∙ start
-    merge-pop-start ∙-assoc id ∙-id start generate zero = sym (∙-id .proj₁)
+    merge-pop-start ∙-assoc id ∙-id start generate zero = sym (∙-id .proj₁ _)
     merge-pop-start ∙-assoc id ∙-id start generate i@(suc i') = begin
         merge _∙_ start generate i                          ≈⟨ refl ⟩
         merge _∙_ (generate i' ∙ start) generate i'         ≈⟨ merge-pop-startᵣ ∙-assoc (generate i') start generate i' ⟩
-        merge _∙_ (generate i') generate i' ∙ start         ≈⟨ ∙-cong (merge-substitute-start _∙_ ∙-cong (generate i') (generate i' ∙ id) (sym (∙-id .proj₂)) generate i') refl ⟩
+        merge _∙_ (generate i') generate i' ∙ start         ≈⟨ ∙-cong (merge-substitute-start _∙_ ∙-cong (generate i') (generate i' ∙ id) (sym (∙-id .proj₂ (generate i'))) generate i') refl ⟩
         merge _∙_ (generate i' ∙ id) generate i' ∙ start    ≈⟨ refl ⟩
         merge _∙_ id generate i ∙ start                     ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
@@ -255,7 +255,7 @@ module MergeOnSetoid
     -- If f distributes over combine, then it distributes through merge
     merge-distribute-theorem :
         (f : A → A) →
-        DistributiveFunction A-setoid f _∙_ →
+        DistributiveFunction _≈_ f _∙_ →
         (start : A)
         (generate : ℕ → A)
         (n : ℕ) →
@@ -263,26 +263,26 @@ module MergeOnSetoid
     merge-distribute-theorem f f-∙-distributes start generate zero = refl
     merge-distribute-theorem f f-∙-distributes start generate n@(suc n') = begin
         f (merge _∙_ start generate n)                                      ≈⟨ reflexive (cong f (merge-pop-first _∙_ start generate n')) ⟩
-        f (generate zero ∙ merge _∙_ start (generate ∘ suc) n')             ≈⟨ f-∙-distributes ⟩
+        f (generate zero ∙ merge _∙_ start (generate ∘ suc) n')             ≈⟨ f-∙-distributes (generate zero) (merge (SetoidFunction₂.func ∙-op) start (λ x → generate (suc x)) n') ⟩
         f (generate zero) ∙ f (merge _∙_ start (generate ∘ suc) n')         ≈⟨ ∙-cong refl (merge-distribute-theorem f f-∙-distributes start (generate ∘ suc) n') ⟩
         f (generate zero) ∙ merge _∙_ (f start) (f ∘ generate ∘ suc) n'     ≈⟨ reflexive (≡-sym (merge-pop-first _∙_ (f start) (f ∘ generate) n')) ⟩
         merge _∙_ (f start) (f ∘ generate) n                                ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-zipper-lemma :
-        Associative A-setoid _∙_ →
-        Commutative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
+        Commutative _≈_ _∙_ →
         {id : A} →
-        Identity A-setoid _∙_ id →
+        Identity _≈_ _∙_ id →
         (generate₁ generate₂ : ℕ → A)
         (n : ℕ) →
         merge _∙_ id generate₁ n ∙ merge _∙_ id generate₂ n ≈ merge _∙_ id (λ i → generate₁ i ∙ generate₂ i) n
-    merge-zipper-lemma ∙-assoc ∙-comm {id} ∙-id generate₁ generate₂ zero = ∙-id .proj₁
+    merge-zipper-lemma ∙-assoc ∙-comm {id} ∙-id generate₁ generate₂ zero = ∙-id .proj₁ _
     merge-zipper-lemma ∙-assoc ∙-comm {id} ∙-id generate₁ generate₂ n@(suc n') = begin
         merge _∙_ id generate₁ n ∙ merge _∙_ id generate₂ n     ≈⟨ reflexive (cong₂ _∙_ (merge-pop-first _∙_ id generate₁ n') (merge-pop-first _∙_ id generate₂ n')) ⟩
         _∙_
             (generate₁ zero ∙ merge _∙_ id (generate₁ ∘ suc) n')
-            (generate₂ zero ∙ merge _∙_ id (generate₂ ∘ suc) n')  ≈⟨ exchange-middle A-setoid _∙_ ∙-assoc ∙-comm ∙-cong ⟩
+            (generate₂ zero ∙ merge _∙_ id (generate₂ ∘ suc) n')  ≈⟨ exchange-middle A-setoid _∙_ ∙-assoc ∙-comm ∙-cong (generate₁ zero) (merge _∙_ id (generate₁ ∘ suc) n') (generate₂ zero) (merge _∙_ id (generate₂ ∘ suc) n') ⟩
         _∙_
             (generate₁ zero ∙ generate₂ zero)
             (merge _∙_ id (generate₁ ∘ suc) n' ∙ merge _∙_ id (generate₂ ∘ suc) n')  ≈⟨ ∙-cong refl (merge-zipper-lemma ∙-assoc ∙-comm ∙-id (generate₁ ∘ suc) (generate₂ ∘ suc) n') ⟩
@@ -293,83 +293,83 @@ module MergeOnSetoid
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-pop-last' :
-        Associative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
         {id : A} →
-        Identity A-setoid _∙_ id →
+        Identity _≈_ _∙_ id →
         (start : A)
         (generate : ℕ → A) →
         (n : ℕ) →
         merge _∙_ start generate (suc n) ≈ merge _∙_ id generate n ∙ generate n ∙ start
-    merge-pop-last' ∙-assoc {id} ∙-id start generate zero = trans (sym (∙-id .proj₁)) ∙-assoc
+    merge-pop-last' ∙-assoc {id} ∙-id start generate zero = trans (sym (∙-id .proj₁ _)) (sym (∙-assoc id (generate 0) start))
     merge-pop-last' ∙-assoc {id} ∙-id start generate n@(suc n') = begin
         merge _∙_ start generate (suc n)                                            ≈⟨ reflexive (merge-pop-first _∙_ start generate n) ⟩
         generate zero ∙ merge _∙_ start (generate ∘ suc) n                          ≈⟨ ∙-cong refl (merge-pop-last' ∙-assoc ∙-id start (generate ∘ suc) n') ⟩
-        generate zero ∙ ((merge _∙_ id (generate ∘ suc) n' ∙ generate n) ∙ start)   ≈⟨ ∙-assoc ⟩
-        (generate zero ∙ (merge _∙_ id (generate ∘ suc) n' ∙ generate n)) ∙ start   ≈⟨ ∙-cong ∙-assoc refl ⟩
+        generate zero ∙ ((merge _∙_ id (generate ∘ suc) n' ∙ generate n) ∙ start)   ≈⟨ sym (∙-assoc (generate zero) _ start) ⟩
+        (generate zero ∙ (merge _∙_ id (generate ∘ suc) n' ∙ generate n)) ∙ start   ≈⟨ ∙-cong (sym (∙-assoc (generate zero) (merge _∙_ id (generate ∘ suc) n') (generate n))) refl ⟩
         (generate zero ∙ merge _∙_ id (generate ∘ suc) n') ∙ generate n ∙ start     ≈⟨ ∙-cong (∙-cong (reflexive (≡-sym (merge-pop-first _∙_ id generate n'))) refl) refl ⟩
         merge _∙_ id generate n ∙ generate n ∙ start                                ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-pop-last :
-        Associative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
         {id : A} →
-        Identity A-setoid _∙_ id →
+        Identity _≈_ _∙_ id →
         (generate : ℕ → A) →
         (n : ℕ) →
         merge _∙_ id generate (suc n) ≈ merge _∙_ id generate n ∙ generate n
-    merge-pop-last ∙-assoc {id} ∙-id generate n = trans (merge-pop-last' ∙-assoc ∙-id id generate n) (∙-id .proj₂)
+    merge-pop-last ∙-assoc {id} ∙-id generate n = trans (merge-pop-last' ∙-assoc ∙-id id generate n) (∙-id .proj₂ _)
 
     merge-split-lemma :
-        Associative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
         {id : A} →
-        Identity A-setoid _∙_ id →
+        Identity _≈_ _∙_ id →
         (start : A) →
         (generate : ℕ → A) →
         (m n : ℕ) →
         merge _∙_ start generate (m + n) ≈
         merge _∙_ id generate m ∙ merge _∙_ start (generate ∘ (m +_)) n
-    merge-split-lemma ∙-assoc {id} ∙-id start generate zero n = sym (∙-id .proj₁)
+    merge-split-lemma ∙-assoc {id} ∙-id start generate zero n = sym (∙-id .proj₁ _)
     merge-split-lemma ∙-assoc {id} ∙-id start generate m@(suc m') n = begin
         merge _∙_ start generate (m + n)                                                                       ≈⟨ reflexive (merge-pop-first _∙_ start generate (m' + n)) ⟩
         generate zero ∙ merge _∙_ start (generate ∘ suc) (m' + n)                                              ≈⟨ ∙-cong refl (merge-split-lemma ∙-assoc ∙-id start (generate ∘ suc) m' n) ⟩
-        generate zero ∙ (merge _∙_ id (generate ∘ suc) m' ∙ merge _∙_ start ((generate ∘ suc) ∘ _+_ m') n)     ≈⟨ ∙-assoc ⟩
+        generate zero ∙ (merge _∙_ id (generate ∘ suc) m' ∙ merge _∙_ start ((generate ∘ suc) ∘ _+_ m') n)     ≈⟨ sym (∙-assoc (generate zero) (merge _∙_ id (λ x → generate (suc x)) m') (merge _∙_ start (λ x → generate (suc (m' + x))) n)) ⟩
         (generate zero ∙ merge _∙_ id (generate ∘ suc) m') ∙ merge _∙_ start ((generate ∘ suc) ∘ _+_ m') n     ≈⟨ ∙-cong (reflexive (≡-sym (merge-pop-first _∙_ id generate m'))) refl ⟩
         merge _∙_ id generate m ∙ merge _∙_ start ((generate ∘ suc) ∘ _+_ m') n                                ≈⟨ ∙-cong refl (merge-substitute-generate _∙_ ∙-cong start _ _ (λ _ → refl) n) ⟩
         merge _∙_ id generate m ∙ merge _∙_ start (generate ∘ _+_ m) n                                         ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-extend' :
-        (∙-assoc : Associative A-setoid _∙_)
+        (∙-assoc : Associative _≈_ _∙_)
         (start : A)
         (f : ℕ → A) →
         (x y : ℕ) →
-        (∀ z → .(z < y) → LeftIdentity A-setoid _∙_ (f (z + x))) →
+        (∀ z → .(z < y) → LeftIdentity _≈_ _∙_ (f (z + x))) →
         merge _∙_ start f x ≈
         merge _∙_ start f (y + x)
     merge-extend' ∙-assoc start f x zero _ = refl
     merge-extend' ∙-assoc start f x y@(suc y') extension-is-left-id = begin
         merge _∙_ start f x                         ≈⟨ merge-extend' ∙-assoc start f x y' (λ z z<y' → extension-is-left-id z (<-≤-trans z<y' n≤sn)) ⟩
-        merge _∙_ start f (y' + x)                  ≈⟨ merge-substitute-start _∙_ ∙-cong start (f (y' + x) ∙ start) (sym (extension-is-left-id y' n<sn)) f (y' + x) ⟩
+        merge _∙_ start f (y' + x)                  ≈⟨ merge-substitute-start _∙_ ∙-cong start (f (y' + x) ∙ start) (sym (extension-is-left-id y' n<sn start)) f (y' + x) ⟩
         merge _∙_ (f (y' + x) ∙ start) f (y' + x)   ≈⟨ refl ⟩
         merge _∙_ start f (y + x)                   ∎
         where open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
 
     merge-extend :
-        (∙-assoc : Associative A-setoid _∙_)
+        (∙-assoc : Associative _≈_ _∙_)
         (start : A)
         (f : ℕ → A) →
         (x y : ℕ) →
         .(x ≤ y) →
-        (∀ z → .(x ≤ z) → .(z < y) → LeftIdentity A-setoid _∙_ (f z)) →
+        (∀ z → .(x ≤ z) → .(z < y) → LeftIdentity _≈_ _∙_ (f z)) →
         merge _∙_ start f x ≈
         merge _∙_ start f y
     merge-extend ∙-assoc start f x y x≤y extension-is-left-id = ≡-subst (λ q → merge _∙_ start f x ≈ merge _∙_ start f q) {y ∸ x + x} {y} (m∸n+n≡m x≤y) (merge-extend' ∙-assoc start f x (y ∸ x) λ z z<y∸x → extension-is-left-id (z + x) (m≤n+m x z) (∸-cancelˡ-< {x} {z + x} {y} (≡-subst (_< y ∸ x) (≡-sym (m+n∸n≡m z x)) z<y∸x)))
 
     -- For rectangle merges
     merge-merge' :
-        (∙-assoc : Associative A-setoid _∙_)
+        (∙-assoc : Associative _≈_ _∙_)
         {id : A}
-        (∙-id : Identity A-setoid _∙_ id)
+        (∙-id : Identity _≈_ _∙_ id)
         (f : ℕ → ℕ → A) →
         (x y : ℕ) →
         .{{_ : NonZero y}} →
@@ -378,7 +378,7 @@ module MergeOnSetoid
     merge-merge' ∙-assoc {id} ∙-id f zero _ = refl
     merge-merge' ∙-assoc {id} ∙-id f x@(suc x') y = begin
         merge _∙_ id (λ i → merge _∙_ id (f i) y) x                                                                 ≈⟨ refl ⟩
-        merge _∙_ (merge _∙_ id (f x') y ∙ id) (λ i → merge _∙_ id (f i) y) x'                                      ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans (∙-id .proj₂) (sym (∙-id .proj₁))) (λ i → merge _∙_ id (f i) y) x' ⟩
+        merge _∙_ (merge _∙_ id (f x') y ∙ id) (λ i → merge _∙_ id (f i) y) x'                                      ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans (∙-id .proj₂ (merge _∙_ id (f x') y)) (sym (∙-id .proj₁ (merge _∙_ id (f x') y)))) (λ i → merge _∙_ id (f i) y) x' ⟩
         merge _∙_ (id ∙ merge _∙_ id (f x') y) (λ i → merge _∙_ id (f i) y) x'                                      ≈⟨ merge-pop-startᵣ ∙-assoc id (merge _∙_ id (f x') y) (λ i → merge _∙_ id (f i) y) x' ⟩
         merge _∙_ id (λ i → merge _∙_ id (f i) y) x' ∙ merge _∙_ id (f x') y                                        ≈⟨ ∙-cong (merge-merge' ∙-assoc ∙-id f x' y) refl ⟩
         merge _∙_ id (λ i → f (i / y) (i % y)) (x' * y) ∙ merge _∙_ id (f x') y                                     ≈⟨ ∙-cong refl (merge-local-substitute-generate _∙_ ∙-cong id (f x') ((λ i → f (i / y) (i % y)) ∘ (x' * y +_)) y lemma) ⟩
@@ -402,9 +402,9 @@ module MergeOnSetoid
     -- This one is better for non-rectangular merges,
     -- though then you have to prove all the bounds and things
     merge-merge :
-        (∙-assoc : Associative A-setoid _∙_)
+        (∙-assoc : Associative _≈_ _∙_)
         {id : A}
-        (∙-id : Identity A-setoid _∙_ id)
+        (∙-id : Identity _≈_ _∙_ id)
         (f : ℕ → ℕ → A) →
         (x : ℕ) →
         (ys : ℕ → ℕ) →
@@ -412,7 +412,7 @@ module MergeOnSetoid
         (y-bound : ℕ) →
         .{{_ : NonZero y-bound}} →
         (∀ i → .(i < x) → ys i ≤ y-bound) →
-        (∀ i j → .(i < x) → .(ys i ≤ j) → .(j < y-bound) → LeftIdentity A-setoid _∙_ (f i j)) →
+        (∀ i j → .(i < x) → .(ys i ≤ j) → .(j < y-bound) → LeftIdentity _≈_ _∙_ (f i j)) →
         merge _∙_ id (λ i → merge _∙_ id (f i) (ys i)) x ≈
         merge _∙_ id (λ i → f (i / y-bound) (i % y-bound)) (x * y-bound)
     merge-merge ∙-assoc {id} ∙-id f x ys {{ys-nonZero}} y-bound {{y-bound-nonZero}} ys≤y-bound f-id-on-boundary = begin
@@ -423,8 +423,8 @@ module MergeOnSetoid
 
     private
         merge-flip-lemma-helper :
-            Associative A-setoid _∙_ →
-            Commutative A-setoid _∙_ →
+            Associative _≈_ _∙_ →
+            Commutative _≈_ _∙_ →
             (start : A) →
             (generate : ℕ → A) →
             (n : ℕ)
@@ -439,22 +439,22 @@ module MergeOnSetoid
         ... | no _ | yes ≡-refl with i ≟ n'' | suc i ≟ n''
         ...     | no i≠n'' | no si≠n'' = ⊥-elim (i≠n'' ≡-refl)
         ...     | yes ≡-refl | no si≠n'' = begin
-            merge _∙_ (generate n' ∙ (generate n'' ∙ start)) (generate ∘ flip i) n''    ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans ∙-assoc ∙-comm) (generate ∘ flip i) n'' ⟩
+            merge _∙_ (generate n' ∙ (generate n'' ∙ start)) (generate ∘ flip i) n''    ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans (sym (∙-assoc (generate n') (generate n'') start)) (∙-comm ((generate n') ∙ (generate n'')) start)) (generate ∘ flip i) n'' ⟩
             merge _∙_ (start ∙ (generate n' ∙ generate n'')) (generate ∘ flip i) n''    ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') (generate ∘ flip i) n'' ⟩
             merge _∙_ start (generate ∘ flip i) n'' ∙ (generate n' ∙ generate n'')      ≈⟨ ∙-cong (merge-local-substitute-generate _∙_ ∙-cong start (generate ∘ flip i) generate n'' λ i i<n'' → reflexive (cong generate (swp-no-match⇒id n'' n' i (≢-sym (<⇒≢ i<n'')) (≢-sym (<⇒≢ (<-≤-trans i<n'' n≤sn)))))) refl ⟩
             merge _∙_ start generate n'' ∙ (generate n' ∙ generate n'')                 ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n' ∙ generate n'') generate n'') ⟩
-            merge _∙_ (start ∙ (generate n' ∙ generate n'')) generate n''               ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans ∙-assoc (trans ∙-comm (∙-cong refl ∙-comm))) generate n'' ⟩
+            merge _∙_ (start ∙ (generate n' ∙ generate n'')) generate n''               ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (trans (sym (∙-assoc start (generate n') (generate n''))) (trans (∙-comm (SetoidFunction₂.func ∙-op start (generate n')) (generate n'')) (∙-cong refl (∙-comm start (generate n'))))) generate n'' ⟩
             merge _∙_ (generate n'' ∙ (generate n' ∙ start)) generate n''               ≈⟨ refl ⟩
             merge _∙_ start generate n                                                  ∎
             where
                 open import Relation.Binary.Reasoning.Setoid A-setoid hiding (start)
                 n = suc n'
         merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'@(suc n'') i si<n | no i≠n' | no si≠n' = begin
-            merge _∙_ (generate n' ∙ start) (generate ∘ flip i) n'  ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ ∙-comm (generate ∘ flip i) n' ⟩
+            merge _∙_ (generate n' ∙ start) (generate ∘ flip i) n'  ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (∙-comm (generate n') start) (generate ∘ flip i) n' ⟩
             merge _∙_ (start ∙ generate n') (generate ∘ flip i) n'  ≈⟨ merge-pop-startᵣ ∙-assoc start (generate n') (generate ∘ flip i) n' ⟩
             merge _∙_ start (generate ∘ flip i) n' ∙ generate n'    ≈⟨ ∙-cong (merge-flip-lemma-helper ∙-assoc ∙-comm start generate n'' i (≤∧≢⇒< {suc i} {n'} (s≤s⁻¹ si<n) si≠n')) refl ⟩
             merge _∙_ start generate n' ∙ generate n'               ≈⟨ sym (merge-pop-startᵣ ∙-assoc start (generate n') generate n') ⟩
-            merge _∙_ (start ∙ generate n') generate n'             ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ ∙-comm generate n' ⟩
+            merge _∙_ (start ∙ generate n') generate n'             ≈⟨ merge-substitute-start _∙_ ∙-cong _ _ (∙-comm start (generate n')) generate n' ⟩
             merge _∙_ (generate n' ∙ start) generate n'             ≈⟨ refl ⟩
             merge _∙_ start generate n                              ∎
             where
@@ -462,8 +462,8 @@ module MergeOnSetoid
                 n = suc n'
 
         merge-flip-lemma :
-            Associative A-setoid _∙_ →
-            Commutative A-setoid _∙_ →
+            Associative _≈_ _∙_ →
+            Commutative _≈_ _∙_ →
             (start : A) →
             (generate : ℕ → A) →
             (n : ℕ)
@@ -474,8 +474,8 @@ module MergeOnSetoid
         merge-flip-lemma ∙-assoc ∙-comm start generate n@(suc n') i si<n = merge-flip-lemma-helper ∙-assoc ∙-comm start generate n' i si<n
 
     merge-permute-theorem :
-        Associative A-setoid _∙_ →
-        Commutative A-setoid _∙_ →
+        Associative _≈_ _∙_ →
+        Commutative _≈_ _∙_ →
         (start : A)
         (generate : ℕ → A) →
         (n : ℕ)
@@ -697,8 +697,8 @@ module Reindex (I-setoid : Setoid α ℓ) where
                 g-inv-cong = BijectiveBinding.inverse-cong bind'-g-bij
 
         reindex :
-            Associative A-setoid _∙_ →
-            Commutative A-setoid _∙_ →
+            Associative _≈A_ _∙_ →
+            Commutative _≈A_ _∙_ →
             (n : ℕ) (f g : ℕ → I) →
             BijectiveBinding n f →
             BijectiveBinding n g →
@@ -716,8 +716,8 @@ module Reindex (I-setoid : Setoid α ℓ) where
                 g-inv-cong = BijectiveBinding.inverse-cong bind'-g-bij
 
         reindex' :
-            Associative A-setoid _∙_ →
-            Commutative A-setoid _∙_ →
+            Associative _≈A_ _∙_ →
+            Commutative _≈A_ _∙_ →
             (n : ℕ) (f : ℕ → I) →
             BijectiveBinding n f →
             (shuffle : I → I) →
@@ -791,30 +791,30 @@ module AddIdentity
     id : Maybe A
     id = nothing
 
-    ∙'-id : Identity Maybe-A-setoid _∙'_ id
+    ∙'-id : Identity _≈'_ _∙'_ id
     ∙'-id = (λ {
-        {just x} → maybe-rel-just ≈-refl;
-        {nothing} → maybe-rel-nothing
+        (just x) → maybe-rel-just ≈-refl;
+        (nothing) → maybe-rel-nothing
         }) , λ {
-        {just x} → maybe-rel-just ≈-refl;
-        {nothing} → maybe-rel-nothing
+        (just x) → maybe-rel-just ≈-refl;
+        (nothing) → maybe-rel-nothing
         }
 
-    assoc-carries : Associative A-setoid _∙_ → Associative Maybe-A-setoid _∙'_
-    assoc-carries ∙-assoc {just _} {just _} {just _} = maybe-rel-just ∙-assoc
-    assoc-carries ∙-assoc {just _} {just _} {nothing} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {just _} {nothing} {just _} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {just _} {nothing} {nothing} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {nothing} {just _} {just _} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {nothing} {just _} {nothing} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {nothing} {nothing} {just _} = maybe-rel-just ≈-refl
-    assoc-carries ∙-assoc {nothing} {nothing} {nothing} = maybe-rel-nothing
+    assoc-carries : Associative _≈_ _∙_ → Associative _≈'_ _∙'_
+    assoc-carries ∙-assoc (just x) (just y) (just z) = maybe-rel-just (∙-assoc x y z)
+    assoc-carries ∙-assoc (just _) (just _) (nothing) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (just _) (nothing) (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (just _) (nothing) (nothing) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (nothing) (just _) (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (nothing) (just _) (nothing) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (nothing) (nothing) (just _) = maybe-rel-just ≈-refl
+    assoc-carries ∙-assoc (nothing) (nothing) (nothing) = maybe-rel-nothing
 
-    comm-carries : Commutative A-setoid _∙_ → Commutative Maybe-A-setoid _∙'_
-    comm-carries ∙-comm {just _} {just _} = maybe-rel-just ∙-comm
-    comm-carries ∙-comm {just _} {nothing} = maybe-rel-just ≈-refl
-    comm-carries ∙-comm {nothing} {just _} = maybe-rel-just ≈-refl
-    comm-carries ∙-comm {nothing} {nothing} = maybe-rel-nothing
+    comm-carries : Commutative _≈_ _∙_ → Commutative _≈'_ _∙'_
+    comm-carries ∙-comm (just x) (just y) = maybe-rel-just (∙-comm x y)
+    comm-carries ∙-comm (just _) (nothing) = maybe-rel-just ≈-refl
+    comm-carries ∙-comm (nothing) (just _) = maybe-rel-just ≈-refl
+    comm-carries ∙-comm (nothing) (nothing) = maybe-rel-nothing
 
 
 -- module _ {a ℓ : Level} (I-setoid : Setoid a ℓ) where

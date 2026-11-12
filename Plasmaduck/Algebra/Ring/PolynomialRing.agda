@@ -14,7 +14,7 @@ open import Data.Nat.DivMod using (%-congˡ; m%n<n; m<n*o⇒m/o<n; m≡m%n+[m/n]
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂; SetoidFunction; _which-is-cong_; discrete-setoid; from-discrete-cong)
-open import Plasmaduck.Function.Properties using (Congruent₂; LeftIdentity; RightIdentity; Identity; Associative; Commutative; LeftDistributive; RightDistributive; Distributive)
+open import Plasmaduck.Function.Properties using (Congruent₂; Associative; Commutative; LeftIdentity; RightIdentity; Identity; _DistributesOverˡ_; _DistributesOverʳ_; _DistributesOver_)
 open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty)
 open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp₃)
@@ -267,7 +267,7 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
     (p , m , p[≥m]=0) + (q , n , q[≥n]=0) = p +' q , m ⊔ℕ n , λ {o} [m⊔n≤o] → begin
         (p +' q) o      ≈⟨ refl ⟩
         p o +R q o      ≈⟨ +R-cong {p o} {zeroR} {q o} {zeroR} (p[≥m]=0 (≤-trans (m≤m⊔n m n) [m⊔n≤o])) (q[≥n]=0 (≤-trans (m≤n⊔m m n) [m⊔n≤o])) ⟩
-        zeroR +R zeroR  ≈⟨ zeroR-is-+R-left-id ⟩
+        zeroR +R zeroR  ≈⟨ zeroR-is-+R-left-id zeroR ⟩
         zeroR           ∎
         where open import Relation.Binary.Reasoning.Setoid S
 
@@ -310,7 +310,7 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             bound-pf : ∀ {i} → .(bound ≤ i) → IsZero ((p *' q) i)
             bound-pf {i} bound≤i = merge-carrying-lemma IsZero _+R_ (λ x y x-is-zero y-is-zero → begin
                 x +R y      ≈⟨ +R-cong x-is-zero (refl {y}) ⟩
-                zeroR +R y  ≈⟨ zeroR-is-+R-left-id ⟩
+                zeroR +R y  ≈⟨ zeroR-is-+R-left-id y ⟩
                 y           ≈⟨ y-is-zero ⟩
                 zeroR       ∎
                 ) zeroR (*-gen i) (sucℕ i) refl (carry bound≤i)
@@ -350,7 +350,7 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             bound-inject-func = (bind' i* inject) which-is-cong from-discrete-cong IndexSetoid (bind' i* inject)
 
             inject-bijective-binding : BijectiveBinding i* inject
-            inject-bijective-binding = both-inv→bijective IndexSetoid IndexSetoid bound-inject-func ((Function.id which-is-cong from-discrete-cong IndexSetoid Function.id) , (λ {x} → squash-≡ (inv x)) , (λ {x} → squash-≡ (inv x)))
+            inject-bijective-binding = both-inv→bijective IndexSetoid IndexSetoid bound-inject-func ((Function.id which-is-cong from-discrete-cong IndexSetoid Function.id) , (λ x → squash-≡ (inv x)) , (λ x → squash-≡ (inv x)))
                 where
                     inv : ((j , _) : FakeFin i*) → inject j .proj₁ ≡ j
                     inv (j , squash j<i*) = m<n⇒m%n≡m (≤-recompute j<i*)
@@ -365,7 +365,7 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             shuffle-bijective = both-inv→bijective IndexSetoid IndexSetoid shuffle-func (shuffle-func , inv , inv)
                 where
                     inv : Plasmaduck.Function.Properties.LeftInverse _≡_ _≡_ shuffle shuffle
-                    inv {(j , squash j<i*)} = squash-≡ (m∸[m∸n]≡n {i} {j} (s≤s⁻¹ j<i*))
+                    inv (j , squash j<i*) = squash-≡ (m∸[m∸n]≡n {i} {j} (s≤s⁻¹ j<i*))
 
             gen : FakeFin i* → Carrier
             gen (j , _) = p' j *R q' (i ∸ℕ j)
@@ -453,8 +453,8 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             merge _+R_ ((one' 0 *R p' (m ∸ℕ 0)) +R zeroR) gen 0     ≈⟨ refl ⟩
             merge _+R_ ((one' 0 *R p' m) +R zeroR) gen 0            ≈⟨ refl ⟩
             one' 0 *R p' m +R zeroR                                 ≈⟨ refl ⟩
-            oneR *R p' m +R zeroR                                   ≈⟨ zeroR-is-+R-right-id ⟩
-            oneR *R p' m                                            ≈⟨ oneR-is-*R-left-id ⟩
+            oneR *R p' m +R zeroR                                   ≈⟨ zeroR-is-+R-right-id (oneR *R p' m) ⟩
+            oneR *R p' m                                            ≈⟨ oneR-is-*R-left-id (p' m) ⟩
             p' m                                                    ∎
                 where
                     open import Relation.Binary.Reasoning.Setoid S
@@ -462,8 +462,8 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
         one-is-*-left-id-trace p' m n'@(sucℕ n'') = begin
             merge _+R_ zeroR gen n                                  ≈⟨ refl ⟩
             merge _+R_ ((one' n' *R p' (m ∸ℕ n')) +R zeroR) gen n'  ≈⟨ refl ⟩
-            merge _+R_ ((zeroR *R p' (m ∸ℕ n')) +R zeroR) gen n'    ≈⟨ merge-substitute-start _+R_ +R-cong ((zeroR *R p' (m ∸ℕ n')) +R zeroR) (zeroR +R zeroR) (+R-cong zeroR-is-*R-left-absorber (refl {zeroR})) gen n' ⟩
-            merge _+R_ (zeroR +R zeroR) gen n'                      ≈⟨ merge-substitute-start _+R_ +R-cong (zeroR +R zeroR) zeroR zeroR-is-+R-left-id gen n' ⟩
+            merge _+R_ ((zeroR *R p' (m ∸ℕ n')) +R zeroR) gen n'    ≈⟨ merge-substitute-start _+R_ +R-cong ((zeroR *R p' (m ∸ℕ n')) +R zeroR) (zeroR +R zeroR) (+R-cong (zeroR-is-*R-left-absorber (p' (m ∸ℕ sucℕ n''))) (refl {zeroR})) gen n' ⟩
+            merge _+R_ (zeroR +R zeroR) gen n'                      ≈⟨ merge-substitute-start _+R_ +R-cong (zeroR +R zeroR) zeroR (zeroR-is-+R-left-id zeroR) gen n' ⟩
             merge _+R_ zeroR gen n'                                 ≈⟨ one-is-*-left-id-trace p' m n'' ⟩
             p' m                                                    ∎
                 where
@@ -471,24 +471,24 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
                     n = sucℕ n'
                     gen = λ j → one' j *R p' (m ∸ℕ j)
 
-        is-zero⇒left-identity : ∀ {x} → IsZero x → LeftIdentity S _+R_ x
-        is-zero⇒left-identity {x} x≈0 {y} = begin
+        is-zero⇒left-identity : ∀ {x} → IsZero x → LeftIdentity _≈R_ _+R_ x
+        is-zero⇒left-identity {x} x≈0 y = begin
             x +R y      ≈⟨ +R-cong x≈0 refl ⟩
-            zeroR +R y  ≈⟨ zeroR-is-+R-left-id ⟩
+            zeroR +R y  ≈⟨ zeroR-is-+R-left-id y ⟩
             y           ∎
             where open import Relation.Binary.Reasoning.Setoid S
 
-    one-is-*-left-id : LeftIdentity PolynomialSetoid _*_ one
-    one-is-*-left-id p@{p' , _} n = one-is-*-left-id-trace p' n n
+    one-is-*-left-id : LeftIdentity _≈_ _*_ one
+    one-is-*-left-id p@(p' , _) n = one-is-*-left-id-trace p' n n
 
-    *-assoc : Associative PolynomialSetoid _*_
-    *-assoc {p' , p-bound , high-p-zero} {q' , q-bound , high-q-zero} {r' , r-bound , high-r-zero} i = begin
+    *-assoc : Associative _≈_ _*_
+    *-assoc (p' , p-bound , high-p-zero) (q' , q-bound , high-q-zero) (r' , r-bound , high-r-zero) i = sym (begin
         (p' *' (q' *' r')) i                                                                                        ≈⟨ refl ⟩
         merge _+R_ zeroR (λ j → (p' j *R merge _+R_ zeroR (λ k → (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j)))) i*   ≈⟨ merge-local-substitute-generate _+R_ +R-cong zeroR _ _ i* (λ j j<i* → begin
-            p' j *R merge _+R_ zeroR (λ k → q' k *R r' (i ∸ℕ j ∸ℕ k)) (sucℕ (i ∸ℕ j))                       ≈⟨ merge-distribute-theorem +R-op (p' j *R_) (*R-+R-distributive .proj₁) zeroR (λ k → (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j)) ⟩
+            p' j *R merge _+R_ zeroR (λ k → q' k *R r' (i ∸ℕ j ∸ℕ k)) (sucℕ (i ∸ℕ j))                       ≈⟨ merge-distribute-theorem +R-op (p' j *R_) (*R-+R-distributive .proj₁ (p' j)) zeroR (λ k → (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j)) ⟩
             merge _+R_ (p' j *R zeroR) (_*R_ (p' j) ∘ (λ k → q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j))     ≈⟨ refl ⟩
-            merge _+R_ (p' j *R zeroR) (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j))           ≈⟨ merge-substitute-start _+R_ +R-cong (p' j *R zeroR) zeroR zeroR-is-*R-right-absorber (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j)) ⟩
-            merge _+R_ zeroR (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j))                     ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (λ k → p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) (λ k → *R-assoc) (sucℕ (i ∸ℕ j)) ⟩
+            merge _+R_ (p' j *R zeroR) (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j))           ≈⟨ merge-substitute-start _+R_ +R-cong (p' j *R zeroR) zeroR (zeroR-is-*R-right-absorber (p' j)) (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j)) ⟩
+            merge _+R_ zeroR (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (sucℕ (i ∸ℕ j))                     ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR (λ k → p' j *R (q' k *R r' (i ∸ℕ j ∸ℕ k))) (λ k → p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) (λ k → sym (*R-assoc (p' j) (q' k) (r' (i ∸ℕ j ∸ℕ k)))) (sucℕ (i ∸ℕ j)) ⟩
             merge _+R_ zeroR (λ k → p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) (sucℕ (i ∸ℕ j))                       ≈⟨ merge-local-substitute-generate _+R_ +R-cong zeroR (λ k → p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) (gen' j) (sucℕ (i ∸ℕ j)) (λ k k<s[i∸j] → reflexive (≡-sym (if-force-true (F j k) (p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) zeroR (≤⇒≤ᵇ {j +ℕ k} {i} (≤-trans (≤-reflexive (+ℕ-comm j k)) (m≤o∸n⇒m+n≤o k {j} {i} (s≤s⁻¹ j<i*) (s≤s⁻¹ k<s[i∸j]))))))) ⟩
             merge _+R_ zeroR (λ k → gen' j k) (sucℕ (i ∸ℕ j))                                               ∎
             ) ⟩
@@ -503,11 +503,11 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
                 gen' k (j ∸ℕ k)                                 ≈⟨ reflexive (if-force-true (F k (j ∸ℕ k)) (p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ k ∸ℕ (j ∸ℕ k))) zeroR (≤⇒≤ᵇ {k +ℕ (j ∸ℕ k)} {i} (≤-trans (≤-reflexive (m+[n∸m]≡n {k} {j} (s≤s⁻¹ k<sj))) (s≤s⁻¹ j<i*)))) ⟩
                 p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ k ∸ℕ (j ∸ℕ k))  ≈⟨ reflexive (≡-cong (λ q → p' k *R q' (j ∸ℕ k) *R r' q) ([n∸m]∸[o∸m]=n∸o k i j (s≤s⁻¹ k<sj))) ⟩
                 p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)              ∎) ⟩
-            merge _+R_ zeroR (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j)                    ≈⟨ merge-substitute-start _+R_ +R-cong zeroR (zeroR *R r' (i ∸ℕ j)) (sym zeroR-is-*R-left-absorber) (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j) ⟩
-            merge _+R_ (zeroR *R r' (i ∸ℕ j)) (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j)   ≈⟨ sym (merge-distribute-theorem +R-op (_*R r' (i ∸ℕ j)) (λ {x} {y} → *R-+R-distributive .proj₂) zeroR (λ k → p' k *R q' (j ∸ℕ k)) (sucℕ j)) ⟩
-            merge _+R_ zeroR (λ k → p' k *R q' (j ∸ℕ k)) (sucℕ j) *R r' (i ∸ℕ j)                    ∎) ⟩
+            merge _+R_ zeroR (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j)                    ≈⟨ merge-substitute-start _+R_ +R-cong zeroR (zeroR *R r' (i ∸ℕ j)) (sym (zeroR-is-*R-left-absorber (r' (i ∸ℕ j)))) (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j) ⟩
+            merge _+R_ (zeroR *R r' (i ∸ℕ j)) (λ k → p' k *R q' (j ∸ℕ k) *R r' (i ∸ℕ j)) (sucℕ j)   ≈⟨ sym (merge-distribute-theorem +R-op (_*R r' (i ∸ℕ j)) (*R-+R-distributive .proj₂ (r' (i ∸ℕ j))) zeroR (λ k → p' k *R q' (j ∸ℕ k)) (sucℕ j)) ⟩
+            merge _+R_ zeroR (λ k → p' k *R q' (j ∸ℕ k)) (sucℕ j) *R r' (i ∸ℕ j)                    ∎) ⟩  --
         merge _+R_ zeroR (λ j → merge _+R_ zeroR (λ k → (p' k *R q' (j ∸ℕ k))) (sucℕ j) *R r' (i ∸ℕ j)) i*          ≈⟨ refl ⟩
-        ((p' *' q') *' r') i                                                                                        ∎
+        ((p' *' q') *' r') i                                                                                        ∎)
         where
             i* = sucℕ i
 
@@ -557,10 +557,10 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             gen' : ℕ → ℕ → Carrier
             gen' m n = if (F m n) then (p' m *R q' n *R r' (i ∸ℕ m ∸ℕ n)) else zeroR
 
-            identity-thing₁ : (j k : ℕ) → .(j < i*) → .(sucℕ (i ∸ℕ j) ≤ k) → .(k < i*) → LeftIdentity S _+R_ (gen' j k)
+            identity-thing₁ : (j k : ℕ) → .(j < i*) → .(sucℕ (i ∸ℕ j) ≤ k) → .(k < i*) → LeftIdentity _≈R_ _+R_ (gen' j k)
             identity-thing₁ j k j<i* i∸j<k k<i* = is-zero⇒left-identity (reflexive (if-force-false (j +ℕ k ≤ᵇ i) (p' j *R q' k *R r' (i ∸ℕ j ∸ℕ k)) zeroR λ j+k≤ᵇi → ⊥-recompute (<-irrefl ≡-refl (<-≤-trans (≤-trans (m∸n≤o⇒m≤o+n i* j k (≤-trans (≤-reflexive (≡-sym (∸-suc i j (s≤s⁻¹ j<i*)))) i∸j<k)) (≤-reflexive (+ℕ-comm k j))) (≤ᵇ⇒≤ (j +ℕ k) i j+k≤ᵇi)))))
 
-            identity-thing₂ : (j k : ℕ) → .(j < i*) → .(sucℕ j ≤ k) → .(k < i*) → LeftIdentity S _+R_ (gen' k (j -mod k))
+            identity-thing₂ : (j k : ℕ) → .(j < i*) → .(sucℕ j ≤ k) → .(k < i*) → LeftIdentity _≈R_ _+R_ (gen' k (j -mod k))
             identity-thing₂ j k j<i* j<k k<i* = is-zero⇒left-identity (reflexive (if-force-false (k +ℕ (j -mod k) ≤ᵇ i) (p' k *R q' (j -mod k) *R r' (i ∸ℕ k ∸ℕ (j -mod k))) zeroR λ k+[j∸k]≤ᵇi → ⊥-recompute (<-irrefl ≡-refl (<-≤-trans thing (≤ᵇ⇒≤ (k +ℕ (j -mod k)) i k+[j∸k]≤ᵇi)))))
                 where
                     thing : k +ℕ (j -mod k) > i
@@ -631,11 +631,11 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
             finv-f m = ≡-sym (m≡m%n+[m/n]*n m i*)
 
             f-bind : BijectiveBinding (i* *ℕ i*) (unbind' zeroVec f-func)
-            f-bind = both-inv→bijective (discrete-setoid (FakeFin (i* *ℕ i*))) IndexSetoid (bind' (i* *ℕ i*) (unbind' zeroVec f-func) which-is-cong from-discrete-cong IndexSetoid (bind' (i* *ℕ i*) (unbind' zeroVec f-func))) ((f-inv-func which-is-cong λ {x@(u , _)} {y@(v , _)} u~v → squash-≡ (≡-cong₂ _+ℕ_ (u~v 1) (≡-cong (_*ℕ i*) (u~v 0)))) , (λ {x@(j , j<i*²)} →
+            f-bind = both-inv→bijective (discrete-setoid (FakeFin (i* *ℕ i*))) IndexSetoid (bind' (i* *ℕ i*) (unbind' zeroVec f-func) which-is-cong from-discrete-cong IndexSetoid (bind' (i* *ℕ i*) (unbind' zeroVec f-func))) ((f-inv-func which-is-cong λ {x@(u , _)} {y@(v , _)} u~v → squash-≡ (≡-cong₂ _+ℕ_ (u~v 1) (≡-cong (_*ℕ i*) (u~v 0)))) , (λ x@(j , j<i*²) →
                 f-inv-func (unbind' zeroVec f-func j)   ≡⟨ ≡-cong f-inv-func (unbind'-force< zeroVec f-func x) ⟩
                 f-inv-func (f-func x)                   ≡⟨ squash-≡ (finv-f j) ⟩
                 x ∎
-                    ) , (λ {x@(u , u≺bases)} i →
+                    ) , (λ x@(u , u≺bases) i →
                 (unbind' zeroVec f-func (f-inv u)) .proj₁ i     ≡⟨ ≡-cong (λ q → q .proj₁ i) (unbind'-force< zeroVec f-func (f-inv-func x)) ⟩
                 f-func (f-inv-func x) .proj₁ i                  ≡⟨ f-finv u u≺bases i ⟩
                 u i                                             ∎))
@@ -735,10 +735,10 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
                 where open ≡-Reasoning
 
             shuffle-bijective : Bijective (IndexSetoid .Setoid._≈_) (IndexSetoid .Setoid._≈_) shuffle-func
-            shuffle-bijective = both-inv→bijective IndexSetoid IndexSetoid (shuffle-func which-is-cong λ {x} {y} → shuffle-func-cong {x} {y}) ((shuffle-inv-func which-is-cong λ {x} {y} → shuffle-inv-func-cong {x} {y}) , (λ {x@(u , u≺bases)} i →
+            shuffle-bijective = both-inv→bijective IndexSetoid IndexSetoid (shuffle-func which-is-cong λ {x} {y} → shuffle-func-cong {x} {y}) ((shuffle-inv-func which-is-cong λ {x} {y} → shuffle-inv-func-cong {x} {y}) , (λ x@(u , u≺bases) i →
                 shuffle-inv (shuffle u) i   ≡⟨ shuffle-left-inv u u≺bases i ⟩
                 u i                         ∎
-                    ) , (λ {x@(u , u≺bases)} i →
+                    ) , (λ x@(u , u≺bases) i →
                 shuffle (shuffle-inv u) i   ≡⟨ shuffle-right-inv u u≺bases i ⟩
                 u i                         ∎))
                 where open ≡-Reasoning
@@ -748,10 +748,10 @@ module LeftPolynomialLemmas (ring : Ring c ℓ) where
 
             open import Relation.Binary.Reasoning.Setoid S
 
-    *-+-left-distributive : LeftDistributive PolynomialSetoid _*_ _+_
-    *-+-left-distributive p@{p' , p-bound , high-p-zero} q@{q' , q-bound , high-q-zero} r@{r' , r-bound , high-r-zero} i = begin
+    *-+-left-distributive : _DistributesOverˡ_ _≈_ _*_ _+_
+    *-+-left-distributive p@(p' , p-bound , high-p-zero) q@(q' , q-bound , high-q-zero) r@(r' , r-bound , high-r-zero) i = begin
         (p * (q + r)) .proj₁ i                                                                                                      ≈⟨ refl ⟩
-        merge _+R_ zeroR (λ j → (p' j *R (q' (i ∸ℕ j) +R r' (i ∸ℕ j)))) (sucℕ i)                                                    ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR _ _ (λ j → *R-+R-distributive .proj₁) (sucℕ i) ⟩
+        merge _+R_ zeroR (λ j → (p' j *R (q' (i ∸ℕ j) +R r' (i ∸ℕ j)))) (sucℕ i)                                                    ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR _ _ (λ j → *R-+R-distributive .proj₁ (p' j) (q' (i ∸ℕ j)) (r' (i ∸ℕ j))) (sucℕ i) ⟩
         merge _+R_ zeroR (λ j → (p' j *R q' (i ∸ℕ j)) +R (p' j *R r' (i ∸ℕ j))) (sucℕ i)                                            ≈⟨ sym (merge-zipper-lemma +R-op +R-assoc +R-comm +R-identity (λ j → (p' j *R q' (i ∸ℕ j))) (λ j → (p' j *R r' (i ∸ℕ j))) (sucℕ i)) ⟩
         (merge _+R_ zeroR (λ j → (p' j *R q' (i ∸ℕ j))) (sucℕ i)) +R (merge _+R_ zeroR (λ j → (p' j *R r' (i ∸ℕ j))) (sucℕ i))      ≈⟨ refl ⟩
         ((p * q) + (p * r)) .proj₁ i                                                                                                ∎
@@ -788,7 +788,7 @@ module Polynomial (ring : Ring c ℓ) where
     module Flip where
         open LeftPolynomialLemmas (opposite-ring ring) using (*-+-left-distributive; one-is-*-left-id) renaming (_*_ to _*-flip_; _*-alt_ to _*-alt-flip_; _+_ to _+-flip_)
         open RawPolynomial (opposite-ring ring .Ring.rawRing) using () renaming (_*_ to _*'-flip_; _+_ to _+'-flip_; one to one'-flip)
-        open LeftPolynomialLemmas ring using (PolynomialSetoid; _*_; _*-alt_; _+_; one) renaming (*'-flip to *'-flip-to-alt)
+        open LeftPolynomialLemmas ring using (_≈_; _*_; _*-alt_; _+_; one) renaming (*'-flip to *'-flip-to-alt)
 
         +'-is-flip-+'-flipped : ∀ p q → p +' q ≈' q +'-flip p
         +'-is-flip-+'-flipped p q i = refl
@@ -799,7 +799,7 @@ module Polynomial (ring : Ring c ℓ) where
             (p *'-alt q) i                                                          ≈⟨ refl ⟩
             merge _+R_ zeroR (λ j → p (i ∸ℕ j) *R q j) (sucℕ i)                     ≈⟨ merge-substitute-op _+R_ (Function.flip _+R_) (λ {w} {x} {y} {z} w≈x y≈z → begin
                 w +R y  ≈⟨ +R-cong w≈x y≈z ⟩
-                x +R z  ≈⟨ +R-comm {x} {z} ⟩
+                x +R z  ≈⟨ +R-comm x z ⟩
                 z +R x  ∎
                 ) zeroR (λ j → p (i ∸ℕ j) *R q j) (sucℕ i) ⟩
             merge (Function.flip _+R_) zeroR (λ j → p (i ∸ℕ j) *R q j) (sucℕ i)     ≈⟨ refl ⟩
@@ -810,21 +810,21 @@ module Polynomial (ring : Ring c ℓ) where
         one'-is-flip-one'-flipped zeroℕ = refl
         one'-is-flip-one'-flipped (sucℕ _) = refl
 
-        one-is-*-right-id : RightIdentity PolynomialSetoid _*_ one
-        one-is-*-right-id p@{p' , pb} n = begin
+        one-is-*-right-id : RightIdentity _≈_ _*_ one
+        one-is-*-right-id p@(p' , pb) n = begin
             (p * one) .proj₁ n          ≈⟨ refl ⟩
             (p' *' one') n              ≈⟨ *'-cong {p'} ≈'-refl one'-is-flip-one'-flipped n ⟩
             (p' *' one'-flip) n         ≈⟨ *'-is-flip-*'-flipped p' one'-flip n ⟩
-            (one'-flip *'-flip p') n    ≈⟨ one-is-*-left-id {p} n ⟩
+            (one'-flip *'-flip p') n    ≈⟨ one-is-*-left-id p n ⟩
             p' n                        ∎
             where open import Relation.Binary.Reasoning.Setoid S
 
-        *-+-right-distributive : RightDistributive PolynomialSetoid _*_ _+_
-        *-+-right-distributive p@{p' , pb} q@{q' , qb} r@{r' , rb} i = begin
-            ((p' +' q') *' r') i                        ≈⟨ *'-is-flip-*'-flipped (p' +' q') r' i ⟩
-            (r' *'-flip (q' +'-flip p')) i              ≈⟨ *-+-left-distributive {r} {q} {p} i ⟩
-            (r' *'-flip q' +'-flip r' *'-flip p') i     ≈⟨ sym (+R-cong (*'-is-flip-*'-flipped p' r' i) (*'-is-flip-*'-flipped q' r' i)) ⟩
-            (p' *' r' +' q' *' r') i                    ∎
+        *-+-right-distributive : _DistributesOverʳ_ _≈_ _*_ _+_
+        *-+-right-distributive p@(p' , pb) q@(q' , qb) r@(r' , rb) i = begin
+            ((q' +' r') *' p') i                        ≈⟨ *'-is-flip-*'-flipped (q' +' r') p' i ⟩
+            (p' *'-flip (r' +'-flip q')) i              ≈⟨ *-+-left-distributive p r q i ⟩
+            (p' *'-flip r' +'-flip p' *'-flip q') i     ≈⟨ sym (+R-cong (*'-is-flip-*'-flipped q' p' i) (*'-is-flip-*'-flipped r' p' i)) ⟩
+            (q' *' p' +' r' *' p') i                    ∎
             where open import Relation.Binary.Reasoning.Setoid S
 
     open Flip using (one-is-*-right-id; *-+-right-distributive) public
@@ -840,24 +840,24 @@ module Polynomial (ring : Ring c ℓ) where
         one = one
         }
 
-    *-distrib-+ : Distributive PolynomialSetoid _*_ _+_
-    *-distrib-+ = (λ {x} {y} {z} → *-+-left-distributive {x} {y} {z}) , (λ {x} {y} {z} → *-+-right-distributive {x} {y} {z})
+    *-distrib-+ : _DistributesOver_ _≈_ _*_ _+_
+    *-distrib-+ = *-+-left-distributive , *-+-right-distributive
 
-    *-identity : Identity PolynomialSetoid _*_ one
-    *-identity = (λ {x} → one-is-*-left-id {x}) , (λ {x} → one-is-*-right-id {x})
+    *-identity : Identity _≈_ _*_ one
+    *-identity = one-is-*-left-id , one-is-*-right-id
 
     PolynomialIsRing : IsRing PolynomialRawRing
     PolynomialIsRing = record {
         +-isAbelianGroup = record {
             isGroup = record {
-                id-is-left-id = λ {x} n → zeroR-is-+R-left-id;
-                inv-is-left-inv = λ {x} n → Ring.neg-is-+-left-inv ring;
-                assoc = λ {x} {y} {z} n → Ring.+-assoc ring
+                id-is-left-id = λ x n → zeroR-is-+R-left-id (x .proj₁ n);
+                inv-is-left-inv = λ x n → Ring.neg-is-+-left-inv ring (x .proj₁ n);
+                assoc = λ x y z n → Ring.+-assoc ring (x .proj₁ n) (y .proj₁ n) (z .proj₁ n)
                 };
-            abelian = λ {x} {y} n → Ring.+-comm ring
+            abelian = λ x y n → Ring.+-comm ring (x .proj₁ n) (y .proj₁ n)
             };
         one-is-*-id = *-identity;
-        *-assoc = λ {x} {y} {z} → *-assoc {x} {y} {z};
+        *-assoc = *-assoc;
         *-+-distributive = *-distrib-+
         }
 
@@ -898,11 +898,11 @@ module CommutativePolynomial (ring : CommutativeRing c ℓ) where
     open Polynomial (CommutativeRing.ring ring) public
 
 
-    *-comm : Commutative PolynomialSetoid _*_
-    *-comm {p' , _} {q' , _} i = begin
+    *-comm : Commutative _≈_ _*_
+    *-comm (p' , _) (q' , _) i = begin
         (p' *' q') i                                        ≈⟨ *'-flip p' q' i ⟩
         (p' *'-alt q') i                                    ≈⟨ refl ⟩
-        merge _+R_ zeroR (λ j → (p' (i ∸ℕ j) *R q' j)) i*   ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR _ _ (λ j → *R-comm) i* ⟩
+        merge _+R_ zeroR (λ j → (p' (i ∸ℕ j) *R q' j)) i*   ≈⟨ merge-substitute-generate _+R_ +R-cong zeroR _ _ (λ j → *R-comm (p' (i ∸ℕ j)) (q' j)) i* ⟩
         merge _+R_ zeroR (λ j → (q' j *R p' (i ∸ℕ j))) i*   ≈⟨ refl ⟩
         (q' *' p') i                                        ∎
         where
@@ -912,10 +912,10 @@ module CommutativePolynomial (ring : CommutativeRing c ℓ) where
     PolynomialIsCommutativeRing : IsCommutativeRing PolynomialRawRing
     PolynomialIsCommutativeRing = record {
         +-isAbelianGroup = IsRing.+-isAbelianGroup PolynomialIsRing;
-        one-is-*-left-id = λ {x} → one-is-*-left-id {x};
-        *-assoc = λ {x} {y} {z} → *-assoc {x} {y} {z};
-        *-+-left-distributive = λ {x} {y} {z} → *-+-left-distributive {x} {y} {z};
-        *-comm = λ {x} {y} → *-comm {x} {y}
+        one-is-*-left-id = one-is-*-left-id;
+        *-assoc = *-assoc;
+        *-+-left-distributive = *-+-left-distributive;
+        *-comm = *-comm
         }
 
     PolynomialCommutativeRing : CommutativeRing (c ⊔ ℓ) ℓ

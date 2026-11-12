@@ -200,7 +200,7 @@ flip-swap-as-list i j@(suc j'@(suc j'')) k =
     flip-swap i j k                                                                                         ≡⟨⟩
     (flip (j' + i) ∘ flip-swap i j' ∘ flip (j' + i)) k                                                      ≡⟨ cong (flip (j' + i)) (flip-swap-as-list i j' (flip (j' + i) k)) ⟩
     (flip (j' + i) ∘ flip-swap-using-list (flip-swap-list-helper i j') ∘ flip (j' + i)) k                   ≡⟨ cong (λ q → (flip (j' + i) ∘ q ∘ flip (j' + i)) k) (sym (lemma (flip-swap-list-helper i j'))) ⟩
-    (flip (j' + i) ∘ foldl (λ g f → g ∘ f) id (map flip (flip-swap-list-helper i j')) ∘ flip (j' + i)) k    ≡⟨ sym (foldl-pop (discrete-function-setoid ℕ ℕ) {λ g f → g ∘ f} (λ _ → refl) (λ {f} g=h x → cong f (g=h x)) (flip (j' + i)) id l-center (flip (j' + i) k)) ⟩
+    (flip (j' + i) ∘ foldl (λ g f → g ∘ f) id (map flip (flip-swap-list-helper i j')) ∘ flip (j' + i)) k    ≡⟨ sym (foldl-pop (discrete-function-setoid ℕ ℕ) {λ g f → g ∘ f} (λ _ _ _ _ → refl) (λ f g=h x → cong f (g=h x)) (flip (j' + i)) id l-center (flip (j' + i) k)) ⟩
     (foldl (λ g f → g ∘ f) (flip (j' + i)) (map flip (flip-swap-list-helper i j')) ∘ flip (j' + i)) k       ≡⟨⟩
     (foldl (λ g f → g ∘ f) id (flip (j' + i) ∷ map flip (flip-swap-list-helper i j')) ∘ flip (j' + i)) k    ≡⟨ cong-app (sym (foldl-∷ʳ (λ g f → g ∘ f) id (flip (j' + i)) l-left)) k ⟩
     foldl (λ g f → g ∘ f) id (flip (j' + i) ∷ map flip (flip-swap-list-helper i j') ∷ʳ flip (j' + i)) k     ≡⟨ cong (λ q → foldl (λ g f → g ∘ f) id q k) (sym (map-++ flip l'-left (j' + i ∷ []))) ⟩

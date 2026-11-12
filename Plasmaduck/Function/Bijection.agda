@@ -272,10 +272,10 @@ module _
     open InverseFunction bij
 
     invert-is-left-inverse : LeftInverse s₁ s₂ f-func g
-    invert-is-left-inverse {x = x} = is-left-inv x
+    invert-is-left-inverse = is-left-inv
 
     invert-is-right-inverse : RightInverse s₁ s₂ f-func g
-    invert-is-right-inverse {y = y} = is-right-inv y
+    invert-is-right-inverse = is-right-inv
 
 module _ (A-setoid : Setoid a ℓ₁) where
     private
@@ -392,15 +392,15 @@ module _ (A-setoid : Setoid a ℓ₁) where
         inv-cong {x = inj₂ (x , ¬P[x])} {inj₂ (y , ¬P[y])} (rel₂ x≈₁y) = x≈₁y
 
         is-left-inv : LeftInverse s₁ s₂ (f which-is-cong f-cong) inv
-        is-left-inv {x = x} with P-dec x
+        is-left-inv x with P-dec x
         ... | yes _ = IsEquivalence.refl (Setoid.isEquivalence s₁)
         ... | no _ = IsEquivalence.refl (Setoid.isEquivalence s₁)
 
         is-right-inv : RightInverse s₁ s₂ (f which-is-cong f-cong) inv
-        is-right-inv {inj₁ (x , P[x])} with P-dec x
+        is-right-inv (inj₁ (x , P[x])) with P-dec x
         ... | yes P[x]' = rel₁ (IsEquivalence.refl (Setoid.isEquivalence s₁))
         ... | no ¬P[x]' = ⊥-elim (¬P[x]' P[x])
-        is-right-inv {inj₂ (x , ¬P[x])} with P-dec x
+        is-right-inv (inj₂ (x , ¬P[x])) with P-dec x
         ... | yes P[x]' = ⊥-elim (¬P[x] P[x]')
         ... | no ¬P[x]' = rel₂ (IsEquivalence.refl (Setoid.isEquivalence s₁))
 

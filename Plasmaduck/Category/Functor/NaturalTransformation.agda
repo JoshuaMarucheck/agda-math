@@ -176,20 +176,20 @@ module _ {𝔸 : Category a b c} {𝔹 : Category α β γ} where
         backwardIsNatural : IsNaturalTransformation (RawNaturalIsomorphism.backward rawNaturalIsomorphism)
         backwardIsNatural = record {
             commutes = λ {X} {Y} f → begin
-                backward .η Y ∘₂ mapₘ G f                                       ≈⟨ ~-sym id-is-right-id ⟩ 
-                (backward .η Y ∘₂ mapₘ G f) ∘₂ Category.id 𝔹 (mapₒ G X)         ≈⟨ ∘₂-respects ~-refl (~-sym (opposites X .proj₁)) ⟩ 
-                (backward .η Y ∘₂ mapₘ G f) ∘₂ (forward .η X ∘₂ backward .η X)  ≈⟨ associate-middle 𝔹 (backward .η Y) (mapₘ G f) (forward .η X) (backward .η X) ⟩ 
-                backward .η Y ∘₂ (mapₘ G f ∘₂ forward .η X) ∘₂ backward .η X    ≈⟨ ∘₂-respects ~-refl (∘₂-respects (~-sym (forwardIsNatural .IsNaturalTransformation.commutes f)) ~-refl) ⟩  
-                backward .η Y ∘₂ (forward .η Y ∘₂ mapₘ F f) ∘₂ backward .η X    ≈⟨ ~-sym (associate-middle 𝔹 (backward .η Y) (forward .η Y) (mapₘ F f) (backward .η X)) ⟩ 
-                (backward .η Y ∘₂ forward .η Y) ∘₂ (mapₘ F f ∘₂ backward .η X)  ≈⟨ ∘₂-respects (opposites Y .proj₂) ~-refl ⟩ 
-                (Category.id 𝔹 (mapₒ F Y)) ∘₂ (mapₘ F f ∘₂ backward .η X)       ≈⟨ id-is-left-id ⟩ 
+                backward .η Y ∘₂ mapₘ G f                                       ≈⟨ ~-sym id-is-right-id ⟩
+                (backward .η Y ∘₂ mapₘ G f) ∘₂ Category.id 𝔹 (mapₒ G X)         ≈⟨ ∘₂-respects ~-refl (~-sym (opposites X .proj₁)) ⟩
+                (backward .η Y ∘₂ mapₘ G f) ∘₂ (forward .η X ∘₂ backward .η X)  ≈⟨ associate-middle 𝔹 (backward .η Y) (mapₘ G f) (forward .η X) (backward .η X) ⟩
+                backward .η Y ∘₂ (mapₘ G f ∘₂ forward .η X) ∘₂ backward .η X    ≈⟨ ∘₂-respects ~-refl (∘₂-respects (~-sym (forwardIsNatural .IsNaturalTransformation.commutes f)) ~-refl) ⟩
+                backward .η Y ∘₂ (forward .η Y ∘₂ mapₘ F f) ∘₂ backward .η X    ≈⟨ ~-sym (associate-middle 𝔹 (backward .η Y) (forward .η Y) (mapₘ F f) (backward .η X)) ⟩
+                (backward .η Y ∘₂ forward .η Y) ∘₂ (mapₘ F f ∘₂ backward .η X)  ≈⟨ ∘₂-respects (opposites Y .proj₂) ~-refl ⟩
+                (Category.id 𝔹 (mapₒ F Y)) ∘₂ (mapₘ F f ∘₂ backward .η X)       ≈⟨ id-is-left-id ⟩
                 mapₘ F f ∘₂ backward .η X                                       ∎
             }
             where
                 open RawNaturalTransformation using (η)
                 module _ {X Y : Category.Object 𝔹} where
                     open import Relation.Binary.Reasoning.Setoid (Category.Morphism' 𝔹 X Y) public
-        
+
         forwardNaturalTransformation : NaturalTransformation F G
         forwardNaturalTransformation = record {
             rawNaturalTransformation = forward;

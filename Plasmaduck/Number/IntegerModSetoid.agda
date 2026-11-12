@@ -134,7 +134,7 @@ module NatModSetoid where
     ... | inj₂ o≲n = sym {ℤ.pos o} {ℤ.pos n} (fromNat-thing {o} {n} o≲n)
 
     fromNat-bijective : Bijective _≃_ _≈_ fromNat
-    fromNat-bijective = both-inv→bijective NatModSetoid ModSetoid (fromNat which-is-cong fromNat-cong) ((toNat which-is-cong λ {x} {y} → toNat-cong {x} {y}) , (λ {x} → toNat-fromNat x) , (λ {x} → fromNat-toNat x))
+    fromNat-bijective = both-inv→bijective NatModSetoid ModSetoid (fromNat which-is-cong fromNat-cong) ((toNat which-is-cong λ {x} {y} → toNat-cong {x} {y}) , toNat-fromNat , fromNat-toNat)
 
 
 ------------------------------------------
@@ -152,7 +152,7 @@ neg-cong {i} {j} (divides k j-i=k*m) = divides (~ k) (
 +-cong : Congruent₂ _≈_ _≈_ _≈_ _+_
 +-cong {i₁} {i₂} {j₁} {j₂} (divides qᵢ i₂-i₁=qᵢ*m) (divides qⱼ j₂-j₁=qⱼ*m) = divides (qᵢ + qⱼ) (
     (i₂ + j₂) - (i₁ + j₁)       ≡⟨ cong (λ q → (i₂ + j₂) + q) (neg-distrib-+ i₁ j₁) ⟩
-    (i₂ + j₂) + (~ i₁ + ~ j₁)   ≡⟨ exchange-middle (discrete-setoid ℤ) _+_ (λ {x} {y} {z} → ≡-sym (+-assoc x y z)) (λ {x} {y} → +-comm x y) (λ { ≡-refl ≡-refl → ≡-refl }) {i₂} {j₂} {~ i₁} {~ j₁} ⟩
+    (i₂ + j₂) + (~ i₁ + ~ j₁)   ≡⟨ exchange-middle (discrete-setoid ℤ) _+_ +-assoc +-comm (λ { ≡-refl ≡-refl → ≡-refl }) i₂ j₂ (~ i₁) (~ j₁) ⟩
     (i₂ - i₁) + (j₂ - j₁)       ≡⟨ cong₂ _+_ i₂-i₁=qᵢ*m j₂-j₁=qⱼ*m ⟩
     qᵢ * m + qⱼ * m             ≡⟨ ≡-sym (*-distrib-+ .proj₂ m qᵢ qⱼ) ⟩
     (qᵢ + qⱼ) * m               ∎)

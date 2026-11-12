@@ -212,7 +212,7 @@ module CeilToGenerator
                 ceil-n≥sn : ceil n ≥ suc n
                 ceil-n≥sn = Q⇒ceil> n Q[n]
 
-        ceil-idempotent : Idempotent (discrete-setoid ℕ) ceil
+        ceil-idempotent : Idempotent _≡_ ceil
         ceil-idempotent n = P⇒ceil= (ceil n) (P[ceil] n)
 
         -- count-force-P : ∀ m → .(P m) → count (suc m) ≡ suc (count m)
@@ -241,10 +241,10 @@ module CeilToGenerator
         ... | inj₂ Q[j'] | yes ≡-refl = ⊥-elim-irr (PQ-contradict j' (P[gen] i) Q[j'])
 
         count-gen : RightInverse _≡_ _≡_ count gen
-        count-gen {zero} = count-gen-inv-near-0 (gen zero) ≤-refl
-        count-gen {suc i} =
+        count-gen zero = count-gen-inv-near-0 (gen zero) ≤-refl
+        count-gen (suc i) =
             count (gen (suc i))     ≡⟨ count-gen-inv-elsewhere i (gen (suc i)) ((gen-monotonic {i} n<sn)) ≤-refl ⟩
-            suc (count (gen i))     ≡⟨ cong suc (count-gen {i}) ⟩
+            suc (count (gen i))     ≡⟨ cong suc (count-gen i) ⟩
             suc i                   ∎
             where open ≡-Reasoning
 
@@ -280,7 +280,7 @@ module CeilToGenerator
             where open ≡-Reasoning
 
         restricted-gen-bijective : Bijective _≡_ (_≡_ Function.on proj₁) restricted-gen
-        restricted-gen-bijective = both-inv→bijective A B (restricted-gen which-is-cong from-discrete-cong B restricted-gen) ((partial-count which-is-cong λ { ≡-refl → ≡-refl }) , (λ {x} → count-gen {x}) , λ {(x , P[x])} → gen-count' x P[x])
+        restricted-gen-bijective = both-inv→bijective A B (restricted-gen which-is-cong from-discrete-cong B restricted-gen) ((partial-count which-is-cong λ { ≡-refl → ≡-refl }) , count-gen , λ (x , P[x]) → gen-count' x P[x])
             where
                 A = discrete-setoid ℕ
                 B = property-subset-setoid (discrete-setoid ℕ) P

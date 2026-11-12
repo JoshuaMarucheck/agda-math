@@ -36,7 +36,7 @@ variable
     a b c α β γ : Level
 
 module HomSetAdjoint {ℂ : Category a b c} {𝔻 : Category α β γ} (F : Functor 𝔻 ℂ) (G : Functor ℂ 𝔻) where
-    
+
 
 
 module _ {ℂ : RawCategory a b c} {𝔻 : RawCategory α β γ} where

@@ -165,7 +165,7 @@ clip≺ : (n : ℕ) → {vec₁ vec₂ : InfiniteVector} → vec₁ ≺' vec₂ 
 clip≺ n {vec₁} {vec₂} vec₁≺vec₂ (i , _) = vec₁≺vec₂ i
 
 clip-extend : (n x : ℕ) → LeftInverse _~_ _~'_ (extend {m = n} x) (clip n)
-clip-extend n x {u} (i , squash i<n) with i <? n
+clip-extend n x u (i , squash i<n) with i <? n
 ... | no i≮n = ⊥-irr-elim (i≮n i<n)
 ... | yes i<n = ≡-refl
 
@@ -221,7 +221,7 @@ module Bijections
     extend-lesser (u , u≺bases) = extend 0 u , extend≺ (s≤s z≤n) u≺bases
 
     clip-lesser : InfiniteReindexing.LesserInfiniteVector (extend 1 basesVec) → LesserFiniteVector basesVec
-    clip-lesser (u' , u'≺'bases) = clip n u' , ≺-cong-≗ (λ _ → ≡-refl) (clip-extend n 1 {basesVec}) (clip≺ n u'≺'bases)
+    clip-lesser (u' , u'≺'bases) = clip n u' , ≺-cong-≗ (λ _ → ≡-refl) (clip-extend n 1 basesVec) (clip≺ n u'≺'bases)
 
     extend-lesser-cong : Congruent _~′_ _~'′_ extend-lesser
     extend-lesser-cong {u , u≺bases} {v , v≺bases} u~v i with i <? n
@@ -232,7 +232,7 @@ module Bijections
     clip-lesser-cong {u , u≺'bases} {v , v≺'bases} u~′v (i , squash i<n) = u~′v i
 
     extend-clip-lesser-inverse : RightInverse {A = LesserFiniteVector basesVec} {InfiniteReindexing.LesserInfiniteVector (extend 1 basesVec)} _~′_ _~'′_ extend-lesser clip-lesser
-    extend-clip-lesser-inverse {u , u≺'bases} i with i <? n
+    extend-clip-lesser-inverse (u , u≺'bases) i with i <? n
     ... | yes i<n = ≡-refl
     ... | no ¬i<n = ≡-sym (n<1⇒n≡0 (begin
         suc (u i)               ≤⟨ u≺'bases i ⟩
@@ -241,7 +241,7 @@ module Bijections
         where open ≤-Reasoning
 
     clip-extend-lesser-inverse : LeftInverse {A = LesserFiniteVector basesVec} {InfiniteReindexing.LesserInfiniteVector (extend 1 basesVec)} _~′_ _~'′_ extend-lesser clip-lesser
-    clip-extend-lesser-inverse u-lesser@{u , u≺bases} i-fin@(i , squash i<n) =
+    clip-extend-lesser-inverse u-lesser@(u , u≺bases) i-fin@(i , squash i<n) =
         clip-lesser (extend-lesser u-lesser) .proj₁ i-fin   ≡⟨⟩
         clip n (extend 0 u) i-fin                           ≡⟨⟩
         extend 0 u i                                        ≡⟨ extend-force< 0 u i i<n ⟩
@@ -250,11 +250,11 @@ module Bijections
 
     extend-lesser-bijective : Bijective _~′_ _~'′_ extend-lesser
     extend-lesser-bijective = both-inv→bijective (LesserFiniteVectorSetoid basesVec) (InfiniteReindexing.LesserInfiniteVectorSetoid (extend 1 basesVec))
-        (extend-lesser which-is-cong λ {x} {y} → extend-lesser-cong {x} {y}) ((clip-lesser which-is-cong λ {x} {y} → clip-lesser-cong {x} {y}) , (λ {x} → clip-extend-lesser-inverse {x}) , (λ {x} → extend-clip-lesser-inverse {x}))
+        (extend-lesser which-is-cong λ {x} {y} → extend-lesser-cong {x} {y}) ((clip-lesser which-is-cong λ {x} {y} → clip-lesser-cong {x} {y}) , clip-extend-lesser-inverse , extend-clip-lesser-inverse)
 
     clip-lesser-bijective : Bijective _~'′_ _~′_ clip-lesser
     clip-lesser-bijective = both-inv→bijective (InfiniteReindexing.LesserInfiniteVectorSetoid (extend 1 basesVec)) (LesserFiniteVectorSetoid basesVec)
-        (clip-lesser which-is-cong λ {x} {y} → clip-lesser-cong {x} {y}) ((extend-lesser which-is-cong (λ {x} {y} → extend-lesser-cong {x} {y})) , (λ {x} → extend-clip-lesser-inverse {x}) , (λ {x} → clip-extend-lesser-inverse {x}))
+        (clip-lesser which-is-cong λ {x} {y} → clip-lesser-cong {x} {y}) ((extend-lesser which-is-cong (λ {x} {y} → extend-lesser-cong {x} {y})) , extend-clip-lesser-inverse , clip-extend-lesser-inverse)
 
     finite-vector-representation-bijection : Bijection (LesserFiniteVectorSetoid basesVec) (InfiniteReindexing.LesserInfiniteVectorSetoid (extend 1 basesVec))
     finite-vector-representation-bijection = record {

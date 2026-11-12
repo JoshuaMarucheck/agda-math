@@ -38,7 +38,7 @@ _×_ 𝔸 𝔹 = record {
     }
 infix 30 _×_
 
-×-functor : 
+×-functor :
     {𝔸 : Category a b c} {𝔹 : Category α β γ} {ℂ : Category ℓ₁ ℓ₂ ℓ₃} {𝔻 : Category l₁ l₂ l₃} →
     Functor 𝔸 ℂ →
     Functor 𝔹 𝔻 →

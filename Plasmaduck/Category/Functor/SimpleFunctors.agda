@@ -4,7 +4,7 @@ open import Data.Product using (_×_; _,_)
 open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Plasmaduck.Category.Category using (RawCategory; Category; RawFunctor; Functor; ContravariantFunctor; opposite-category)
-open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (𝟙; 𝐒𝐞𝐭𝐨𝐢𝐝) 
+open import Plasmaduck.Category.ExampleCategories.SimpleCategories using (𝟙; 𝐒𝐞𝐭𝐨𝐢𝐝)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction₂)
 

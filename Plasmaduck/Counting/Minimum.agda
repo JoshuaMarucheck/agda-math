@@ -89,7 +89,7 @@ module Minimum {ℓ : Level} (P : ℕ → Set ℓ) where
         minimum-idempotent' v with find-minimum v | find-minimum (minimum-has-value (find-minimum v))
         ... | (m , m-is-minimum) | (n , n-is-minimum) = unique-minimum n-is-minimum m-is-minimum
 
-        to-minimum-value-idempotent : Idempotent (property-subset-setoid (discrete-setoid ℕ) P) to-minimum-value
+        to-minimum-value-idempotent : Idempotent (_≡_ Function.on proj₁) to-minimum-value
         to-minimum-value-idempotent = minimum-idempotent'
 
 open Minimum

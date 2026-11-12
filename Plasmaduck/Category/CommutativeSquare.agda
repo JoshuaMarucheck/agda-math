@@ -58,8 +58,8 @@ module _ (𝔸 : Category a b c) where
         (bc : Morphism B C) →
         (ab : Morphism A B) →
         (de ∘ cd) ∘ (bc ∘ ab) ~ de ∘ (cd ∘ bc) ∘ ab
-    associate-middle {A = A} {E = E} de cd bc ab = begin 
-        (de ∘ cd) ∘ (bc ∘ ab)   ≈⟨ assoc de cd (bc ∘ ab) ⟩ 
-        de ∘ (cd ∘ (bc ∘ ab))   ≈⟨ ∘-respects ~-refl (~-sym (assoc cd bc ab)) ⟩ 
+    associate-middle {A = A} {E = E} de cd bc ab = begin
+        (de ∘ cd) ∘ (bc ∘ ab)   ≈⟨ assoc de cd (bc ∘ ab) ⟩
+        de ∘ (cd ∘ (bc ∘ ab))   ≈⟨ ∘-respects ~-refl (~-sym (assoc cd bc ab)) ⟩
         de ∘ ((cd ∘ bc) ∘ ab)   ∎
         where open import Relation.Binary.Reasoning.Setoid (Category.Morphism' 𝔸 A E)

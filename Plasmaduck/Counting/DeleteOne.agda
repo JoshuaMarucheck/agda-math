@@ -70,7 +70,7 @@ delete-one-bijection {n = n'} q = full-bijection
         split-bij {i = i} qℕ≤i = record {
             to = to;
             cong = to-cong;
-            bijective = both-inv→bijective A B to-func (inv-func , (λ {x} → join-splitAt qℕ (i ∸ qℕ) x) , λ {y} → splitAt-join qℕ (i ∸ qℕ) y)
+            bijective = both-inv→bijective A B to-func (inv-func , (λ x → join-splitAt qℕ (i ∸ qℕ) x) , λ y → splitAt-join qℕ (i ∸ qℕ) y)
             }
             where
                 A = (disc-fin (twist i))
@@ -125,10 +125,10 @@ delete-one-bijection {n = n'} q = full-bijection
                 inv-func = inv which-is-cong inv-cong
 
                 is-left-inv : LeftInverse A-setoid B-setoid to-func inv
-                is-left-inv = change-type-trans' (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) ≡-refl
+                is-left-inv x = change-type-trans' (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) ≡-refl
 
                 is-right-inv : RightInverse A-setoid B-setoid to-func inv
-                is-right-inv = change-type-trans' (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) ≡-refl
+                is-right-inv x = change-type-trans' (≡-sym (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i)) (qℕ-⊎-n∸qℕ≡qℕ-⊎-s[n'∸qℕ] qℕ≤i) ≡-refl
 
         half : {i : ℕ} → qℕ ≤ i → Bijection (disc-fin (suc-ℕ i)) (discrete-setoid (Fin qℕ ⊎ (Fin (suc-ℕ (i ∸ qℕ)))))
         half qℕ≤i = (spin-bij qℕ≤i) ∘-bijection (split-bij (≤-trans qℕ≤i n≤sn)) ∘-bijection (twist-bij (≤-trans qℕ≤i n≤sn))
@@ -298,10 +298,10 @@ delete-one-bijection {n = n'} q = full-bijection
                 inv-func = inv which-is-cong inv-cong
 
                 is-left-inv : LeftInverse A-setoid B-setoid to-func inv
-                is-left-inv = A-setoid .Setoid.isEquivalence .IsEquivalence.refl
+                is-left-inv x = A-setoid .Setoid.isEquivalence .IsEquivalence.refl
 
                 is-right-inv : RightInverse A-setoid B-setoid to-func inv
-                is-right-inv = B-setoid .Setoid.isEquivalence .IsEquivalence.refl
+                is-right-inv x = B-setoid .Setoid.isEquivalence .IsEquivalence.refl
 
         del-bij : Bijection (discrete-setoid (Fin qℕ ⊎ Fin (n' ∸ qℕ))) (discrete-setoid (Fin qℕ ⊎ Σ (Fin (suc-ℕ (n' ∸ qℕ))) λ x → x ≢ zero))
         del-bij = record {
@@ -336,13 +336,13 @@ delete-one-bijection {n = n'} q = full-bijection
                 inv-func = inv which-is-cong inv-cong
 
                 is-left-inv : LeftInverse A-setoid B-setoid to-func inv
-                is-left-inv {inj₁ x} = ≡-refl
-                is-left-inv {inj₂ x} = ≡-refl
+                is-left-inv (inj₁ x) = ≡-refl
+                is-left-inv (inj₂ x) = ≡-refl
 
                 is-right-inv : RightInverse A-setoid B-setoid to-func inv
-                is-right-inv {inj₁ x} = ≡-refl
-                is-right-inv {inj₂ (zero , z≠z)} = ⊥-elim (z≠z ≡-refl)
-                is-right-inv {inj₂ (suc x , _)} = ≡-refl
+                is-right-inv (inj₁ x) = ≡-refl
+                is-right-inv (inj₂ (zero , z≠z)) = ⊥-elim (z≠z ≡-refl)
+                is-right-inv (inj₂ (suc x , _)) = ≡-refl
 
         full-bijection : Bijection (property-subset-setoid (disc-fin n) (λ i → i ≢ q)) (disc-fin n')
         full-bijection = (invert-bijection (twist-bij qℕ≤n')) ∘-bijection (invert-bijection (split-bij qℕ≤n')) ∘-bijection (invert-bijection del-bij) ∘-bijection oops-property-bij ∘-bijection first-half-mod
