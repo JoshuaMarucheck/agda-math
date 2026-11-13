@@ -1,15 +1,16 @@
 open import Level using (Level; _⊔_)
-open import Relation.Binary.PropositionalEquality using (subst; _≡_; _≗_; module ≡-Reasoning) renaming (cong to ≡-cong; cong₂ to ≡-cong₂; refl to ≡-refl; sym to ≡-sym)
+open import Relation.Binary.PropositionalEquality using (subst; _≡_; _≗_; module ≡-Reasoning) renaming (cong to ≡-cong; cong₂ to ≡-cong₂; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open import Relation.Binary using (Setoid; Rel; Decidable; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Function using (_∘_; Congruent; Bijective)
 open import Data.Empty using (⊥; ⊥-elim; ⊥-elim-irr)
 open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Data.Bool.Properties using (T?)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _≤ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
-open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; <⇒≤; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; ∸-mono; ∸-+-assoc; +-∸-assoc; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
+open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _<?_; _≤ᵇ_; _<ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
+open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; <⇒≤; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; +-suc; ∸-mono; ∸-+-assoc; +-∸-assoc; m+n∸m≡n; m+n∸n≡m; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
 open import Data.Nat.DivMod using (%-congˡ; m%n<n; m<n*o⇒m/o<n; m≡m%n+[m/n]*n; [m+kn]%n≡m%n; m<n⇒m%n≡m; m<n⇒m/n≡0)
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
 
@@ -21,7 +22,7 @@ open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.Squash using (Squash; squash; squash-≡)
 open import Plasmaduck.Data.Bool using (if-force-true; if-force-false)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; ≤-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; n≤spn; ≤-+-split; <-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; m∸n+n≡m⊔n; ⊔≥₁)
 open import Plasmaduck.Data.FakeFin using (FakeFin)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; merge-carrying-lemma; merge-merge; module MergeSubstitute; module MergeOnSetoid; module Reindex)
 open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; IsNonZero; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
@@ -40,7 +41,7 @@ variable
     c ℓ : Level
 
 module Polynomial (ring : Ring c ℓ) where
-    open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
+    open Ring ring using (IsZero; IsNonzero; IsNonzero-cong; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
         +-op to +R-op;
         +-cong to +R-cong;
@@ -61,7 +62,7 @@ module Polynomial (ring : Ring c ℓ) where
         *-+-distributive to *R-+R-distributive
         )
     open IsEquivalence (S .Setoid.isEquivalence)
-    open RawFormalPolynomial (ring .Ring.rawRing) using (FormalPolynomial; FormalPolynomialSetoid) renaming (_≈_ to _≈'_; _+_ to _+'_; -_ to -'_; _∸_ to _∸'_; _*_ to _*'_; _*-alt_ to _*'-alt_; zero to zero'; one to one'; one-force-nonZero to one'-force-nonZero; +-cong to +'-cong; ∸-cong to ∸'-cong; negate-cong to negate'-cong; *-cong to *'-cong)
+    open RawFormalPolynomial (ring .Ring.rawRing) using (FormalPolynomial; FormalPolynomialSetoid) renaming (_≈_ to _≈'_; _+_ to _+'_; -_ to -'_; _∸_ to _∸'_; _*_ to _*'_; _*-alt_ to _*'-alt_; _*x^_ to _*x^'_; zero to zero'; one to one'; +-cong to +'-cong; ∸-cong to ∸'-cong; negate-cong to negate'-cong; *-cong to *'-cong; constant-polynomial to constant-polynomial')
     open FormalPolynomial ring using () renaming (
         *-flip to *'-flip;
         *-identity to *-identity';
@@ -71,17 +72,39 @@ module Polynomial (ring : Ring c ℓ) where
     open MergeSubstitute S using (merge-local-substitute-generate; merge-substitute-generate; merge-substitute; merge-substitute-start; merge-substitute-op)
     open MergeOnSetoid S using (merge-pop-last; merge-distribute-theorem; merge-zipper-lemma)
 
+    {-
+        This one is clunkier to use conceptually,
+        but is capable of expressing that
+        a zero polynomial has lower degree
+        than a constant polynomial.
+    -}
+    HasDegree< : FormalPolynomial → ℕ → Set ℓ
+    HasDegree< p n = ∀ {m} → .(n ≤ m) → IsZero (p m)
+
     HasDegree≤ : FormalPolynomial → ℕ → Set ℓ
-    HasDegree≤ p n = ∀ {m} → .(n ≤ m) → IsZero (p m)
+    HasDegree≤ p n = HasDegree< p (sucℕ n)
+
+    -- not tight
+    HasDegree<⇒HasDegree≤ : ∀ p m → HasDegree< p m → HasDegree≤ p (predℕ m)
+    HasDegree<⇒HasDegree≤ p m p[≥m]=0 {i} i>pm = p[≥m]=0 {i} (≤-trans (n≤spn m) i>pm)
 
     HasDegree : FormalPolynomial → ℕ → Set ℓ
     HasDegree p n = IsNonzero (p n) × HasDegree≤ p n
 
     IsBoundedDegree : FormalPolynomial → Set ℓ
-    IsBoundedDegree p = Σ ℕ (HasDegree≤ p)
+    IsBoundedDegree p = Σ ℕ (HasDegree< p)
+
+    HasDegree<-cong : ∀ n → CongruentProperty FormalPolynomialSetoid (λ p → HasDegree< p n)
+    HasDegree<-cong n {p} {q} p≈q p[≥n]=zero {m} n≤m = trans (sym (p≈q m)) (p[≥n]=zero n≤m)
+
+    HasDegree-cong : ∀ n → CongruentProperty FormalPolynomialSetoid (λ p → HasDegree p n)
+    HasDegree-cong n {p} {q} p≈q (p[n]-nonZero , p[>n]=zero) = IsNonzero-cong (p≈q n) p[n]-nonZero , λ {i} n<i → trans (sym (p≈q i)) (p[>n]=zero n<i)
 
     IsBoundedDegree-cong : CongruentProperty FormalPolynomialSetoid IsBoundedDegree
     IsBoundedDegree-cong {p} {q} p≈q (p-bound , p-high-zero) = p-bound , λ {i} pb≤i → trans (sym (p≈q i)) (p-high-zero pb≤i)
+
+    HasDegree<-raise : ∀ p {m n} → .(m ≤ n) → HasDegree< p m → HasDegree< p n
+    HasDegree<-raise p {m} {n} m≤n p[≥m]=0 {i} i≥n = p[≥m]=0 {i} (≤-trans m≤n i≥n)
 
     Polynomial : Set (c ⊔ ℓ)
     Polynomial = Σ FormalPolynomial IsBoundedDegree
@@ -116,32 +139,32 @@ module Polynomial (ring : Ring c ℓ) where
     PolynomialSetoid : Setoid (c ⊔ ℓ) ℓ
     PolynomialSetoid = record { isEquivalence = ≈-eq }
 
-    +-degree-bound : (p q : FormalPolynomial) {m n : ℕ} → (HasDegree≤ p m) → (HasDegree≤ q n) → HasDegree≤ (p +' q) (m ⊔ℕ n)
-    +-degree-bound p q {m} {n} p[≥m]=0 q[≥n]=0 {o} m⊔n≤o = begin
+    +-degree-bound : (p q : FormalPolynomial) {m n : ℕ} → (HasDegree< p m) → (HasDegree< q n) → HasDegree< (p +' q) (m ⊔ℕ n)
+    +-degree-bound p q {m} {n} p[>m]=0 q[>n]=0 {o} m⊔n≤o = begin
         (p +' q) o      ≈⟨ refl ⟩
-        p o +R q o      ≈⟨ +R-cong {p o} {zeroR} {q o} {zeroR} (p[≥m]=0 (≤-trans (m≤m⊔n m n) m⊔n≤o)) (q[≥n]=0 (≤-trans (m≤n⊔m m n) m⊔n≤o)) ⟩
+        p o +R q o      ≈⟨ +R-cong {p o} {zeroR} {q o} {zeroR} (p[>m]=0 (≤-trans (m≤m⊔n m n) m⊔n≤o)) (q[>n]=0 (≤-trans (m≤n⊔m m n) m⊔n≤o)) ⟩
         zeroR +R zeroR  ≈⟨ zeroR-is-+R-left-id zeroR ⟩
         zeroR           ∎
         where open import Relation.Binary.Reasoning.Setoid S
 
     _+_ : Polynomial → Polynomial → Polynomial
-    (p , m , p[≥m]=0) + (q , n , q[≥n]=0) = p +' q , m ⊔ℕ n , +-degree-bound p q p[≥m]=0 q[≥n]=0
+    (p , m , p[>m]=0) + (q , n , q[>n]=0) = p +' q , m ⊔ℕ n , +-degree-bound p q p[>m]=0 q[>n]=0
 
-    neg-preserves-degree-bound : (p : FormalPolynomial) {m : ℕ} → (HasDegree≤ p m) → HasDegree≤ (-' p) m
-    neg-preserves-degree-bound p p[≥m]=0 {i} m≤i = begin
-        -R p i      ≈⟨ negR-cong (p[≥m]=0 m≤i) ⟩
+    neg-preserves-degree-bound : (p : FormalPolynomial) {m : ℕ} → (HasDegree< p m) → HasDegree< (-' p) m
+    neg-preserves-degree-bound p p[>m]=0 {i} m≤i = begin
+        -R p i      ≈⟨ negR-cong (p[>m]=0 m≤i) ⟩
         -R zeroR    ≈⟨ negR-zeroR-is-zeroR ⟩
         zeroR       ∎
         where open import Relation.Binary.Reasoning.Setoid S
 
     -_ : Polynomial → Polynomial
-    -_ (p , m , p[≥m]=0) = (λ i → -R p i) , m , neg-preserves-degree-bound p p[≥m]=0
+    -_ (p , m , p[>m]=0) = (λ i → -R p i) , m , neg-preserves-degree-bound p p[>m]=0
 
     _∸_ : Polynomial → Polynomial → Polynomial
     p ∸ q = p + - q
 
-    *-degree-bound : (p q : FormalPolynomial) {m n : ℕ} → (HasDegree≤ p m) → (HasDegree≤ q n) → HasDegree≤ (p *' q) (m +ℕ n ∸ℕ 1)
-    *-degree-bound p q {m} {n} p[≥m]=0 q[≥n]=0 {i} bound≤i = merge-carrying-lemma IsZero _+R_ (λ x y x-is-zero y-is-zero → begin
+    *-degree-bound' : (p q : FormalPolynomial) {m n : ℕ} → (HasDegree≤ p m) → (HasDegree≤ q n) → HasDegree≤ (p *' q) (m +ℕ n)
+    *-degree-bound' p q {m} {n} p[>m]=0 q[>n]=0 {i} m+n≤i = merge-carrying-lemma IsZero _+R_ (λ x y x-is-zero y-is-zero → begin
         x +R y          ≈⟨ +R-cong x-is-zero y-is-zero ⟩
         zeroR +R zeroR  ≈⟨ zeroR-is-+R-left-id zeroR ⟩
         zeroR           ∎
@@ -150,30 +173,24 @@ module Polynomial (ring : Ring c ℓ) where
             *-gen : ℕ → ℕ → Carrier
             *-gen i j = p j *R q (i ∸ℕ j)
 
-            bound = m +ℕ n ∸ℕ 1
-
-            split : ∀ j → (m ≤ j) ⊎ (n ≤ i ∸ℕ j)
-            split j with m ≤? j
-            ... | yes m≤j = inj₁ m≤j
-            ... | no m≰j = inj₂ (begin
-                n                       ≤⟨ m≤n⇒m≤n+o (m ∸ℕ (1 +ℕ j)) ≤-refl ⟩
-                n +ℕ (m ∸ℕ (1 +ℕ j))    ≤⟨ ≤-reflexive (≡-sym (+-∸-assoc n {m} {1 +ℕ j} (≰⇒> m≰j))) ⟩
-                (n +ℕ m) ∸ℕ (1 +ℕ j)    ≤⟨ ≤-reflexive (≡-sym (∸-+-assoc (n +ℕ m) 1 j)) ⟩
-                ((n +ℕ m) ∸ℕ 1) ∸ℕ j    ≤⟨ ≤-reflexive (≡-cong (λ q → q ∸ℕ 1 ∸ℕ j) (+ℕ-comm n m)) ⟩
-                ((m +ℕ n) ∸ℕ 1) ∸ℕ j    ≤⟨ ≤-refl ⟩
-                (m +ℕ n ∸ℕ 1) ∸ℕ j      ≤⟨ ∸-monoˡ-≤ j (≤-recompute bound≤i) ⟩
-                i ∸ℕ j                  ∎)
-                where open ≤-Reasoning
+            split : ∀ j → (m < j) ⊎ (n < i ∸ℕ j)
+            split j = <-+-split m n j (i ∸ℕ j) (≤-trans m+n≤i (≤-trans (⊔≥₁ i j) (≤-reflexive (≡-trans (≡-sym (m∸n+n≡m⊔n i j)) (+ℕ-comm (i ∸ℕ j) j)))))
 
             carry : (j : ℕ) → IsZero (*-gen i j)
             carry j = zeroR-is-*R-strong-absorber (case (split j) of λ {
-                (inj₁ m≤j) → inj₁ (p[≥m]=0 m≤j);
-                (inj₂ n≤i∸j) → inj₂ (q[≥n]=0 n≤i∸j)})
+                (inj₁ m<j) → inj₁ (p[>m]=0 m<j);
+                (inj₂ n<i∸j) → inj₂ (q[>n]=0 n<i∸j)})
 
             open import Relation.Binary.Reasoning.Setoid S
 
+    *-degree-bound : (p q : FormalPolynomial) {m n : ℕ} → (HasDegree< p m) → (HasDegree< q n) → HasDegree< (p *' q) (sucℕ (predℕ m +ℕ predℕ n))
+    *-degree-bound p q {m} {n} p-bound q-bound = *-degree-bound' p q {predℕ m} {predℕ n} (HasDegree<⇒HasDegree≤ p m p-bound) (HasDegree<⇒HasDegree≤ q n q-bound)
+
     _*_ : Polynomial → Polynomial → Polynomial
-    (p , m , p[≥m]=0) * (q , n , q[≥n]=0) = p *' q , m +ℕ n ∸ℕ 1 , *-degree-bound p q p[≥m]=0 q[≥n]=0
+    (p , m , p[>m]=0) * (q , n , q[>n]=0) = p *' q , sucℕ (predℕ m +ℕ predℕ n) , *-degree-bound p q p[>m]=0 q[>n]=0
+
+    constant-polynomial'-degree-bound : ∀ x → HasDegree< (constant-polynomial' x) 1
+    constant-polynomial'-degree-bound x {sucℕ i} 0<i = refl
 
     zero : Polynomial
     zero = zero' , zeroℕ , λ _ → refl
@@ -183,6 +200,36 @@ module Polynomial (ring : Ring c ℓ) where
 
     _*-alt_ : Polynomial → Polynomial → Polynomial
     p@(p' , p-bound , p-high-zero) *-alt q@(q' , q-bound , q-high-zero) = p' *'-alt q' , IsBoundedDegree-cong (*'-flip p' q') ((p * q) .proj₂)
+
+    *x^'-degree-bound : ∀ p {m} → HasDegree< p m → ∀ n → HasDegree< (p *x^' n) (n +ℕ m)
+    *x^'-degree-bound p {m} p[≥m]=0 n {o} n+m≤o with o <? n
+    ... | yes o<n = refl
+    ... | no ¬o<n = p[≥m]=0 (begin
+        m               ≡⟨ ≡-sym (m+n∸m≡n n m) ⟩
+        n +ℕ m ∸ℕ n   ≤⟨ ∸-mono {n +ℕ m} {o} {n} {n} n+m≤o ≤-refl ⟩
+        o ∸ℕ n          ∎)
+        where open ≤-Reasoning
+
+    _*x^_ : Polynomial → ℕ → Polynomial
+    (p , m , p[>m]=0) *x^ n = p *x^' n , n +ℕ m , *x^'-degree-bound p p[>m]=0 n
+
+    record IsMonic (p : FormalPolynomial) : Set ℓ where
+        field
+            degree : ℕ
+            monic : p degree ≈R oneR
+            bounded : HasDegree≤ p degree
+
+        polynomial : Polynomial
+        polynomial = p , sucℕ degree , bounded
+
+        has-degree : ¬ (zeroR ≈R oneR) → HasDegree p degree
+        has-degree 0≉1 = (λ p[deg]=0 → 0≉1 (trans (sym p[deg]=0) monic)) , bounded
+
+    record MonicPolynomial : Set (c ⊔ ℓ) where
+        field
+            poly : FormalPolynomial
+            isMonic : IsMonic poly
+        open IsMonic isMonic public
 
 
     -- --------------------------

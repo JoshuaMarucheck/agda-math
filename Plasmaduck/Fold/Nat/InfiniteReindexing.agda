@@ -33,6 +33,7 @@ open import Plasmaduck.Util.Case using (inspect-case_of_)
 open import Plasmaduck.Function.Properties using (Congruent₂; LeftInverse; RightInverse)
 open import Plasmaduck.Function.Bijection using (_∘-bijection_)
 open import Plasmaduck.Counting.Counting using (HasSize; IsFinite)
+open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty)
 
 open import Plasmaduck.Fold.Nat.Foldl using (foldl)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; module MergeSubstitute; module MergeOnSetoid)
@@ -74,8 +75,8 @@ private
 InfiniteVector : Set
 InfiniteVector = ℕ → ℕ
 
-InfiniteVectorSetoid : ℕ → Setoid lzero lzero
-InfiniteVectorSetoid n = discrete-function-setoid ℕ ℕ
+InfiniteVectorSetoid : Setoid lzero lzero
+InfiniteVectorSetoid = discrete-function-setoid ℕ ℕ
 
 
 infix 4 _~_
@@ -135,6 +136,9 @@ module VectorProperties (vec : InfiniteVector) where
     HasNonZeroNonTrivialTail = IsNonZero × HasNonTrivialTail
 
 open VectorProperties public
+
+IsNonZero-cong : CongruentProperty InfiniteVectorSetoid IsNonZero
+IsNonZero-cong u≈v u-isNonZero i = subst NonZero (u≈v i) (u-isNonZero i)
 
 LesserInfiniteVector : InfiniteVector → Set
 LesserInfiniteVector vec = Σ InfiniteVector (_≺ vec)

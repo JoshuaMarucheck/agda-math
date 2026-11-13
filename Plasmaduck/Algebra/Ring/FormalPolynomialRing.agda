@@ -1,5 +1,5 @@
 open import Level using (Level; _⊔_)
-open import Relation.Binary.PropositionalEquality using (subst; _≡_; _≗_; module ≡-Reasoning) renaming (cong to ≡-cong; cong₂ to ≡-cong₂; refl to ≡-refl; sym to ≡-sym)
+open import Relation.Binary.PropositionalEquality using (subst; _≡_; _≢_; _≗_; module ≡-Reasoning) renaming (cong to ≡-cong; cong₂ to ≡-cong₂; refl to ≡-refl; sym to ≡-sym)
 open import Relation.Binary using (Setoid; Rel; Decidable; IsEquivalence; Reflexive; Symmetric; Transitive)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
@@ -8,8 +8,8 @@ open import Data.Empty using (⊥; ⊥-elim; ⊥-elim-irr)
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _≤ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
-open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; ∸-mono; ∸-+-assoc; +-∸-assoc; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
+open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _<?_; _≤ᵇ_; _<ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
+open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n+m; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; ≤∧≢⇒<; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; ∸-mono; ∸-+-assoc; +-∸-assoc; n∸n≡0; m∸n≤m; ≰⇒>; ≮⇒≥; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
 open import Data.Nat.DivMod using (%-congˡ; m%n<n; m<n*o⇒m/o<n; m≡m%n+[m/n]*n; [m+kn]%n≡m%n; m<n⇒m%n≡m; m<n⇒m/n≡0)
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
 
@@ -50,7 +50,6 @@ variable
 
 module RawFormalPolynomial (ring : RawRing c ℓ) where
     open RawRing ring using (IsZero; IsNonzero; Carrier; S; neg-cong) renaming (zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_; +-cong to +R-cong; *-cong to *R-cong)
-    open import Relation.Binary.Reasoning.Setoid S
     open IsEquivalence (S .Setoid.isEquivalence)
 
     open MergeSubstitute S using (merge-local-substitute-generate; merge-substitute-generate)
@@ -85,7 +84,9 @@ module RawFormalPolynomial (ring : RawRing c ℓ) where
     infix 4 _≈_
     infixl 5 _+_ _∸_
     infixl 6 _*_ _*-alt_
-    infix 7 -_
+    infixl 7 _*x^_
+    infixl 8 _⋆_
+    infix 9 -_
 
     _+_ : FormalPolynomial → FormalPolynomial → FormalPolynomial
     _+_ p q o = p o +R q o
@@ -102,15 +103,30 @@ module RawFormalPolynomial (ring : RawRing c ℓ) where
     _*-alt_ : FormalPolynomial → FormalPolynomial → FormalPolynomial
     _*-alt_ p q i = merge _+R_ zeroR (λ j → (p (i ∸ℕ j) *R q j)) (sucℕ i)
 
+    -- Scalar multiplication
+    _⋆_ : Carrier → FormalPolynomial → FormalPolynomial
+    _⋆_ x p i = x *R p i
+
+    _⋆-alt_ : Carrier → FormalPolynomial → FormalPolynomial
+    _⋆-alt_ x p i = p i *R x
+
+    _*x^_ : FormalPolynomial → ℕ → FormalPolynomial
+    _*x^_ p n i with i <? n
+    ... | yes _ = zeroR
+    ... | no _ = p (i ∸ℕ n)
+
+    constant-polynomial : Carrier → FormalPolynomial
+    constant-polynomial x zeroℕ = x
+    constant-polynomial x (sucℕ _) = zeroR
+
     zero : FormalPolynomial
     zero _ = zeroR
 
     one : FormalPolynomial
-    one zeroℕ = oneR
-    one (sucℕ _) = zeroR
+    one = constant-polynomial oneR
 
-    one-force-nonZero : ∀ i → {{_ : NonZero i}} → one i ≡ zeroR
-    one-force-nonZero (sucℕ i) = ≡-refl
+    constant-polynomial-force-nonZero : ∀ x i → {{_ : NonZero i}} → constant-polynomial x i ≡ zeroR
+    constant-polynomial-force-nonZero _ (sucℕ i) = ≡-refl
 
 
     ------------------------------------
@@ -153,6 +169,50 @@ module RawFormalPolynomial (ring : RawRing c ℓ) where
         respects = *-cong
         }
 
+    ⋆-cong : Congruent₂ _≈R_ _≈_ _≈_ _⋆_
+    ⋆-cong x≈Ry p≈q i = *R-cong x≈Ry (p≈q i)
+
+    *x^-cong' : ∀ n → Congruent _≈_ _≈_ (_*x^ n)
+    *x^-cong' n p≈q i with i <? n
+    ... | no ¬a = p≈q (i ∸ℕ n)
+    ... | yes a = refl
+
+    *x^-cong : Congruent₂ _≈_ _≡_ _≈_ _*x^_
+    *x^-cong {u = n} p≈q ≡-refl = *x^-cong' n p≈q
+
+
+    ----------------------------------------------------------------------------
+    --- Wheeee somehow I can prove these theorems without the ring structure ---
+    ----------------------------------------------------------------------------
+
+    *x^-force< : ∀ p {n i} → .(i < n) → (p *x^ n) i ≡ zeroR
+    *x^-force< p {n} {i} i<n with i <? n
+    ... | no ¬i<n = ⊥-elim-irr (¬i<n i<n)
+    ... | yes _ = ≡-refl
+
+    *x^-force≥ : ∀ p {n i} → .(i ≥ n) → (p *x^ n) i ≡ p (i ∸ℕ n)
+    *x^-force≥ p {n} {i} i≥n with i <? n
+    ... | no _ = ≡-refl
+    ... | yes i<n = ⊥-elim-irr (<-irrefl ≡-refl (≤-<-trans i≥n i<n))
+
+    p*x^0≈p : (p : FormalPolynomial) → p *x^ 0 ≈ p
+    p*x^0≈p p i = reflexive (*x^-force≥ p z≤n)
+
+    const*x^-exact= : ∀ x n → (constant-polynomial x *x^ n) n ≡ x
+    const*x^-exact= x n =
+        (constant-polynomial x *x^ n) n     ≡⟨ *x^-force≥ (constant-polynomial x) {n} ≤-refl ⟩
+        constant-polynomial x (n ∸ℕ n)      ≡⟨ ≡-cong (constant-polynomial x) (n∸n≡0 n) ⟩
+        constant-polynomial x zeroℕ         ≡⟨⟩
+        x                                   ∎
+        where open ≡-Reasoning
+
+    const*x^-exact≠ : ∀ x {n i} → .(n ≢ i) → (constant-polynomial x *x^ n) i ≡ zeroR
+    const*x^-exact≠ x {n} {i} n≠i with i <? n
+    ... | yes _ = ≡-refl
+    ... | no ¬i<n = constant-polynomial-force-nonZero x (i ∸ℕ n) {{m<n⇒n∸m-nonZero {n} {i} (≤∧≢⇒< (≮⇒≥ ¬i<n) n≠i)}}
+        where open ≡-Reasoning
+
+
 module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
     open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
@@ -177,7 +237,7 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
     open IsEquivalence (S .Setoid.isEquivalence)
     open MergeSubstitute S using (merge-local-substitute-generate; merge-substitute-generate; merge-substitute; merge-substitute-start; merge-substitute-op)
     open MergeOnSetoid S using (merge-pop-last; merge-distribute-theorem; merge-zipper-lemma)
-    open RawFormalPolynomial (ring .Ring.rawRing) using (FormalPolynomial; FormalPolynomialSetoid; _≈_; _+_; _∸_; _*_; _*-alt_; zero; one; one-force-nonZero; +-cong; ∸-cong; negate-cong; *-cong)
+    open RawFormalPolynomial (ring .Ring.rawRing)
 
     *-flip : ∀ p q → p * q ≈ p *-alt q
     *-flip p q i = begin
@@ -232,31 +292,55 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
             gen-func : SetoidFunction IndexSetoid S
             gen-func = gen which-is-cong gen-cong
 
-
     private
-        one-is-*-left-id-trace : (p : FormalPolynomial) → (m n' : ℕ) → merge _+R_ zeroR (λ j → one j *R p (m ∸ℕ j)) (sucℕ n') ≈R p m
-        one-is-*-left-id-trace p m zeroℕ = begin
-            merge _+R_ zeroR gen 1                              ≈⟨ refl ⟩
-            merge _+R_ ((one 0 *R p (m ∸ℕ 0)) +R zeroR) gen 0   ≈⟨ refl ⟩
-            merge _+R_ ((one 0 *R p m) +R zeroR) gen 0          ≈⟨ refl ⟩
-            one 0 *R p m +R zeroR                               ≈⟨ refl ⟩
-            oneR *R p m +R zeroR                                ≈⟨ zeroR-is-+R-right-id (oneR *R p m) ⟩
-            oneR *R p m                                         ≈⟨ oneR-is-*R-left-id (p m) ⟩
-            p m                                                 ∎
-                where
-                    open import Relation.Binary.Reasoning.Setoid S
-                    gen = λ j → one j *R p (m ∸ℕ j)
-        one-is-*-left-id-trace p m n'@(sucℕ n'') = begin
-            merge _+R_ zeroR gen n                                  ≈⟨ refl ⟩
-            merge _+R_ ((one n' *R p (m ∸ℕ n')) +R zeroR) gen n'    ≈⟨ refl ⟩
-            merge _+R_ ((zeroR *R p (m ∸ℕ n')) +R zeroR) gen n'     ≈⟨ merge-substitute-start _+R_ +R-cong ((zeroR *R p (m ∸ℕ n')) +R zeroR) (zeroR +R zeroR) (+R-cong (zeroR-is-*R-left-absorber (p (m ∸ℕ sucℕ n''))) (refl {zeroR})) gen n' ⟩
-            merge _+R_ (zeroR +R zeroR) gen n'                      ≈⟨ merge-substitute-start _+R_ +R-cong (zeroR +R zeroR) zeroR (zeroR-is-+R-left-id zeroR) gen n' ⟩
-            merge _+R_ zeroR gen n'                                 ≈⟨ one-is-*-left-id-trace p m n'' ⟩
-            p m                                                     ∎
+        ⋆-trace : (x : Carrier) (p : FormalPolynomial) → (m n' : ℕ) → merge _+R_ zeroR (λ j → constant-polynomial x j *R p (m ∸ℕ j)) (sucℕ n') ≈R x *R p m
+        ⋆-trace x p m zeroℕ = zeroR-is-+R-right-id (x *R p m)
+        ⋆-trace x p m n'@(sucℕ n'') = begin
+            merge _+R_ zeroR gen n                                                  ≈⟨ refl ⟩
+            merge _+R_ ((constant-polynomial x n' *R p (m ∸ℕ n')) +R zeroR) gen n'  ≈⟨ refl ⟩
+            merge _+R_ ((zeroR *R p (m ∸ℕ n')) +R zeroR) gen n'                     ≈⟨ merge-substitute-start _+R_ +R-cong ((zeroR *R p (m ∸ℕ n')) +R zeroR) (zeroR +R zeroR) (+R-cong (zeroR-is-*R-left-absorber (p (m ∸ℕ sucℕ n''))) (refl {zeroR})) gen n' ⟩
+            merge _+R_ (zeroR +R zeroR) gen n'                                      ≈⟨ merge-substitute-start _+R_ +R-cong (zeroR +R zeroR) zeroR (zeroR-is-+R-left-id zeroR) gen n' ⟩
+            merge _+R_ zeroR gen n'                                                 ≈⟨ ⋆-trace x p m n'' ⟩
+            x *R p m                                                                ∎
                 where
                     open import Relation.Binary.Reasoning.Setoid S
                     n = sucℕ n'
-                    gen = λ j → one j *R p (m ∸ℕ j)
+                    gen = λ j → constant-polynomial x j *R p (m ∸ℕ j)
+
+        one*x^n*-trace≤ : ∀ (p : FormalPolynomial) n i k → .(k ≤ n) → merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) k ≈R zeroR
+        one*x^n*-trace≤ p n i zeroℕ _ = refl
+        one*x^n*-trace≤ p n i k@(sucℕ k') k≤n = begin
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) k                                      ≈⟨ refl ⟩
+            merge _+R_ ((one *x^ n) k' *R p (i ∸ℕ k') +R zeroR) (λ j → (one *x^ n) j *R p (i ∸ℕ j)) k'  ≈⟨ merge-substitute-start _+R_ +R-cong ((one *x^ n) k' *R p (i ∸ℕ k') +R zeroR) zeroR (begin
+                (one *x^ n) k' *R p (i ∸ℕ k') +R zeroR  ≈⟨ +R-cong (*R-cong (reflexive (*x^-force< (constant-polynomial oneR) k≤n)) refl) refl ⟩
+                zeroR *R p (i ∸ℕ k') +R zeroR           ≈⟨ +R-cong (zeroR-is-*R-left-absorber (p (i ∸ℕ k'))) refl ⟩
+                zeroR +R zeroR                          ≈⟨ zeroR-is-+R-left-id zeroR ⟩
+                zeroR                                   ∎
+                ) (λ j → (one *x^ n) j *R p (i ∸ℕ j)) k' ⟩
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) k'                                     ≈⟨ one*x^n*-trace≤ p n i k' (≤-trans n≤sn k≤n) ⟩
+            zeroR                                                                                       ∎
+            where open import Relation.Binary.Reasoning.Setoid S
+
+        one*x^n*-trace> : ∀ (p : FormalPolynomial) n i k → merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (sucℕ k +ℕ n) ≈R p (i ∸ℕ n)
+        one*x^n*-trace> p n i zeroℕ = begin
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (sucℕ n)                           ≈⟨ merge-pop-last +R-op +R-assoc +R-identity (λ j → (one *x^ n) j *R p (i ∸ℕ j)) n ⟩
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) n +R (one *x^ n) n *R p (i ∸ℕ n)   ≈⟨ +R-cong (one*x^n*-trace≤ p n i n ≤-refl) refl ⟩
+            zeroR +R (one *x^ n) n *R p (i ∸ℕ n)                                                    ≈⟨ zeroR-is-+R-left-id ((one *x^ n) n *R p (i ∸ℕ n)) ⟩
+            (one *x^ n) n *R p (i ∸ℕ n)                                                             ≈⟨ *R-cong (reflexive (const*x^-exact= oneR n)) refl ⟩
+            oneR *R p (i ∸ℕ n)                                                                      ≈⟨ oneR-is-*R-left-id (p (i ∸ℕ n)) ⟩
+            p (i ∸ℕ n)                                                                              ∎
+            where open import Relation.Binary.Reasoning.Setoid S
+        one*x^n*-trace> p n i k@(sucℕ k') = begin
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (sucℕ k +ℕ n)  ≈⟨ refl ⟩
+            merge _+R_ ((one *x^ n) (k +ℕ n) *R p (i ∸ℕ (k +ℕ n)) +R zeroR) (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (k +ℕ n) ≈⟨ merge-substitute-start _+R_ +R-cong ((one *x^ n) (k +ℕ n) *R p (i ∸ℕ (k +ℕ n)) +R zeroR) zeroR (begin
+                (one *x^ n) (k +ℕ n) *R p (i ∸ℕ (sucℕ k' +ℕ n)) +R zeroR    ≈⟨ reflexive (≡-cong (λ section → section *R p (i ∸ℕ (sucℕ k' +ℕ n)) +R zeroR) (const*x^-exact≠ oneR {n} {k +ℕ n} (λ n=k+n → <-irrefl n=k+n (s≤s (m≤n+m n k'))))) ⟩
+                zeroR *R p (i ∸ℕ (sucℕ k' +ℕ n)) +R zeroR                   ≈⟨ +R-cong (zeroR-is-*R-left-absorber (p (i ∸ℕ (sucℕ k' +ℕ n)))) refl ⟩
+                zeroR +R zeroR                                              ≈⟨ zeroR-is-+R-left-id zeroR ⟩
+                zeroR                                                       ∎
+                ) (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (k +ℕ n) ⟩
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (k +ℕ n)       ≈⟨ one*x^n*-trace> p n i k' ⟩
+            p (i ∸ℕ n)                                                          ∎
+            where open import Relation.Binary.Reasoning.Setoid S
 
         is-zero⇒left-identity : ∀ {x} → IsZero x → LeftIdentity _≈R_ _+R_ x
         is-zero⇒left-identity {x} x≈0 y = begin
@@ -265,8 +349,33 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
             y           ∎
             where open import Relation.Binary.Reasoning.Setoid S
 
+    -- These two lemmas mean we can treat both operators using anything we prove about _*_
+    -- e.g. these operators associate with multiplication and with each other.
+    *-const-is-⋆ˡ : ∀ x p → constant-polynomial x * p ≈ x ⋆ p
+    *-const-is-⋆ˡ x p i = ⋆-trace x p i i
+
+    *-raised-one-is-*x^ˡ : ∀ p n → one *x^ n * p ≈ p *x^ n
+    *-raised-one-is-*x^ˡ p n i = case (≤-cmp n i) of λ {
+        (inj₁ n≤i) → begin
+            ((one *x^ n) * p) i                                                         ≈⟨ refl ⟩
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (sucℕ i)               ≈⟨ reflexive (≡-cong (merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j))) {sucℕ i} {sucℕ (i ∸ℕ n) +ℕ n} (≡-cong sucℕ (≡-sym (m∸n+n≡m n≤i)))) ⟩
+            merge _+R_ zeroR (λ j → (one *x^ n) j *R p (i ∸ℕ j)) (sucℕ (i ∸ℕ n) +ℕ n)   ≈⟨ one*x^n*-trace> p n i (i ∸ℕ n) ⟩
+            p (i ∸ℕ n)                                                                  ≈⟨ reflexive (≡-sym (*x^-force≥ p n≤i)) ⟩
+            (p *x^ n) i                                                                 ∎;
+        (inj₂ n>i) → begin
+            ((one *x^ n) * p) i     ≈⟨ one*x^n*-trace≤ p n i (sucℕ i) n>i ⟩
+            zeroR                   ≈⟨ reflexive (≡-sym (*x^-force< p n>i)) ⟩
+            (p *x^ n) i             ∎
+        }
+        where open import Relation.Binary.Reasoning.Setoid S
+
     one-is-*-left-id : LeftIdentity _≈_ _*_ one
-    one-is-*-left-id p n = one-is-*-left-id-trace p n n
+    one-is-*-left-id p n = begin
+        (one * p) n     ≈⟨ *-const-is-⋆ˡ oneR p n ⟩
+        (oneR ⋆ p) n    ≈⟨ refl ⟩
+        oneR *R p n     ≈⟨ oneR-is-*R-left-id (p n) ⟩
+        p n             ∎
+        where open import Relation.Binary.Reasoning.Setoid S
 
     *-assoc : Associative _≈_ _*_
     *-assoc p q r i = sym (begin
@@ -533,9 +642,29 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
         where
             open import Relation.Binary.Reasoning.Setoid S
 
+    ⋆-distrib-+ : ∀ x p q → x ⋆ (p + q) ≈ x ⋆ p + x ⋆ q
+    ⋆-distrib-+ x p q i = *R-+R-distributive .proj₁ x (p i) (q i)
+
+    *-*x^-selectiveˡ : ∀ p q n → (p * q) *x^ n ≈ (p *x^ n) * q
+    *-*x^-selectiveˡ p q n = begin
+        (p * q) *x^ n           ≈⟨ ≈-sym (*-raised-one-is-*x^ˡ (p * q) n) ⟩
+        one *x^ n * (p * q)     ≈⟨ ≈-sym (*-assoc (one *x^ n) p q) ⟩
+        (one *x^ n * p) * q     ≈⟨ *-cong {u = q} (*-raised-one-is-*x^ˡ p n) ≈-refl ⟩
+        (p *x^ n) * q           ∎
+        where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
+
+    ⋆-*-selectiveˡ : ∀ x p q → x ⋆ (p * q) ≈ (x ⋆ p) * q
+    ⋆-*-selectiveˡ x p q = begin
+        x ⋆ (p * q)                         ≈⟨ ≈-sym (*-const-is-⋆ˡ x (p * q)) ⟩
+        constant-polynomial x * (p * q)     ≈⟨ ≈-sym (*-assoc (constant-polynomial x) p q) ⟩
+        (constant-polynomial x * p) * q     ≈⟨ *-cong {u = q} (*-const-is-⋆ˡ x p) ≈-refl ⟩
+        (x ⋆ p) * q                         ∎
+        where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
+
 module FormalPolynomial (ring : Ring c ℓ) where
     open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
+        ≈-refl to ≈R-refl;
         +-op to +R-op;
         +-cong to +R-cong;
         +-assoc to +R-assoc;
@@ -560,10 +689,10 @@ module FormalPolynomial (ring : Ring c ℓ) where
     open MergeOnSetoid S using (merge-pop-last; merge-distribute-theorem; merge-zipper-lemma)
 
     module Flip where
-        open LeftFormalPolynomialLemmas (opposite-ring ring) using (*-+-left-distributive; one-is-*-left-id)
-        open RawFormalPolynomial (opposite-ring ring .Ring.rawRing) using () renaming (one to one-flip; _*_ to _*-flip_; _*-alt_ to _*-alt-flip_; _+_ to _+-flip_)
+        open LeftFormalPolynomialLemmas (opposite-ring ring) using (*-+-left-distributive; one-is-*-left-id; *-const-is-⋆ˡ; *-raised-one-is-*x^ˡ; *-*x^-selectiveˡ)
+        open RawFormalPolynomial (opposite-ring ring .Ring.rawRing) using () renaming (one to one-flip; _*_ to _*-flip_; _*-alt_ to _*-alt-flip_; _+_ to _+-flip_; _⋆_ to _⋆-flip_; _*x^_ to _*x^-flip_; constant-polynomial to constant-polynomial-flip)
         open LeftFormalPolynomialLemmas ring using () renaming (*-flip to *-flip-to-alt)
-        open RawFormalPolynomial (ring .Ring.rawRing) using (FormalPolynomial; FormalPolynomialSetoid; _≈_; _+_; _∸_; _*_; _*-alt_; zero; one; one-force-nonZero; +-cong; ∸-cong; negate-cong; *-cong; ≈-refl)
+        open RawFormalPolynomial (ring .Ring.rawRing) using (FormalPolynomial; FormalPolynomialSetoid; _≈_; _+_; _∸_; _*_; _*-alt_; _⋆_; _⋆-alt_; zero; one; constant-polynomial; _*x^_; +-cong; ∸-cong; negate-cong; *-cong; *x^-cong'; ≈-refl)
 
         +-is-flip-+-flipped : ∀ p q → p + q ≈ q +-flip p
         +-is-flip-+-flipped p q i = refl
@@ -585,6 +714,37 @@ module FormalPolynomial (ring : Ring c ℓ) where
         one-is-flip-one-flipped zeroℕ = refl
         one-is-flip-one-flipped (sucℕ _) = refl
 
+        constant-polynomial-flip-sym : ∀ x → constant-polynomial x ≈ constant-polynomial-flip x
+        constant-polynomial-flip-sym x zeroℕ = refl
+        constant-polynomial-flip-sym x (sucℕ _) = refl
+
+        *x^-flip-sym : ∀ p n → p *x^ n ≈ p *x^-flip n
+        *x^-flip-sym p n i with i <? n
+        ... | no _ = refl
+        ... | yes _ = refl
+
+        ⋆-flip-sym : ∀ x p → x ⋆-alt p ≈ x ⋆-flip p
+        ⋆-flip-sym x p i = refl
+
+        *-const-is-⋆ʳ : ∀ x p → p * constant-polynomial x ≈ x ⋆-alt p
+        *-const-is-⋆ʳ x p i = begin
+            (p * constant-polynomial x) i               ≈⟨ *-cong {p} ≈-refl (constant-polynomial-flip-sym x) i ⟩
+            (p * constant-polynomial-flip x) i          ≈⟨ *-is-flip-*-flipped p (constant-polynomial-flip x) i ⟩
+            (constant-polynomial-flip x *-flip p) i     ≈⟨ *-const-is-⋆ˡ x p i ⟩
+            (x ⋆-flip p) i                              ≈⟨ sym (⋆-flip-sym x p i) ⟩
+            (x ⋆-alt p) i                               ∎
+            where open import Relation.Binary.Reasoning.Setoid S
+
+        *-raised-one-is-*x^ʳ : ∀ p n → p * one *x^ n ≈ p *x^ n
+        *-raised-one-is-*x^ʳ p n i = begin
+            (p * (one *x^ n)) i                 ≈⟨ *-cong {p} ≈-refl (*x^-cong' n one-is-flip-one-flipped) i ⟩
+            (p * (one-flip *x^ n)) i            ≈⟨ *-cong {p} ≈-refl (*x^-flip-sym one-flip n) i ⟩
+            (p * (one-flip *x^-flip n)) i       ≈⟨ *-is-flip-*-flipped p (one-flip *x^-flip n) i ⟩
+            (one-flip *x^-flip n *-flip p) i    ≈⟨ *-raised-one-is-*x^ˡ p n i ⟩
+            (p *x^-flip n) i                    ≈⟨ sym (*x^-flip-sym p n i) ⟩
+            (p *x^ n) i                         ∎
+            where open import Relation.Binary.Reasoning.Setoid S
+
         one-is-*-right-id : RightIdentity _≈_ _*_ one
         one-is-*-right-id p n = begin
             (p * one) n             ≈⟨ refl ⟩
@@ -602,9 +762,34 @@ module FormalPolynomial (ring : Ring c ℓ) where
             (q * p + r * p) i                   ∎
             where open import Relation.Binary.Reasoning.Setoid S
 
-    open Flip using (one-is-*-right-id; *-+-right-distributive) public
+        *-*x^-selectiveʳ : ∀ p q n → (p * q) *x^ n ≈ p * (q *x^ n)
+        *-*x^-selectiveʳ p q n i = begin
+            ((p * q) *x^ n) i               ≈⟨ *x^-cong' n (*-is-flip-*-flipped p q) i ⟩
+            ((q *-flip p) *x^ n) i          ≈⟨ *x^-flip-sym (q *-flip p) n i ⟩
+            ((q *-flip p) *x^-flip n) i     ≈⟨ *-*x^-selectiveˡ q p n i ⟩
+            (q *x^-flip n *-flip p) i       ≈⟨ sym (*-is-flip-*-flipped p (q *x^-flip n) i) ⟩
+            (p * q *x^-flip n) i            ≈⟨ sym (*-cong {p} ≈-refl (*x^-flip-sym q n) i) ⟩
+            (p * q *x^ n) i                 ∎
+            where open import Relation.Binary.Reasoning.Setoid S
+
+    open Flip using (*-const-is-⋆ʳ; *-raised-one-is-*x^ʳ; one-is-*-right-id; *-+-right-distributive; *-*x^-selectiveʳ) public
     open LeftFormalPolynomialLemmas ring public
     open RawFormalPolynomial (ring .Ring.rawRing) public
+
+    ⋆-*x^-assoc : ∀ x p n → (x ⋆ p) *x^ n ≈ x ⋆ (p *x^ n)
+    ⋆-*x^-assoc x p n = begin
+        (x ⋆ p) *x^ n                               ≈⟨ *x^-cong' n (≈-sym (*-const-is-⋆ˡ x p)) ⟩
+        (constant-polynomial x * p) *x^ n           ≈⟨ *-*x^-selectiveʳ (constant-polynomial x) p n ⟩
+        constant-polynomial x * (p *x^ n)           ≈⟨ *-const-is-⋆ˡ x (p *x^ n) ⟩
+        x ⋆ (p *x^ n)                               ∎
+        where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
+
+    *-*x^-exchange : ∀ p q n → p *x^ n * q ≈ p * q *x^ n
+    *-*x^-exchange p q n = begin
+        p *x^ n * q     ≈⟨ ≈-sym (*-*x^-selectiveˡ p q n) ⟩
+        (p * q) *x^ n   ≈⟨ *-*x^-selectiveʳ p q n ⟩
+        p * q *x^ n     ∎
+        where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
 
     FormalPolynomialRawRing : RawRing c ℓ
     FormalPolynomialRawRing = record {

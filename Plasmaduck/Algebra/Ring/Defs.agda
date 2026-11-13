@@ -48,9 +48,12 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 
     open import Relation.Binary.Reasoning.Setoid S
 
+    infix 6 _≈_ _≉_
     _≈_ : Rel Carrier ℓ
     _≈_ = S .Setoid._≈_
-    infix 6 _≈_
+
+    _≉_ : Rel Carrier ℓ
+    x ≉ y = ¬ (x ≈ y)
 
     +-raw-group : RawGroup c ℓ
     +-raw-group = record {
@@ -140,6 +143,9 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
 
         NonTrivial : Set (c ⊔ ℓ)
         NonTrivial = ¬ Trivial
+
+    IsNonzero-cong : CongruentProperty S IsNonzero
+    IsNonzero-cong x≈y x-nonZero = λ y≈0 → x-nonZero (trans x≈y y≈0)
 
     -- Left divisibility
     -- Note this is \|
@@ -347,7 +353,7 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         ascending-+ i (sucℕ j) = ⊆RawIdeal-trans (ascending-+ i j) (ascending (j +ℕ i))
 
         ascending-≤ : ∀ i j → i ≤ℕ j → chain i ⊆ chain j
-        ascending-≤ i j i≤j = subst (λ q → chain i ⊆ chain q) (m∸n+n≡m i≤j) (ascending-+ (i) (j ∸ℕ i))
+        ascending-≤ i j i≤j = subst (λ q → chain i ⊆ chain q) (m∸n+n≡m i≤j) (ascending-+ i (j ∸ℕ i))
 
 
     -- ≈Ideal-refl : {α : Level} → Reflexive (_≈Ideal_ {α})
@@ -367,6 +373,10 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
     --     sym = λ {x} {y} → ≈Ideal-sym {x = x} {y};
     --     trans = λ {i} {j} {k} → ≈Ideal-trans {i = i} {j} {k}
     --     }
+
+IsDecidableEqualityRawRing : RawRing c ℓ → Set (c ⊔ ℓ)
+IsDecidableEqualityRawRing R = Relation.Binary.Decidable _≈_
+    where open RawRing R
 
 IsIntegralDomain : RawRing c ℓ → Set (c ⊔ ℓ)
 IsIntegralDomain R = ∀ x y → IsZero (x * y) → IsZero x ⊎ IsZero y

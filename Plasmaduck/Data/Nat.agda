@@ -99,6 +99,12 @@ nonZero⇒suc-nonTrivial (suc _) = record { nonTrivial = tt }
 ... | tri≈ _ m=n _ = inj₁ (≤-reflexive m=n)
 ... | tri> _ _ m>n = inj₂ m>n
 
+≤⇒≡∨< : ∀ {m n} → .(m ≤ n) → m ≡ n ⊎ m < n
+≤⇒≡∨< {m} {n} m≤n with <-cmp m n
+... | tri< m<n _ _ = inj₂ m<n
+... | tri≈ _ m=n _ = inj₁ m=n
+... | tri> _ _ m>n = ⊥-irr-elim (<-irrefl ≡-refl (≤-<-trans m≤n m>n))
+
 ⊔≥₁ : ∀ m n → m ⊔ n ≥ m
 ⊔≥₁ m n with ≤-cmp m n
 ... | inj₁ m≤n = ≤-trans m≤n (≤-reflexive (≡-sym (m≤n⇒m⊔n≡n m≤n)))
@@ -124,6 +130,10 @@ n≤sn {n = suc n'} = s≤s n≤sn
 
 m>0⇒m=sn : .(m > 0) → Σ ℕ λ n → m ≡ suc n
 m>0⇒m=sn {m = suc m} m>0 = m , ≡-refl
+
+m∸n>0⇒n<m : m ∸ n > 0 → n < m
+m∸n>0⇒n<m {suc m} {zero} m∸n>0 = m∸n>0
+m∸n>0⇒n<m {suc m} {suc n} m∸n>0 = s≤s (m∸n>0⇒n<m m∸n>0)
 
 m<n*m : ∀ m n .{{_ : NonZero m}} → .(1 < n) → m < n * m
 m<n*m m n 1<n = <-≤-trans (m<m*n m n 1<n) (≤-reflexive (*-comm m n))
@@ -242,6 +252,11 @@ max≥snd {m} {n} with m ≤? n
 s≡s⁻¹ : suc m ≡ suc n → m ≡ n
 s≡s⁻¹ ≡-refl = ≡-refl
 
+∸-suc-≤ : (m n : ℕ) → (suc m ∸ n) ≤ suc (m ∸ n)
+∸-suc-≤ m zero = ≤-refl
+∸-suc-≤ zero (suc n) = ≤-trans (≤-reflexive (0∸n≡0 n)) z≤n
+∸-suc-≤ (suc m) (suc n) = ∸-suc-≤ m n
+
 m∸n<m : ∀ m n .{{_ : NonZero m}} .{{_ : NonZero n}} → m ∸ n < m
 m∸n<m (suc m) (suc n) = s≤s (m∸n≤m m n)
 
@@ -263,6 +278,20 @@ m=n+o⇒m∸o=n m n o m=n+o =
     m ∸ o       ≡⟨ cong (_∸ o) m=n+o ⟩
     n + o ∸ o   ≡⟨ m+n∸n≡m n o ⟩
     n           ∎
+    where open ≡-Reasoning
+
+m∸n+n≡m⊔n : ∀ m n → m ∸ n + n ≡ m ⊔ n
+m∸n+n≡m⊔n m n with ≤-cmp n m
+... | inj₁ n≤m =
+    m ∸ n + n   ≡⟨ m∸n+n≡m n≤m ⟩
+    m           ≡⟨ ≡-sym (m≥n⇒m⊔n≡m n≤m) ⟩
+    m ⊔ n       ∎
+    where open ≡-Reasoning
+... | inj₂ n>m =
+    m ∸ n + n   ≡⟨ cong (_+ n) (m≤n⇒m∸n≡0 (<⇒≤ n>m)) ⟩
+    0 + n       ≡⟨⟩
+    n           ≡⟨ ≡-sym (m≤n⇒m⊔n≡n (<⇒≤ n>m)) ⟩
+    m ⊔ n       ∎
     where open ≡-Reasoning
 
 +-∸-telescope : (m n o : ℕ) → .(m ≥ n) → .(n ≥ o) → (m ∸ n) + (n ∸ o) ≡ m ∸ o
@@ -340,6 +369,10 @@ m≡spm {m = m} m≢0 | m' , m≡sm' =
 
 n=spn : .{{NonZero n}} → n ≡ suc (pred n)
 n=spn {suc n} = ≡-refl
+
+n≤spn : ∀ n → n ≤ suc (pred n)
+n≤spn zero = z≤n
+n≤spn (suc n) = ≤-refl
 
 m/n/o=m/[n*o] : ∀ m n o  .{{_ : NonZero n}} .{{_ : NonZero o}} .{{_ : NonZero (n * o)}} →
     n * o ∣ m →

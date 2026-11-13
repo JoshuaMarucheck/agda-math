@@ -18,7 +18,6 @@ open import Plasmaduck.Data.Sum using (⊎-force₁)
 open import Plasmaduck.Data.Nat using (≤-cmp; m∸n+n≡m; m<n⇒n∸m-nonZero; monotonic⇒injective; n<sn; n≤sn; ∸-suc)
 open import Plasmaduck.Function.Properties using (LeftInverse; RightInverse; Idempotent)
 open import Plasmaduck.Function.InjectionSurjection using (both-inv→bijective)
--- open import Algebra.Definitions {A = ℕ} _≡_ using (Idempotent)
 open import Plasmaduck.Util.Case using (case_of_; inspect-case_of_)
 {-
     Functions that generate all nats with property P, in order
