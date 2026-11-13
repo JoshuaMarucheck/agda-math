@@ -21,7 +21,7 @@ open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.Squash using (Squash; squash; squash-≡)
 open import Plasmaduck.Data.Bool using (if-force-true; if-force-false)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; ∸-suc-≤; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; ≤⇒≡∨<; m∸[n∸o]=m+o∸n; m∸n>0⇒n<m; n=spn; n≤spn)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; ∸-suc-≤; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; ≤→<≡; m∸[n∸o]=m+o∸n; m∸n>0⇒n<m; n=spn; n≤spn)
 open import Plasmaduck.Data.FakeFin using (FakeFin)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; merge-carrying-lemma; merge-merge; module MergeSubstitute; module MergeOnSetoid; module Reindex)
 open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; IsNonZero; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
@@ -159,9 +159,9 @@ module Modulus (d : MonicPolynomial) where
         /-poke-degree =  subst (HasDegree< /-poke) (+ℕ-comm (deg p ∸ℕ modulus-degree) 1) (*x^'-degree-bound (constant-polynomial' (leading-coeff p)) (constant-polynomial'-degree-bound (leading-coeff p)) (deg p ∸ℕ modulus-degree))
 
         %-poke-degree : HasDegree< %-poke m'
-        %-poke-degree {i} m'≤i with ≤⇒≡∨< m'≤i
-        ... | inj₁ ≡-refl = %-poke[m]-zero
-        ... | inj₂ m'<i = begin
+        %-poke-degree {i} m'≤i with ≤→<≡ m'≤i
+        ... | inj₂ ≡-refl = %-poke[m]-zero
+        ... | inj₁ m'<i = begin
             %-poke i                                                                ≈⟨ refl ⟩
             p' i ∸R (leading-coeff p ⋆' d-poly' *x^' (deg p ∸ℕ modulus-degree)) i   ≈⟨ ∸R-cong (p'[≥m]=0 m≤i) refl ⟩
             zeroR ∸R (leading-coeff p ⋆' d-poly' *x^' (deg p ∸ℕ modulus-degree)) i  ≈⟨ zeroR-is-+R-left-id (-R (leading-coeff p ⋆' d-poly' *x^' (deg p ∸ℕ modulus-degree)) i) ⟩
@@ -408,7 +408,7 @@ module _ (p@(p' , m , p'-bound-at-m) : Polynomial) (q : MonicPolynomial) where
 
     %'-degree-bound : HasDegree< _%'_ modulus-degree
     %'-degree-bound with ≤-cmp m modulus-degree
-    ... | inj₁ m≤mod-deg = HasDegree<-raise p' m≤mod-deg p'-bound-at-m
+    ... | inj₁ m≤mod-deg = HasDegree<-raise p' p'-bound-at-m m≤mod-deg
     ... | inj₂ m>mod-deg = %-helper-degree-bound p' (p'-bound-at-m-twist (<⇒≤ m>mod-deg))
 
     _%_ : Polynomial

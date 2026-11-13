@@ -99,12 +99,6 @@ nonZero⇒suc-nonTrivial (suc _) = record { nonTrivial = tt }
 ... | tri≈ _ m=n _ = inj₁ (≤-reflexive m=n)
 ... | tri> _ _ m>n = inj₂ m>n
 
-≤⇒≡∨< : ∀ {m n} → .(m ≤ n) → m ≡ n ⊎ m < n
-≤⇒≡∨< {m} {n} m≤n with <-cmp m n
-... | tri< m<n _ _ = inj₂ m<n
-... | tri≈ _ m=n _ = inj₁ m=n
-... | tri> _ _ m>n = ⊥-irr-elim (<-irrefl ≡-refl (≤-<-trans m≤n m>n))
-
 ⊔≥₁ : ∀ m n → m ⊔ n ≥ m
 ⊔≥₁ m n with ≤-cmp m n
 ... | inj₁ m≤n = ≤-trans m≤n (≤-reflexive (≡-sym (m≤n⇒m⊔n≡n m≤n)))

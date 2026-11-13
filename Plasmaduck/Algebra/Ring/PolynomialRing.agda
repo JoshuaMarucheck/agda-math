@@ -1,6 +1,6 @@
 open import Level using (Level; _⊔_)
 open import Relation.Binary.PropositionalEquality using (subst; _≡_; _≗_; module ≡-Reasoning) renaming (cong to ≡-cong; cong₂ to ≡-cong₂; refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
-open import Relation.Binary using (Setoid; Rel; Decidable; IsEquivalence; Reflexive; Symmetric; Transitive)
+open import Relation.Binary using (tri<; tri≈; tri>; Setoid; Rel; Decidable; IsEquivalence; Reflexive; Symmetric; Transitive; Trans; Irreflexive; Asymmetric; Antisymmetric)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Function using (_∘_; Congruent; Bijective)
@@ -10,7 +10,7 @@ open import Data.Bool.Properties using (T?)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _<?_; _≤ᵇ_; _<ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
-open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; <⇒≤; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; +-suc; ∸-mono; ∸-+-assoc; +-∸-assoc; m+n∸m≡n; m+n∸n≡m; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
+open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; <⇒≤; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; +-suc; ∸-mono; ∸-+-assoc; +-∸-assoc; m+n∸m≡n; m+n∸n≡m; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; <-cmp; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
 open import Data.Nat.DivMod using (%-congˡ; m%n<n; m<n*o⇒m/o<n; m≡m%n+[m/n]*n; [m+kn]%n≡m%n; m<n⇒m%n≡m; m<n⇒m/n≡0)
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
 
@@ -22,7 +22,7 @@ open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.Squash using (Squash; squash; squash-≡)
 open import Plasmaduck.Data.Bool using (if-force-true; if-force-false)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; n≤spn; ≤-+-split; <-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; m∸n+n≡m⊔n; ⊔≥₁)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; n≤spn; ≤-+-split; <-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; m∸n+n≡m⊔n; ⊔≥₁; ≤→<≡)
 open import Plasmaduck.Data.FakeFin using (FakeFin)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; merge-carrying-lemma; merge-merge; module MergeSubstitute; module MergeOnSetoid; module Reindex)
 open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; IsNonZero; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
@@ -102,9 +102,6 @@ module Polynomial (ring : Ring c ℓ) where
 
     IsBoundedDegree-cong : CongruentProperty FormalPolynomialSetoid IsBoundedDegree
     IsBoundedDegree-cong {p} {q} p≈q (p-bound , p-high-zero) = p-bound , λ {i} pb≤i → trans (sym (p≈q i)) (p-high-zero pb≤i)
-
-    HasDegree<-raise : ∀ p {m n} → .(m ≤ n) → HasDegree< p m → HasDegree< p n
-    HasDegree<-raise p {m} {n} m≤n p[≥m]=0 {i} i≥n = p[≥m]=0 {i} (≤-trans m≤n i≥n)
 
     Polynomial : Set (c ⊔ ℓ)
     Polynomial = Σ FormalPolynomial IsBoundedDegree
@@ -231,6 +228,110 @@ module Polynomial (ring : Ring c ℓ) where
             isMonic : IsMonic poly
         open IsMonic isMonic public
 
+
+    -------------------------
+    --- More Degree Stuff ---
+    -------------------------
+
+    HasDegree≥ : FormalPolynomial → ℕ → Set ℓ
+    HasDegree≥ p m = Σ ℕ λ n → Squash (n ≥ m) × IsNonzero (p n)
+
+    HasDegree> : FormalPolynomial → ℕ → Set ℓ
+    HasDegree> p m = HasDegree≥ p (sucℕ m)
+
+    HasDegree<-raise : ∀ p {m} → HasDegree< p m → ∀ {n} → .(m ≤ n) → HasDegree< p n
+    HasDegree<-raise p {m} p[≥m]=0 {n} m≤n {i} i≥n = p[≥m]=0 {i} (≤-trans m≤n i≥n)
+
+    HasDegree≥-lower : ∀ p {m} → HasDegree≥ p m → ∀ {n} → .(m ≥ n) → HasDegree≥ p n
+    HasDegree≥-lower p {m} (k , squash k≥m , p[k]-nonZero) {n} m≥n = k , squash (≤-trans m≥n k≥m) , p[k]-nonZero
+
+    HasDegree-fixed : ∀ p {m n} → .(HasDegree p m) → .(HasDegree p n) → m ≡ n
+    HasDegree-fixed p {m} {n} deg[p]=m deg[p]=n with <-cmp m n
+    ... | tri< m<n _ _ = ⊥-elim-irr (deg[p]=n .proj₁ (deg[p]=m .proj₂ m<n))
+    ... | tri≈ _ m=n _ = m=n
+    ... | tri> _ _ m>n = ⊥-elim-irr (deg[p]=m .proj₁ (deg[p]=n .proj₂ m>n))
+
+    HasDegree⇒HasDegree≤ : ∀ p {n} → HasDegree p n → HasDegree≤ p n
+    HasDegree⇒HasDegree≤ p deg[p]=n = deg[p]=n .proj₂
+
+    HasDegree⇒HasDegree≥ : ∀ p {n} → HasDegree p n → HasDegree≥ p n
+    HasDegree⇒HasDegree≥ p {n} deg[p]=n = n , squash ≤-refl , deg[p]=n .proj₁
+
+    HasDegree≤≥⇒HasDegree : ∀ p {n} → HasDegree≤ p n → HasDegree≥ p n → HasDegree p n
+    HasDegree≤≥⇒HasDegree p {n} p[>n]=0 (k , squash k≥n , p[k]-nonZero) with ≤→<≡ k≥n
+    ... | inj₁ n<k = ⊥-elim (p[k]-nonZero (p[>n]=0 n<k))
+    ... | inj₂ ≡-refl = p[k]-nonZero , p[>n]=0
+
+    HasDegree<≥-degree-bind : ∀ p {m n} → HasDegree< p m → HasDegree≥ p n → n < m
+    HasDegree<≥-degree-bind p {m} {n} p[≥m]=0 (k , squash k≥n , p[k]-nonZero) with ≤-cmp m k
+    ... | inj₁ m≤k = ⊥-elim-irr (p[k]-nonZero (p[≥m]=0 m≤k))
+    ... | inj₂ m>k = ≤-<-trans k≥n m>k
+
+    HasDegree≤≥-degree-bind : ∀ p {m n} → HasDegree≤ p m → HasDegree≥ p n → n ≤ m
+    HasDegree≤≥-degree-bind p {m} {n} deg[p]≤m deg[p]≥n = s≤s⁻¹ (HasDegree<≥-degree-bind p {sucℕ m} {n} deg[p]≤m deg[p]≥n)
+
+    HasDegree<≥-contradict : ∀ p {n} → HasDegree< p n → HasDegree≥ p n → ⊥
+    HasDegree<≥-contradict p {n} p[≥n]=0 (k , squash k≥n , p[k]-nonZero) = p[k]-nonZero (p[≥n]=0 {k} k≥n)
+
+    HasDegree≤>-contradict : ∀ p {n} → HasDegree≤ p n → HasDegree> p n → ⊥
+    HasDegree≤>-contradict p {n} p[>n]=0 (k , squash k>n , p[k]-nonZero) = p[k]-nonZero (p[>n]=0 {k} k>n)
+
+    _≈deg_ : Rel FormalPolynomial ℓ
+    p ≈deg q = Σ ℕ λ n → HasDegree p n × HasDegree q n
+
+    _≤deg_ : Rel FormalPolynomial ℓ
+    p ≤deg q = Σ ℕ λ n → HasDegree≤ p n × HasDegree≥ q n
+
+    _<deg_ : Rel FormalPolynomial ℓ
+    p <deg q = Σ ℕ λ n → HasDegree< p n × HasDegree≥ q n
+
+    _>deg_ = Function.flip _<deg_
+    _≥deg_ = Function.flip _≤deg_
+
+    infix 2 _≈deg_ _≤deg_ _≥deg_ _<deg_ _>deg_
+
+    <deg⇒≤deg : ∀ {p q} → p <deg q → p ≤deg q
+    <deg⇒≤deg {p} {q} (n , deg[p]<n , deg[q]≥n) = n , HasDegree<-raise p deg[p]<n n≤sn , deg[q]≥n
+
+    ≤>deg-contradict : ∀ {p q} → p ≤deg q → p >deg q → ⊥
+    ≤>deg-contradict {p} {q} (m , deg[p]≤m , deg[q]≥m) (n , deg[q]<n , deg[p]≥n) = <-irrefl ≡-refl (≤-<-trans m≥n m<n)
+        where
+            m<n : m < n
+            m<n = HasDegree<≥-degree-bind q deg[q]<n deg[q]≥m
+
+            m≥n : m ≥ n
+            m≥n = HasDegree≤≥-degree-bind p deg[p]≤m deg[p]≥n
+
+    -- Oops, _≈deg_ is not reflexive because knowing p ≈deg p amounts to knowing the degree of p, which we can't do.
+    -- (There are some formal polynomials without degrees, even!)
+
+    ≈deg-sym : Symmetric _≈deg_
+    ≈deg-sym (n , deg[p]=n , deg[q]=n) = n , deg[q]=n , deg[p]=n
+
+    ≈deg-trans : Transitive _≈deg_
+    ≈deg-trans {p} {q} {r} (m , deg[p]=m , deg[q]=m) (n , deg[q]=n , deg[r]=n) with HasDegree-fixed q deg[q]=m deg[q]=n
+    ... | ≡-refl = m , deg[p]=m , deg[r]=n
+
+    ≤deg-reflexive : _≈deg_ Relation.Binary.⇒ _≤deg_
+    ≤deg-reflexive {p} {q} (n , deg[p]=n , deg[q]=n) = n , HasDegree⇒HasDegree≤ p deg[p]=n , HasDegree⇒HasDegree≥ q deg[q]=n
+
+    ≤deg-trans : Transitive _≤deg_
+    ≤deg-trans {p} {q} {r} (m , deg[p]≤m , deg[q]≥m) (n , deg[q]≤n , deg[r]≥n) = m , deg[p]≤m , HasDegree≥-lower r deg[r]≥n (HasDegree≤≥-degree-bind q deg[q]≤n deg[q]≥m)
+
+    <deg-≤deg-trans : Trans _<deg_ _≤deg_ _<deg_
+    <deg-≤deg-trans {p} {q} {r} (m , deg[p]<m , deg[q]≥m) (n , deg[q]≤n , deg[r]≥n) = n , HasDegree<-raise p deg[p]<m (HasDegree≤≥-degree-bind q deg[q]≤n deg[q]≥m) , deg[r]≥n
+
+    ≤deg-<deg-trans : Trans _≤deg_ _<deg_ _<deg_
+    ≤deg-<deg-trans {p} {q} {r} (m , deg[p]≤m , deg[q]≥m) (n , deg[q]<n , deg[r]≥n) = n , HasDegree<-raise p deg[p]≤m (HasDegree<≥-degree-bind q deg[q]<n deg[q]≥m) , deg[r]≥n
+
+    <deg-irrefl : Irreflexive _≈deg_ _<deg_
+    <deg-irrefl p-≈deg-q p-<deg-q = ≤>deg-contradict (≤deg-reflexive (≈deg-sym p-≈deg-q)) p-<deg-q
+
+    <deg-asym : Asymmetric _<deg_
+    <deg-asym p-<deg-q p->deg-q = ≤>deg-contradict (<deg⇒≤deg p-<deg-q) p->deg-q
+
+    <deg-trans : Transitive _<deg_
+    <deg-trans p-<deg-q = ≤deg-<deg-trans (<deg⇒≤deg p-<deg-q)
 
     -- --------------------------
     -- --- Decidability stuff ---
