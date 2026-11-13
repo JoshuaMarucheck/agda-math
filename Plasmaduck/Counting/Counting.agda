@@ -21,7 +21,7 @@ open import Plasmaduck.Function.Bijection using (invert-bijection; _∘-bijectio
 open import Plasmaduck.Function.InjectionSurjection using (bijection→surjection; _∘-surjection_)
 open import Plasmaduck.Relation.Defs using (CongruentRel; CongruentProperty; rel-property)
 open import Plasmaduck.Property.Defs using (DecidableProperty; any-type; all-type)
-open import Plasmaduck.Data.Nat using (n<sn; n≤sn; ≤→<≡; s≡s⁻¹; n≤n)
+open import Plasmaduck.Data.Nat using (n<sn; n≤sn; ≤⇒<≡; s≡s⁻¹; n≤n)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.Negation using (¬¬-lift)
 open import Plasmaduck.Util.TypeChange using (change-type; change-type-input-dependence-irrelevance)
@@ -116,7 +116,7 @@ module _
             hunt (suc-ℕ zero-ℕ) z<n         | no ¬P[j] = no λ { (zero , s≤s z≤n , P[j]) → ¬P[j] P[j] }
             hunt j@(suc-ℕ j'@(suc-ℕ _)) j'<n | no ¬P[j] with hunt j' (<-trans n<sn j'<n)
             ...                                     | yes (k , k≤j' , P[k]) = yes (k , ≤-trans k≤j' n≤sn , P[k])
-            ...                                     | no pf = no λ { (k , k≤j , P[k]) → case ≤→<≡ k≤j of λ {
+            ...                                     | no pf = no λ { (k , k≤j , P[k]) → case ≤⇒<≡ k≤j of λ {
                 (inj₁ k<j) → pf (k , s≤s⁻¹ k<j , P[k]);
                 (inj₂ k≡j) → ¬P[j] (P-cong (reflexive (cong to (≡-trans (≡-sym (fromℕ<-toℕ k (≤-<-trans (s≤s⁻¹ k≤j) j'<n))) (fromℕ<-cong (toℕ k) j' (s≡s⁻¹ k≡j) (≤-<-trans (s≤s⁻¹ k≤j) j'<n) j'<n)))) P[k])
                 } }

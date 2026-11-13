@@ -14,7 +14,7 @@ open import Data.Empty using (⊥; ⊥-elim; ⊥-elim-irr)
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (property-subset-setoid; discrete-setoid)
 open import Plasmaduck.Counting.Counting using (any; all; fin-nat-bijection)
-open import Plasmaduck.Data.Nat using (n≤n; n≤sn; ≤→<≡; s≡s⁻¹)
+open import Plasmaduck.Data.Nat using (n≤n; n≤sn; ≤⇒<≡; s≡s⁻¹)
 open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty)
 open import Plasmaduck.Relation.Defs using (from-discrete-cong-property)
 open import Plasmaduck.Util.Case using (case_of_)
@@ -130,12 +130,12 @@ module IsMinimum (not-both-PQ : ∀ {m} → P m → Q m → ⊥) where
     minimum-contradict (P[n] , Q[<n]) (inj₂ ((m , m<n) , P[m])) = not-both-PQ P[m] (Q[<n] (m , m<n))
 
     value-below-pred : (n : ℕ) → Q n → ValueBelow (suc n) → ValueBelow n
-    value-below-pred n Q[n] ((m , m<sn) , P[m]) with ≤→<≡ m<sn
+    value-below-pred n Q[n] ((m , m<sn) , P[m]) with ≤⇒<≡ m<sn
     ... | inj₁ (s≤s m<n) = (m , m<n) , P[m]
     ... | inj₂ sm=sn = ⊥-elim (not-both-PQ (change-type (cong P (s≡s⁻¹ sm=sn)) P[m]) Q[n])
 
     no-value-below-suc : (n : ℕ) → Q n → NoValueBelow n → NoValueBelow (suc n)
-    no-value-below-suc n Q[n] nothing-below-n (m , m<sn) with ≤→<≡ m<sn
+    no-value-below-suc n Q[n] nothing-below-n (m , m<sn) with ≤⇒<≡ m<sn
     ... | inj₁ (s≤s m<n) = nothing-below-n (m , m<n)
     ... | inj₂ sm=sn = change-type (cong Q (≡-sym (s≡s⁻¹ sm=sn))) Q[n]
 

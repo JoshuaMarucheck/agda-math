@@ -21,10 +21,10 @@ open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.Squash using (Squash; squash; squash-≡)
 open import Plasmaduck.Data.Bool using (if-force-true; if-force-false)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; ∸-suc-≤; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; ≤→<≡; m∸[n∸o]=m+o∸n; m∸n>0⇒n<m; n=spn; n≤spn)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; ∸-suc-≤; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; ≤⇒<≡; m∸[n∸o]=m+o∸n; m∸n>0⇒n<m; n=spn; n≤spn)
 open import Plasmaduck.Data.FakeFin using (FakeFin)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; merge-carrying-lemma; merge-merge; module MergeSubstitute; module MergeOnSetoid; module Reindex)
-open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; IsNonZero; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
+open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
 open import Plasmaduck.Counting.Permutation.Defs using (swp)
 open import Plasmaduck.Algebra.Ring.Defs using (Ring; RawRing; IsDecidableEqualityRawRing; IsRing; IsCommutativeRing; CommutativeRing; opposite-ring)
 open import Plasmaduck.Algebra.Group.Defs using (Group)
@@ -61,7 +61,7 @@ open Polynomial ring using (MonicPolynomial; Polynomial; HasDegree≤; HasDegree
     ) renaming (
     +-degree-bound to +'-degree-bound
     )
-open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
+open Ring ring using (IsZero; Carrier; S) renaming (
     zero to zeroR; one to oneR; _≈_ to _≈R_; _≉_ to _≉R_; _+_ to _+R_; -_ to -R_; _∸_ to _∸R_; _*_ to _*R_;
     +-op to +R-op;
     +-cong to +R-cong;
@@ -159,7 +159,7 @@ module Modulus (d : MonicPolynomial) where
         /-poke-degree =  subst (HasDegree< /-poke) (+ℕ-comm (deg p ∸ℕ modulus-degree) 1) (*x^'-degree-bound (constant-polynomial' (leading-coeff p)) (constant-polynomial'-degree-bound (leading-coeff p)) (deg p ∸ℕ modulus-degree))
 
         %-poke-degree : HasDegree< %-poke m'
-        %-poke-degree {i} m'≤i with ≤→<≡ m'≤i
+        %-poke-degree {i} m'≤i with ≤⇒<≡ m'≤i
         ... | inj₂ ≡-refl = %-poke[m]-zero
         ... | inj₁ m'<i = begin
             %-poke i                                                                ≈⟨ refl ⟩

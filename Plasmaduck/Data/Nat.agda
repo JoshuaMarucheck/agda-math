@@ -157,24 +157,21 @@ m<o∧n<p⇒s[m+o]<n+p {m = m} {n = n} m<o n<p = ≤-trans (≤-reflexive (cong 
 ∸-cancelˡ-< {suc m} {zero} {suc o} n∸m<o∸m = s≤s z≤n
 ∸-cancelˡ-< {suc m} {suc n} {suc o} n∸m<o∸m = s≤s (∸-cancelˡ-< {m} {n} {o} n∸m<o∸m)
 
-<→≤ : m < n → m ≤ n
-<→≤ (s≤s m-1<n-1) = ≤-trans m-1<n-1 n≤sn
-
 ≤≥⇒≡ : .(m ≤ n) → .(m ≥ n) → m ≡ n
 ≤≥⇒≡ {m} {n} m≤n m≥n with <-cmp m n
 ... | tri< m<n _ _ = ⊥-elim (<-irrefl ≡-refl (<-≤-trans m<n (≤-recompute m≥n)))
 ... | tri≈ _ m≡n _ = m≡n
 ... | tri> _ _ m>n = ⊥-elim (<-irrefl ≡-refl (<-≤-trans m>n (≤-recompute m≤n)))
 
-≤→<≡ : .(m ≤ n) → m < n ⊎ m ≡ n
-≤→<≡ {m = m} {n = n} m≤n with <-cmp m n
+≤⇒<≡ : .(m ≤ n) → m < n ⊎ m ≡ n
+≤⇒<≡ {m = m} {n = n} m≤n with <-cmp m n
 ... | tri< m<n _ _ = inj₁ m<n
 ... | tri≈ _ m≡n _ = inj₂ m≡n
 ... | tri> _ _ m>n = ⊥-elim (<-irrefl ≡-refl (<-≤-trans m>n (≤-recompute m≤n)))
 
-<≡→≤ : m < n ⊎ m ≡ n → m ≤ n
-<≡→≤ (inj₁ m<n) = <→≤ m<n
-<≡→≤ (inj₂ m≡n) = ≤-reflexive m≡n
+<≡⇒≤ : m < n ⊎ m ≡ n → m ≤ n
+<≡⇒≤ (inj₁ m<n) = <⇒≤ m<n
+<≡⇒≤ (inj₂ m≡n) = ≤-reflexive m≡n
 
 ≤-+-split : ∀ m n o p → .(m + n ≤ o + p) → WeakTri (m < o) (m ≡ o × n ≡ p) (n < p)
 ≤-+-split m n o p m+n≤o+p with ≤-cmp o m | ≤-cmp p n
@@ -239,7 +236,7 @@ max≥snd : max m n ≥ n
 max≥snd {m} {n} with m ≤? n
 ... | yes _ = n≤n
 ... | no ¬m≤n with <-cmp m n
-...     | tri< m<n _ _ = ⊥-elim (¬m≤n (<→≤ m<n))
+...     | tri< m<n _ _ = ⊥-elim (¬m≤n (<⇒≤ m<n))
 ...     | tri≈ _ m≡n _ = ≤-reflexive (≡-sym m≡n)
 ...     | tri> _ _ m>n = ≤-trans n≤sn m>n
 
@@ -332,8 +329,8 @@ m∸n∸o≡m∸o∸n m n o =
     m ∸ o ∸ n   ∎
     where open ≡-Reasoning
 
-sm∸n≡so→m∸n≡o : (m n : ℕ) → {o : ℕ} → suc m ∸ n ≡ suc o → m ∸ n ≡ o
-sm∸n≡so→m∸n≡o m n {o} sm-n=so =
+sm∸n≡so⇒m∸n≡o : (m n : ℕ) → {o : ℕ} → suc m ∸ n ≡ suc o → m ∸ n ≡ o
+sm∸n≡so⇒m∸n≡o m n {o} sm-n=so =
     m ∸ n                   ≡⟨⟩
     (suc m ∸ suc zero) ∸ n  ≡⟨ m∸n∸o≡m∸o∸n (suc m) (suc zero) n ⟩
     (suc m ∸ n) ∸ suc zero  ≡⟨ cong (λ x → x ∸ suc zero) sm-n=so ⟩
@@ -348,12 +345,12 @@ sm∸n≡so→m∸n≡o m n {o} sm-n=so =
     n ∸ o               ∎
     where open ≡-Reasoning
 
-m≢0→m≡sn : .(m ≢ 0) → Σ ℕ λ n → m ≡ suc n
-m≢0→m≡sn {m = zero} z≢z = ⊥-elim ((≢-recompute z≢z) ≡-refl)
-m≢0→m≡sn {m = suc m'} _ = m' , ≡-refl
+m≢0⇒m≡sn : .(m ≢ 0) → Σ ℕ λ n → m ≡ suc n
+m≢0⇒m≡sn {m = zero} z≢z = ⊥-elim ((≢-recompute z≢z) ≡-refl)
+m≢0⇒m≡sn {m = suc m'} _ = m' , ≡-refl
 
 m≡spm : .(m ≢ 0) → m ≡ suc (pred m)
-m≡spm {m = m} m≢0 with m≢0→m≡sn m≢0
+m≡spm {m = m} m≢0 with m≢0⇒m≡sn m≢0
 m≡spm {m = m} m≢0 | m' , m≡sm' =
     m                   ≡⟨ m≡sm' ⟩
     suc m'              ≡⟨⟩

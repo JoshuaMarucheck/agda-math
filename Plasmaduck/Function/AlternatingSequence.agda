@@ -18,7 +18,7 @@ open import Plasmaduck.Util.TypeChange using (change-type)
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (SetoidFunction; discrete-setoid; property-subset-setoid)
 open import Plasmaduck.Property.Defs using (DecidableProperty)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
-open import Plasmaduck.Data.Nat using (+-induction; ≤-induction; n≤n; n≤sn; ≤→<≡)
+open import Plasmaduck.Data.Nat using (+-induction; ≤-induction; n≤n; n≤sn; ≤⇒<≡)
 open import Plasmaduck.Counting.Counting using (any; fin-nat-bijection)
 open import Plasmaduck.Function.Sequence using (module Repeat)
 
@@ -115,7 +115,7 @@ module _
         loop-end-at-dec zero = no λ { (zero , z≤n , _ , z≢z) → z≢z ≡-refl }
         loop-end-at-dec m@(suc m') with any {A-setoid = property-subset-setoid (discrete-setoid ℕ) (_< m)} (m , fin-nat-bijection m) (LoopsAt m ∘ proj₁) (λ { ≡-refl → id }) (loops-at-dec m ∘ proj₁)
         ... | yes ((i , i<m) , loop-at-mi) = yes (i , ≤-trans n≤sn i<m , loops-at-sym loop-at-mi)
-        ... | no pf = no λ { ((i , i≤m , loop-at-im@(_ , i≢m))) → pf ((i , (case ≤→<≡ i≤m of λ { (inj₁ i<m) → i<m; (inj₂ i≡m) → ⊥-elim (i≢m i≡m) })) , loops-at-sym loop-at-im) }
+        ... | no pf = no λ { ((i , i≤m , loop-at-im@(_ , i≢m))) → pf ((i , (case ≤⇒<≡ i≤m of λ { (inj₁ i<m) → i<m; (inj₂ i≡m) → ⊥-elim (i≢m i≡m) })) , loops-at-sym loop-at-im) }
 
         loops-below-dec : DecidableProperty LoopsBelow
         loops-below-dec m with loop-end-at-dec m

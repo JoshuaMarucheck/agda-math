@@ -105,15 +105,15 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         IsZero : Set ℓ
         IsZero = x ≈ zero
 
-        IsNonzero : Set ℓ
-        IsNonzero = ¬ (x ≈ zero)
+        NonZero : Set ℓ
+        NonZero = ¬ (x ≈ zero)
 
     module _ (x : Carrier) where
         IsLeftZeroDivisor : Set (c ⊔ ℓ)
-        IsLeftZeroDivisor = Σ Carrier λ y → IsNonzero y × x * y ≈ zero
+        IsLeftZeroDivisor = Σ Carrier λ y → NonZero y × x * y ≈ zero
 
         IsRightZeroDivisor : Set (c ⊔ ℓ)
-        IsRightZeroDivisor = Σ Carrier λ y → IsNonzero y × y * x ≈ zero
+        IsRightZeroDivisor = Σ Carrier λ y → NonZero y × y * x ≈ zero
 
         IsZeroDivisor : Set (c ⊔ ℓ)
         IsZeroDivisor = IsLeftZeroDivisor × IsRightZeroDivisor
@@ -144,8 +144,8 @@ record RawRing (c ℓ : Level) : Set (lsuc c ⊔ lsuc ℓ) where
         NonTrivial : Set (c ⊔ ℓ)
         NonTrivial = ¬ Trivial
 
-    IsNonzero-cong : CongruentProperty S IsNonzero
-    IsNonzero-cong x≈y x-nonZero = λ y≈0 → x-nonZero (trans x≈y y≈0)
+    NonZero-cong : CongruentProperty S NonZero
+    NonZero-cong x≈y x-nonZero = λ y≈0 → x-nonZero (trans x≈y y≈0)
 
     -- Left divisibility
     -- Note this is \|
@@ -613,7 +613,7 @@ record IsRing (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     ∈-neg-closure I x x∈I = Ideal.ideal-cong I neg-one-*-is-neg (Ideal.*-closure I (- one) x x∈I)
 
 
-    any-nonzero-implies-one-not-zero : ∀ {x} → IsNonzero x → IsNonzero one
+    any-nonzero-implies-one-not-zero : ∀ {x} → NonZero x → NonZero one
     any-nonzero-implies-one-not-zero {x} x≄0 1≈0 = x≄0 (begin
         x           ≈⟨ sym (one-is-*-left-id x) ⟩
         one * x     ≈⟨ *-cong 1≈0 refl ⟩
@@ -917,8 +917,8 @@ record IsField (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
 
     private
         -- This will end up being equal to S*, as long as there is at least one nonzero element
-        NonzeroS = property-subset-setoid S IsNonzero
-        NonzeroCarrier = Σ Carrier IsNonzero
+        NonzeroS = property-subset-setoid S NonZero
+        NonzeroCarrier = Σ Carrier NonZero
 
     field
         isRing : IsRing rawRing
@@ -939,7 +939,7 @@ record IsField (rawRing : RawRing c ℓ) : Set (c ⊔ ℓ) where
     open IsEquivalence (S .Setoid.isEquivalence)
 
 
-    inverse-is-not-zero : ∀ {x : NonzeroCarrier} → IsNonzero (x ⁻¹')
+    inverse-is-not-zero : ∀ {x : NonzeroCarrier} → NonZero (x ⁻¹')
     inverse-is-not-zero {x , x≄0} x⁻¹≈0 = any-nonzero-implies-one-not-zero x≄0 (begin
         one                 ≈⟨ sym (inv-gives-inverse {x , x≄0} .proj₁) ⟩
         x * (x , x≄0) ⁻¹'   ≈⟨ *-cong refl x⁻¹≈0 ⟩

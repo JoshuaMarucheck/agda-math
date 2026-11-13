@@ -49,7 +49,7 @@ variable
     c ℓ : Level
 
 module RawFormalPolynomial (ring : RawRing c ℓ) where
-    open RawRing ring using (IsZero; IsNonzero; Carrier; S; neg-cong) renaming (zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_; +-cong to +R-cong; *-cong to *R-cong)
+    open RawRing ring using (IsZero; Carrier; S; neg-cong) renaming (zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_; +-cong to +R-cong; *-cong to *R-cong)
     open IsEquivalence (S .Setoid.isEquivalence)
 
     open MergeSubstitute S using (merge-local-substitute-generate; merge-substitute-generate)
@@ -214,7 +214,7 @@ module RawFormalPolynomial (ring : RawRing c ℓ) where
 
 
 module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
-    open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
+    open Ring ring using (IsZero; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
         +-op to +R-op;
         +-cong to +R-cong;
@@ -239,6 +239,9 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
     open MergeOnSetoid S using (merge-pop-last; merge-distribute-theorem; merge-zipper-lemma)
     open RawFormalPolynomial (ring .Ring.rawRing)
 
+    -- This is the core of the proof of commutativity of _*_ (given commutativity of _*R_),
+    -- but it shows up in many of the proofs of right versions of properties
+    -- using the corresponding left version of the property on the opposite ring.
     *-flip : ∀ p q → p * q ≈ p *-alt q
     *-flip p q i = begin
         (p * q) i                                           ≈⟨ refl ⟩
@@ -662,7 +665,7 @@ module LeftFormalPolynomialLemmas (ring : Ring c ℓ) where
         where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
 
 module FormalPolynomial (ring : Ring c ℓ) where
-    open Ring ring using (IsZero; IsNonzero; Carrier; S) renaming (
+    open Ring ring using (IsZero; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
         ≈-refl to ≈R-refl;
         +-op to +R-op;
@@ -791,6 +794,12 @@ module FormalPolynomial (ring : Ring c ℓ) where
         p * q *x^ n     ∎
         where open import Relation.Binary.Reasoning.Setoid FormalPolynomialSetoid
 
+    *-distrib-+ : _DistributesOver_ _≈_ _*_ _+_
+    *-distrib-+ = *-+-left-distributive , *-+-right-distributive
+
+    *-identity : Identity _≈_ _*_ one
+    *-identity = one-is-*-left-id , one-is-*-right-id
+
     FormalPolynomialRawRing : RawRing c ℓ
     FormalPolynomialRawRing = record {
         S = FormalPolynomialSetoid;
@@ -800,12 +809,6 @@ module FormalPolynomial (ring : Ring c ℓ) where
         *-op = *-op;
         one = one
         }
-
-    *-distrib-+ : _DistributesOver_ _≈_ _*_ _+_
-    *-distrib-+ = *-+-left-distributive , *-+-right-distributive
-
-    *-identity : Identity _≈_ _*_ one
-    *-identity = one-is-*-left-id , one-is-*-right-id
 
     FormalPolynomialIsRing : IsRing FormalPolynomialRawRing
     FormalPolynomialIsRing = record {
@@ -830,7 +833,7 @@ module FormalPolynomial (ring : Ring c ℓ) where
 
 
 module CommutativeFormalPolynomial (ring : CommutativeRing c ℓ) where
-    open CommutativeRing ring using (IsZero; IsNonzero; Carrier; S) renaming (
+    open CommutativeRing ring using (IsZero; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
         +-op to +R-op;
         +-cong to +R-cong;

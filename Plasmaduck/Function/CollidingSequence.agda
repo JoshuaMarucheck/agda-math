@@ -22,7 +22,7 @@ open import Plasmaduck.Property.Defs using (DecidableProperty; CongruentProperty
 open import Plasmaduck.Property.Negation using (negation-cong)
 open import Plasmaduck.Relation.Decidable using (decidable-push)
 open import Plasmaduck.Counting.Counting using (any)
-open import Plasmaduck.Data.Nat using (n≤sn; n≤n; ≤→<≡)
+open import Plasmaduck.Data.Nat using (n≤sn; n≤n; ≤⇒<≡)
 open import Plasmaduck.Util.Negation using (¬¬-lift; invert-product)
 open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Util.TypeChange using (change-type)
@@ -508,7 +508,7 @@ module BijectionBuilding
 
             module _ {x : A} {n : ℕ} where
                 special→normal : SpecialTerminatesAtG x n → TerminatesAtG x n
-                special→normal ((x-breaks-on-g-at-n , x-unbroken-on-f-at-n) , x-unbroken-below-n) = x-breaks-on-g-at-n , (λ (m , m<sn) → case ≤→<≡ (s≤s⁻¹ m<sn) of λ { (inj₁ m<n) → unbroken-at-step₁ x m (x-unbroken-below-n (m , m<n)); (inj₂ m=n) → change-type (cong (UnbrokenAtF x) (≡-sym m=n)) x-unbroken-on-f-at-n}) , (λ (m , m<n) → unbroken-at-step₂ x m (x-unbroken-below-n (m , m<n)))
+                special→normal ((x-breaks-on-g-at-n , x-unbroken-on-f-at-n) , x-unbroken-below-n) = x-breaks-on-g-at-n , (λ (m , m<sn) → case ≤⇒<≡ (s≤s⁻¹ m<sn) of λ { (inj₁ m<n) → unbroken-at-step₁ x m (x-unbroken-below-n (m , m<n)); (inj₂ m=n) → change-type (cong (UnbrokenAtF x) (≡-sym m=n)) x-unbroken-on-f-at-n}) , (λ (m , m<n) → unbroken-at-step₂ x m (x-unbroken-below-n (m , m<n)))
 
                 normal→special : TerminatesAtG x n → SpecialTerminatesAtG x n
                 normal→special (x-breaks-on-g-at-n , x-unbroken-on-f-below-sn , x-unbroken-on-g-below-n) = (x-breaks-on-g-at-n , x-unbroken-on-f-below-sn (n , n≤n)) , λ (m , m<n) → merge-unbroken-at x m (x-unbroken-on-f-below-sn (m , ≤-trans m<n n≤sn)) (x-unbroken-on-g-below-n (m , m<n))
@@ -639,7 +639,7 @@ module BijectionBuilding
             termination-split (n , x-breaks-at-n , unbroken-below-n) with unbroken-at-f-dec n | unbroken-at-g-dec n
             ... | no broken-on-f | _ = inj₁ (n , broken-on-f , (λ (m , m<n) → unbroken-below-n (m , m<n)))
             ... | yes unbroken-on-f | no broken-on-g = inj₂ (n , broken-on-g ,
-                    (λ (m , m<sn) → case ≤→<≡ (s≤s⁻¹ m<sn) of λ {
+                    (λ (m , m<sn) → case ≤⇒<≡ (s≤s⁻¹ m<sn) of λ {
                         (inj₁ m<n) → unbroken-at-step₁ x m (unbroken-below-n (m , m<n));
                         (inj₂ m=n) → change-type (cong (λ q → (f-inv ∘ f) (repeat'-gf x q) ~₁ repeat'-gf x q) (≡-sym m=n)) unbroken-on-f
                     }) ,

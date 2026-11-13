@@ -21,7 +21,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Data.Empty using (¬-recompute; ⊥-recompute; ⊥-irr-elim)
 open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤⇒<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
 open import Plasmaduck.Data.List using (drop-lookup; foldl-pop)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
@@ -130,7 +130,7 @@ module _ where
         ((f ∘ (swap-with-list (decompose-inverse n f))) j)
     partial-decomposition-strictly-monotonic-theorem {n = n@(suc n')} f f-surj i j i<j j<n =
         case
-            ≤→<≡ (partial-decomposition-monotonic-theorem f n' [] i j (<⇒≤ i<j) (s≤s⁻¹ j<n))
+            ≤⇒<≡ (partial-decomposition-monotonic-theorem f n' [] i j (<⇒≤ i<j) (s≤s⁻¹ j<n))
         of λ {
             (inj₁ case<) → case<;
             (inj₂ case=) → ⊥-irr-elim (<-irrefl (swap-with-list-bijective (decompose-inverse n f) .proj₁ (f-surj case=)) i<j)

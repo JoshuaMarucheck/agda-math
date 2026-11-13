@@ -14,7 +14,7 @@ open import Data.Nat.Properties using (module ≤-Reasoning; <-cmp; suc-pred; �
 
 open import Plasmaduck.SetoidExperiment.SetoidMachinery using (discrete-setoid)
 open import Plasmaduck.Relation.Equivalence using (irrelevant-cong; irrelevant-cong₂)
-open import Plasmaduck.Data.Nat using (n≤sn; n<sn; ≤→<≡; s≡s⁻¹)
+open import Plasmaduck.Data.Nat using (n≤sn; n<sn; ≤⇒<≡; s≡s⁻¹)
 open import Plasmaduck.Util.TypeChange using (change-type)
 
 
@@ -97,7 +97,7 @@ foldl-all-lemma :
     (i : ℕ) →
     ∀ (j : ℕ) → .(j < i) → P (foldl combine start i) j
 foldl-all-lemma combine start P combine-imposes-P combine-preserves-P zero j ()
-foldl-all-lemma combine start P combine-imposes-P combine-preserves-P i@(suc i') j j<i with ≤→<≡ j<i
+foldl-all-lemma combine start P combine-imposes-P combine-preserves-P i@(suc i') j j<i with ≤⇒<≡ j<i
 ... | inj₁ (s≤s j'<i') = foldl-all-lemma combine (combine start i') P combine-imposes-P combine-preserves-P i' j j'<i'
 ... | inj₂ sj=si = foldl-carrying-lemma combine (combine start i') i' (λ x → P x j) (λ x i₁ → combine-preserves-P x i₁ j) (change-type (cong (λ q → P (combine start i') q) (≡-sym (s≡s⁻¹ sj=si))) (combine-imposes-P start i'))
 

@@ -9,7 +9,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Bool.Properties using (T?)
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _<?_; _≤ᵇ_; _<ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹; NonZero; >-nonZero) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
+open import Data.Nat using (ℕ; _>_; _<_; _≤_; _≥_; _≤?_; _<?_; _≤ᵇ_; _<ᵇ_; _≡ᵇ_; z≤n; s≤s; s≤s⁻¹) renaming (zero to zeroℕ; suc to sucℕ; pred to predℕ; _+_ to _+ℕ_; _∸_ to _∸ℕ_; _*_ to _*ℕ_; _/_ to _/ℕ_; _%_ to _%ℕ_; _^_ to _^ℕ_; _⊓_ to _⊓ℕ_; _⊔_ to _⊔ℕ_)
 open import Data.Nat.Properties using (≤-refl; ≤-reflexive; ≤-trans; ≤-antisym; m≤n⇒m≤n+o; m≤o∸n⇒m+n≤o; <⇒≤; ≤⇒≤ᵇ; ≤ᵇ⇒≤; ≡⇒≡ᵇ; +-suc; ∸-mono; ∸-+-assoc; +-∸-assoc; m+n∸m≡n; m+n∸n≡m; n∸n≡0; m∸n≤m; ≰⇒>; ∸-monoˡ-≤; m≤m⊔n; m≤n⊔m; <-irrefl; <-cmp; +-mono-≤; *-mono-≤; n<1⇒n≡0; module ≤-Reasoning) renaming (+-comm to +ℕ-comm)
 open import Data.Nat.DivMod using (%-congˡ; m%n<n; m<n*o⇒m/o<n; m≡m%n+[m/n]*n; [m+kn]%n≡m%n; m<n⇒m%n≡m; m<n⇒m/n≡0)
 open import Relation.Binary.Reasoning.Syntax using (module ≤-syntax; module end-syntax)
@@ -22,7 +22,7 @@ open import Plasmaduck.Relation.OrderHelpers using (WeakTri; cmp₁; cmp₂; cmp
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.Squash using (Squash; squash; squash-≡)
 open import Plasmaduck.Data.Bool using (if-force-true; if-force-false)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; n≤spn; ≤-+-split; <-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; m∸n+n≡m⊔n; ⊔≥₁; ≤→<≡)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≥-⊔-semilattice; ≤-cmp; <-≤-trans; ≤-<-trans; n≤sn; n≤spn; ≤-+-split; <-+-split; <-+-split₃; [m+kn]/n≡k+m/n; m∸n+n≡m; m∸n≤o⇒m≤o+n; ∸-suc; m∸[m∸n]≡n; [n∸m]∸[o∸m]=n∸o; m+[n∸m]≡n; m<n⇒n∸m-nonZero; m∸n+n≡m⊔n; ⊔≥₁; ≤⇒<≡)
 open import Plasmaduck.Data.FakeFin using (FakeFin)
 open import Plasmaduck.Fold.Nat.Merge using (merge; merge-pop-first; merge-carrying-lemma; merge-merge; module MergeSubstitute; module MergeOnSetoid; module Reindex)
 open import Plasmaduck.Fold.Nat.InfiniteReindexing using (_≺_; all-index-vectors; InfiniteVector; IsNonZero; HasOneTail; LesserInfiniteVector; LesserInfiniteVectorSetoid; module FiniteVectorBijections; module Cube)
@@ -41,7 +41,7 @@ variable
     c ℓ : Level
 
 module Polynomial (ring : Ring c ℓ) where
-    open Ring ring using (IsZero; IsNonzero; IsNonzero-cong; Carrier; S) renaming (
+    open Ring ring using (IsZero; NonZero; NonZero-cong; Carrier; S) renaming (
         zero to zeroR; one to oneR; _≈_ to _≈R_; _+_ to _+R_; -_ to -R_; _*_ to _*R_;
         +-op to +R-op;
         +-cong to +R-cong;
@@ -89,7 +89,7 @@ module Polynomial (ring : Ring c ℓ) where
     HasDegree<⇒HasDegree≤ p m p[≥m]=0 {i} i>pm = p[≥m]=0 {i} (≤-trans (n≤spn m) i>pm)
 
     HasDegree : FormalPolynomial → ℕ → Set ℓ
-    HasDegree p n = IsNonzero (p n) × HasDegree≤ p n
+    HasDegree p n = NonZero (p n) × HasDegree≤ p n
 
     IsBoundedDegree : FormalPolynomial → Set ℓ
     IsBoundedDegree p = Σ ℕ (HasDegree< p)
@@ -98,7 +98,7 @@ module Polynomial (ring : Ring c ℓ) where
     HasDegree<-cong n {p} {q} p≈q p[≥n]=zero {m} n≤m = trans (sym (p≈q m)) (p[≥n]=zero n≤m)
 
     HasDegree-cong : ∀ n → CongruentProperty FormalPolynomialSetoid (λ p → HasDegree p n)
-    HasDegree-cong n {p} {q} p≈q (p[n]-nonZero , p[>n]=zero) = IsNonzero-cong (p≈q n) p[n]-nonZero , λ {i} n<i → trans (sym (p≈q i)) (p[>n]=zero n<i)
+    HasDegree-cong n {p} {q} p≈q (p[n]-nonZero , p[>n]=zero) = NonZero-cong (p≈q n) p[n]-nonZero , λ {i} n<i → trans (sym (p≈q i)) (p[>n]=zero n<i)
 
     IsBoundedDegree-cong : CongruentProperty FormalPolynomialSetoid IsBoundedDegree
     IsBoundedDegree-cong {p} {q} p≈q (p-bound , p-high-zero) = p-bound , λ {i} pb≤i → trans (sym (p≈q i)) (p-high-zero pb≤i)
@@ -234,7 +234,7 @@ module Polynomial (ring : Ring c ℓ) where
     -------------------------
 
     HasDegree≥ : FormalPolynomial → ℕ → Set ℓ
-    HasDegree≥ p m = Σ ℕ λ n → Squash (n ≥ m) × IsNonzero (p n)
+    HasDegree≥ p m = Σ ℕ λ n → Squash (n ≥ m) × NonZero (p n)
 
     HasDegree> : FormalPolynomial → ℕ → Set ℓ
     HasDegree> p m = HasDegree≥ p (sucℕ m)
@@ -258,7 +258,7 @@ module Polynomial (ring : Ring c ℓ) where
     HasDegree⇒HasDegree≥ p {n} deg[p]=n = n , squash ≤-refl , deg[p]=n .proj₁
 
     HasDegree≤≥⇒HasDegree : ∀ p {n} → HasDegree≤ p n → HasDegree≥ p n → HasDegree p n
-    HasDegree≤≥⇒HasDegree p {n} p[>n]=0 (k , squash k≥n , p[k]-nonZero) with ≤→<≡ k≥n
+    HasDegree≤≥⇒HasDegree p {n} p[>n]=0 (k , squash k≥n , p[k]-nonZero) with ≤⇒<≡ k≥n
     ... | inj₁ n<k = ⊥-elim (p[k]-nonZero (p[>n]=0 n<k))
     ... | inj₂ ≡-refl = p[k]-nonZero , p[>n]=0
 

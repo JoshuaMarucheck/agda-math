@@ -21,7 +21,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Data.Empty using (¬-recompute)
 open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
-open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
+open import Plasmaduck.Data.Nat using (≤-recompute; ≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤⇒<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
 open import Plasmaduck.Data.List using (drop-lookup; foldl-pop; All-++)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
@@ -108,12 +108,12 @@ decompose-swap-helper-is-swap-decomposition i j@(suc j') i≤j k with i ≟ j | 
     swp i j k                                                               ∎
     where
         i<j : i < j
-        i<j with ≤→<≡ i≤j
+        i<j with ≤⇒<≡ i≤j
         ... | inj₁ i<j = i<j
         ... | inj₂ i=j = ⊥-elim (i≠j i=j)
 
         i<j' : i < j'
-        i<j' with ≤→<≡ (s≤s⁻¹ i<j)
+        i<j' with ≤⇒<≡ (s≤s⁻¹ i<j)
         ... | inj₁ i<j' = i<j'
         ... | inj₂ i=j' = ⊥-elim (i≠j' i=j')
 
@@ -124,9 +124,9 @@ decompose-swap-helper-is-swap-decomposition i j@(suc j') i≤j k with i ≟ j | 
         sj''=j' = sym (m≡spm {j'} (n>0⇒n≢0 (≤-<-trans z≤n i<j')))
 
         i≤j'' : i ≤ j''
-        i≤j'' with ≤→<≡ i≤j
+        i≤j'' with ≤⇒<≡ i≤j
         ... | inj₂ i=j = ⊥-elim (i≠j i=j)
-        ... | inj₁ i<j with ≤→<≡ (s≤s⁻¹ i<j)
+        ... | inj₁ i<j with ≤⇒<≡ (s≤s⁻¹ i<j)
         ...     | inj₂ i=j' = ⊥-elim (i≠j' i=j')
         ...     | inj₁ i<j' = s≤s⁻¹ (<-≤-trans i<j' (≤-reflexive (sym sj''=j')))
 

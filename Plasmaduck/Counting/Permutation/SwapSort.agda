@@ -21,7 +21,7 @@ open import Plasmaduck.Util.Case using (case_of_)
 open import Plasmaduck.Data.Empty using (⊥-recompute)
 open import Plasmaduck.Data.FakeFin using (FakeFin; realize; falsify)
 open import Plasmaduck.Data.Squash using (Squash; squash)
-open import Plasmaduck.Data.Nat using (≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤→<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
+open import Plasmaduck.Data.Nat using (≤-cmp; n≤n; n≤sn; n<sn; m≤n⇒m≤pn; m<n⇒m≢n; ≤⇒<≡; ≤≥⇒≡; ∸-suc; m∸n∸o≡m∸o∸n; m∸n∸o≡m∸[n+o]; m>0⇒m=sn; m≡spm; s≡s⁻¹; m<o∧n<p⇒s[m+o]<n+p)
 open import Plasmaduck.Data.Fin using (toℕ<<n; _↑ˡ-inverted_; fromℕ<-↑ˡ-inverted)
 open import Plasmaduck.Data.List using (drop-lookup; foldl-pop)
 open import Plasmaduck.Data.Product using (Σ≡; ×≡; uncurry; curry)
@@ -100,9 +100,9 @@ module FindMaxLower (f : ℕ → A) where
     find-max-lower-is-max {i} {j@(suc j')} i≤j with i ≟ j | f j ≤A? f (find-max-lower j')
     ... | yes refl | yes f[j]≤f[prev] = f[j]≤f[prev]
     ... | yes refl | no f[j]≰f[prev] = ≤A-refl
-    ... | no i≠j | yes f[j]≤f[prev] = find-max-lower-is-max {i} {j'} (case ≤→<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) })
+    ... | no i≠j | yes f[j]≤f[prev] = find-max-lower-is-max {i} {j'} (case ≤⇒<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) })
     ... | no i≠j | no f[j]≰f[prev] = begin
-        f i         ≤⟨ find-max-lower-is-max {i} {j'} (case ≤→<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) }) ⟩
+        f i         ≤⟨ find-max-lower-is-max {i} {j'} (case ≤⇒<≡ i≤j of λ { (inj₁ (s≤s i≤j')) → i≤j'; (inj₂ i=j) → ⊥-elim (i≠j i=j) }) ⟩
         f[prev]     ≤⟨ (case (≤A-decTotal .IsDecTotalOrder.total f[prev] (f j)) of λ { (inj₁ pf) → pf; (inj₂ pf) → ⊥-elim (f[j]≰f[prev] pf) }) ⟩
         f j         ∎
         where

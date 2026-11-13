@@ -16,7 +16,7 @@ open import Data.List.Properties using (drop-drop; reverse-++; ++-identity; fold
 open import Data.List.Relation.Unary.All using (All)
 
 open import Plasmaduck.Relation.Equivalence using (irrelevant-cong; irrelevant-cong₂)
-open import Plasmaduck.Data.Nat using (n≤sn; n<sn; ≤→<≡)
+open import Plasmaduck.Data.Nat using (n≤sn; n<sn; ≤⇒<≡)
 open import Plasmaduck.Util.TypeChange using (change-type)
 
 
@@ -87,7 +87,7 @@ module _ where
         foldl'-all-lemma zero combine start P combine-imposes-P combine-preserves-P i@(suc i') () j j≤i
         foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P zero _ zero _ = (combine-imposes-P start zero (s≤s z≤n))
         foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P zero _ j@(suc j') ()
-        foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P i@(suc i') i<n j j≤i with ≤→<≡ j≤i
+        foldl'-all-lemma n@(suc n') combine start P combine-imposes-P combine-preserves-P i@(suc i') i<n j j≤i with ≤⇒<≡ j≤i
         ... | inj₂ j≡i =
                 (foldl'-carrying-lemma n combine (combine start i i<n) i' (≤-trans n≤sn i<n)
                     (λ x → P x j (≤-<-trans j≤i i<n))
